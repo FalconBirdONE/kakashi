@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "setup": "tsx setup.ts",
+    "check": "tsx check.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
