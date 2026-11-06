@@ -117,6 +117,16 @@ CREATE INDEX audit_pending ON audit_events(state, seq);
     version: 2,
     sql: "ALTER TABLE purchases ADD COLUMN amount TEXT;",
   },
+  {
+    // World attempts: what they target (AuthAttemptPublic.targetId) and server-side poll pacing (interval, slow_down).
+    version: 3,
+    sql: `
+ALTER TABLE auth_attempts ADD COLUMN target_id TEXT;
+ALTER TABLE auth_attempts ADD COLUMN interval_seconds INTEGER;
+ALTER TABLE auth_attempts ADD COLUMN next_poll_at TEXT;
+CREATE INDEX auth_attempts_target ON auth_attempts(purpose, target_id, result);
+`,
+  },
 ];
 
 export function migrate(db: Db): void {

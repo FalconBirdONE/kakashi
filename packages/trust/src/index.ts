@@ -5,15 +5,21 @@ import * as purchases from "./purchases";
 import * as runs from "./runs";
 import * as views from "./views";
 import * as authz from "./authorize";
+import * as attempts from "./world/attempts";
+import { createWorldClient } from "./world/client";
+import type { WorldClient, WorldLogger } from "./world/types";
 
 const later = (name: string) => () => {
   throw new Error(`trust.${name}: not implemented yet`);
 };
 
-export type TrustOptions = { now?: () => Date; ctx?: Ctx };
+/** `world` is the test seam: inject a fake WorldClient to simulate every World result. */
+export type TrustOptions = { now?: () => Date; ctx?: Ctx; world?: WorldClient; logger?: WorldLogger };
 
 export function createTrust(env: Record<string, string | undefined> = process.env, opts: TrustOptions = {}): Trust {
   const ctx = opts.ctx ?? createCtx(env, { now: opts.now });
+  // createWorldClient reads credentials on first use, so a trust without World creds still boots.
+  const auth = { world: opts.world ?? createWorldClient(env, { logger: opts.logger }), logger: opts.logger };
   return {
     // identity and mandates
     createMandateDraft: (userId, draft) => mandates.createMandateDraft(ctx, userId, draft),
@@ -36,10 +42,11 @@ export function createTrust(env: Record<string, string | undefined> = process.en
     // policy and authorization
     precheck: (quoteId) => authz.precheck(ctx, quoteId),
     authorize: (purchaseId) => authz.authorize(ctx, purchaseId),
-    // later prompts: World auth, permit hand-off, audit outbox
-    startAuth: later("startAuth"),
-    pollAuth: later("pollAuth"),
-    getPermitForPurchase: later("getPermitForPurchase"),
+    // World ID: activation and purchase step-up
+    startAuth: (userId, purpose, targetId) => attempts.startAuth(ctx, auth, userId, purpose, targetId),
+    pollAuth: (attemptId) => attempts.pollAuth(ctx, auth, attemptId),
+    getPermitForPurchase: (purchaseId) => attempts.getPermitForPurchase(ctx, purchaseId),
+    // later prompt: audit outbox
     listPendingAudit: later("listPendingAudit"),
     markAnchored: later("markAnchored"),
     markAuditRetry: later("markAuditRetry"),
@@ -48,6 +55,7 @@ export function createTrust(env: Record<string, string | undefined> = process.en
 
 export { createCtx } from "./db";
 export type { Ctx } from "./db";
-// Used by the World approval flow (pollAuth, next prompt); not part of the Trust interface.
+// Internal to the World approval flow; exported for tests and scripts, not part of the Trust interface.
 export { issuePermitAfterApproval } from "./authorize";
+export type { WorldClient, WorldClaims, PollResult, DeviceStart, ValidateResult, WorldLogger } from "./world/types";
 export { evaluate, policyConfigFromEnv } from "./policy";
