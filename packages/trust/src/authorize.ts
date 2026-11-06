@@ -3,12 +3,12 @@ import {
   canonicalJson, mintPermit, newId, sha256Hex,
   type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
 } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { refreshMandate } from "./mandates";
-import { appendAuditEvent } from "./outbox";
-import { evaluate, policyConfigFromEnv, type RunStats } from "./policy";
-import { computeQuoteHash, getPurchase, getQuote, transition, zgOf } from "./purchases";
-import { mandateOf } from "./rows";
+import type { Ctx } from "./db.js";
+import { refreshMandate } from "./mandates.js";
+import { appendAuditEvent } from "./outbox.js";
+import { evaluate, policyConfigFromEnv, type RunStats } from "./policy.js";
+import { computeQuoteHash, getPurchase, getQuote, transition, zgOf } from "./purchases.js";
+import { mandateOf } from "./rows.js";
 
 type Row = Record<string, any>;
 

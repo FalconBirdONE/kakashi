@@ -1,8 +1,8 @@
 import { newId, type ResearchRun } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { getActiveMandate } from "./mandates";
-import { appendAuditEvent } from "./outbox";
-import { runOf, toJson } from "./rows";
+import type { Ctx } from "./db.js";
+import { getActiveMandate } from "./mandates.js";
+import { appendAuditEvent } from "./outbox.js";
+import { runOf, toJson } from "./rows.js";
 
 export function createRun(ctx: Ctx, userId: string, question: string): ResearchRun {
   const mandate = getActiveMandate(ctx, userId);

@@ -1,12 +1,12 @@
 // World ID auth attempts: device flow start/poll, identity binding and the protected actions (SPEC §8.2, §8.4 step 3).
 // Every World call goes through the injected WorldClient, so tests drive the whole flow with a fake.
 import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@tollbooth/contracts";
-import { appendAuditEvent } from "../outbox";
-import { issuePermitAfterApproval } from "../authorize";
-import type { Ctx, Db } from "../db";
-import { refreshMandate } from "../mandates";
-import { getPurchase } from "../purchases";
-import type { WorldClaims, WorldClient, WorldLogger } from "./types";
+import { appendAuditEvent } from "../outbox.js";
+import { issuePermitAfterApproval } from "../authorize.js";
+import type { Ctx, Db } from "../db.js";
+import { refreshMandate } from "../mandates.js";
+import { getPurchase } from "../purchases.js";
+import type { WorldClaims, WorldClient, WorldLogger } from "./types.js";
 
 export type AuthDeps = { world: WorldClient; logger?: WorldLogger };
 

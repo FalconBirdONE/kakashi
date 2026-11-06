@@ -3,10 +3,10 @@ import {
   IllegalTransitionError, addA, canTransition, canonicalJson, cmpA, newId, sha256Hex, subA,
   type AgentDecision, type DeliveryState, type InferenceCall, type Purchase, type PurchaseState, type Quote,
 } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { refreshMandate } from "./mandates";
-import { FORMATS, appendAuditEvent } from "./outbox";
-import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows";
+import type { Ctx } from "./db.js";
+import { refreshMandate } from "./mandates.js";
+import { FORMATS, appendAuditEvent } from "./outbox.js";
+import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows.js";
 
 type Row = Record<string, any>;
 

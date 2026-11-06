@@ -3,12 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc --noEmit -p .",
+    "build": "tsc -p tsconfig.build.json",
     "test": "vitest run --passWithNoTests",
-    "coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include=src/**"
+    "coverage": "vitest run --coverage --coverage.provider=v8 --coverage.include=src/**",
+    "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@tollbooth/contracts": "workspace:*",
@@ -19,5 +20,11 @@
   "devDependencies": {
     "@vitest/coverage-v8": "5.1.0",
     "@types/better-sqlite3": "9.6.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   }
 }

@@ -1,8 +1,8 @@
 import { addA, subA, type LedgerView, type Mandate, type RunView } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { refreshMandate } from "./mandates";
-import { inferenceOf, mandateOf, purchaseOf, quoteOf } from "./rows";
-import { getRun } from "./runs";
+import type { Ctx } from "./db.js";
+import { refreshMandate } from "./mandates.js";
+import { inferenceOf, mandateOf, purchaseOf, quoteOf } from "./rows.js";
+import { getRun } from "./runs.js";
 
 export function getRunView(ctx: Ctx, runId: string): RunView {
   const run = getRun(ctx, runId);

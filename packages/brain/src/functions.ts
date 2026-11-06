@@ -2,11 +2,11 @@ import {
   planOutputSchema, synthesisOutputSchema, decideOutputSchema,
 } from "@tollbooth/contracts";
 import type { Brain, DecideInput, DecideOutput, DecisionItem } from "@tollbooth/contracts";
-import { callStructured } from "./client";
-import type { ClientDeps } from "./client";
-import * as planPrompt from "./prompts/plan";
-import * as decidePrompt from "./prompts/decide";
-import * as synthPrompt from "./prompts/synthesize";
+import { callStructured } from "./client.js";
+import type { ClientDeps } from "./client.js";
+import * as planPrompt from "./prompts/plan.js";
+import * as decidePrompt from "./prompts/decide.js";
+import * as synthPrompt from "./prompts/synthesize.js";
 
 export function createFunctions(env: Record<string, string | undefined> = process.env, deps: ClientDeps = {}): Brain {
   const d = { ...deps, env };

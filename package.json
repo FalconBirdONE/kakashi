@@ -10,7 +10,8 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "dev": "pnpm -r --parallel dev",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "smoke:compiled": "node scripts/compiled-smoke.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2",

@@ -8,7 +8,10 @@ async function main() {
   const deps = await createDeps(config.useReal);
   const { app, ctx } = createApp(deps, config);
   const stopWorkers = startWorkers(ctx);
-  const server = app.listen(config.port, () => console.log(`[server] listening on :${config.port} (demoMode=${config.demoMode})`));
+  const server = app.listen(config.port, () => {
+    console.log(`[server] listening on :${config.port} (demoMode=${config.demoMode})`);
+    process.send?.({ ready: true, port: (server.address() as { port: number }).port });
+  });
 
   let closing = false;
   const shutdown = (sig: string) => {

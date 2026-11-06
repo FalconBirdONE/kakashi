@@ -1,8 +1,8 @@
 // World ID Agent Pass OIDC device-flow client (SPEC §8.2). Approach validated by scripts/world-spike.ts.
 // The client secret is read only here. Logs are metadata only: no tokens, device/user codes, secret or `sub`.
 import { createRemoteJWKSet, type JWTVerifyGetKey } from "jose";
-import type { DeviceStart, PollResult, WorldClient, WorldLogger } from "./types";
-import { validateIdToken } from "./validate";
+import type { DeviceStart, PollResult, WorldClient, WorldLogger } from "./types.js";
+import { validateIdToken } from "./validate.js";
 
 type Discovery = { tokenEndpoint: string; deviceEndpoint: string; jwks: JWTVerifyGetKey };
 type Json = Record<string, unknown>;
