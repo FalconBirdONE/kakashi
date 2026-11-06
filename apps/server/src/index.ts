@@ -1,11 +1,13 @@
 import { createApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDeps } from "./wiring.js";
+import { startWorkers } from "./workers/index.js";
 
 async function main() {
   const config = loadConfig();
   const deps = await createDeps(config.useReal);
   const { app, ctx } = createApp(deps, config);
+  const stopWorkers = startWorkers(ctx);
   const server = app.listen(config.port, () => console.log(`[server] listening on :${config.port} (demoMode=${config.demoMode})`));
 
   let closing = false;
@@ -14,6 +16,7 @@ async function main() {
     closing = true;
     console.log(`[server] ${sig}, shutting down`);
     ctx.stop();
+    stopWorkers();
     server.close(() => process.exit(0));
     server.closeAllConnections(); // SSE streams would otherwise hold the server open
     setTimeout(() => process.exit(1), 5000).unref();

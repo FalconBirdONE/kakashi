@@ -19,3 +19,10 @@ store delivered bodies, or accept the limit for the demo (restart recovery of UN
 - A run is not re-synthesized when an awaiting-approval purchase is later paid.
 - Signer refusal sets FAILED_FINAL (nothing signed). A merchant REJECTED response leaves SUBMITTED for reconciliation. A SETTLED response whose tx differs from the signed one becomes UNKNOWN.
 - `POST /api/demo/fault` returns 501 on real rails until it proxies to `${MERCHANTS_URL}/admin/fault` (TODO in `routes/demo.ts`).
+
+## Workers (`src/workers/`)
+Started from `src/index.ts`, stopped on shutdown. Reconciler: every 3 s plus once at startup. Audit worker: every 2 s.
+- Purchase age is measured from `updatedAt` (last transition), so an UNKNOWN purchase's NOT_FOUND deadline is `maxTimeoutSeconds + 30 s` after it became UNKNOWN, never earlier than signing. Slightly late, never early.
+- If `recoverDelivery` fails after a purchase is CONFIRMED, delivery is set to NOT_RECEIVED with an issue and is not retried (CONFIRMED leaves `listUnresolved`).
+- The run record is not updated when the reconciler resolves a purchase after the run ended; the UI should read purchase state from the run view.
+- Audit publishes strictly in order: a failure stops the batch and backs off 1 s, 2 s, 4 s ... capped at 60 s, so anchored order equals chain order.
