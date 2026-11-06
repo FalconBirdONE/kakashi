@@ -83,7 +83,7 @@ export function createFakeRails(opts: { now?: () => Date } = {}): FakeRails {
         || a.payTo !== permit.payTo || a.extra?.feePayer !== permit.feePayer) {
         return { ok: false, error: "SIGNER_REFUSED" };
       }
-      const hederaTxId = `0.0.9999@${++txCounter}.000000000`;
+      const hederaTxId = `0.0.9999@${Math.floor(Date.now()/1000)}.${String(++txCounter).padStart(9,"0")}`;
       return { ok: true, paymentHeader: toB64({ fake: true, tx: hederaTxId, payTo: a.payTo, amount: a.amount }), hederaTxId };
     },
 

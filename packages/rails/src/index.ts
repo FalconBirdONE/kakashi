@@ -67,6 +67,20 @@ export function createRails(env: NodeJS.ProcessEnv, deps: RailsDeps = {}): Rails
   });
 
   return {
+    restoreRequest(quote,query) {
+      const m=getMerchant(quote.merchantId);
+      if(!m || quote.origin!==origin || quote.path!==m.path || requestHash(quote.method,quote.path,query)!==quote.requestHash)throw new Error('REQUEST_HASH_MISMATCH');
+      queries.set(quote.requestHash,query);
+    },
+    async signerStatus(permit) {
+      try {
+        const res=await fetchFn(new URL('/status',e.SIGNER_URL),{method:'POST',redirect:'manual',headers:{'content-type':'application/json'},body:JSON.stringify({permit}),signal:AbortSignal.timeout(SIGNER_TIMEOUT_MS)});
+        if(!res.ok)return {state:'UNAVAILABLE'};
+        const b=await res.json();
+        if(b.state==='SIGNED'){const r=signerOk.safeParse(b);return r.success?{state:'SIGNED',...r.data}:{state:'UNAVAILABLE'};}
+        return ['NOT_FOUND','SIGNING','FAILED','REFUSED'].includes(b.state)?{state:b.state}:{state:'UNAVAILABLE'};
+      } catch{return {state:'UNAVAILABLE'};}
+    },
     async getCatalog(): Promise<CatalogEntry[]> {
       const res = await fetchFn(new URL("/catalog", origin), { redirect: "manual", signal: AbortSignal.timeout(QUOTE_TIMEOUT_MS) });
       if (!res.ok) throw new Error(`catalog HTTP ${res.status}`);

@@ -11,7 +11,12 @@ import type {
 // SPEC §7.6
 
 // ---- B1 rails ----
+export type SignerStatus =
+  | {state:'SIGNED';paymentHeader:string;hederaTxId:string}
+  | {state:'NOT_FOUND'|'SIGNING'|'FAILED'|'REFUSED'|'UNAVAILABLE'};
 export interface Rails {
+  restoreRequest?(quote:Quote,query:Record<string,string>):void;
+  signerStatus?(permit:SigningPermit):Promise<SignerStatus>;
   getCatalog(): Promise<CatalogEntry[]>;
   fetchQuote(merchantId: string, query: Record<string, string>):
     Promise<{ ok: true; quote: Omit<Quote, "id" | "runId"> } | { ok: false; error: RailsError }>;

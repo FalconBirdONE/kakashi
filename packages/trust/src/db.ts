@@ -133,6 +133,11 @@ ALTER TABLE inference_calls ADD COLUMN billing_state TEXT NOT NULL DEFAULT 'CONF
 CREATE UNIQUE INDEX inference_request_once ON inference_calls(request_key) WHERE request_key IS NOT NULL;
 CREATE TABLE inference_reservations(request_key TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES runs(id),amount TEXT NOT NULL);
 `},
+  {version:5,sql:`
+CREATE TABLE signing_permits(purchase_id TEXT PRIMARY KEY REFERENCES purchases(id),permit_id TEXT UNIQUE NOT NULL,payload TEXT NOT NULL,collected_at TEXT);
+CREATE TABLE evidence(purchase_id TEXT PRIMARY KEY REFERENCES purchases(id),payload TEXT NOT NULL,created_at TEXT NOT NULL);
+ALTER TABLE runs ADD COLUMN resume_key TEXT;
+`},
 ];
 
 export function migrate(db: Db): void {

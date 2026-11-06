@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import ResearchScreen from "./ResearchScreen";
 
@@ -51,4 +51,17 @@ it("shows PARTIAL and FAILED messages", async () => {
   const f = base(); f.run.state = "FAILED"; serve(f);
   render(<ResearchScreen runId="r1" />);
   await waitFor(() => expect(screen.getByText(/Failed: nothing was bought/)).toBeInTheDocument());
+});
+
+it('refreshes an answer and citations when delayed evidence emits an event',async()=>{
+  let event: (()=>void)|undefined;
+  vi.stubGlobal('EventSource',class {set onmessage(fn:()=>void){event=fn;} close(){} });
+  let view=base();view.run.answer.answer='Waiting for the paid evidence';view.run.answer.citations=[];
+  vi.stubGlobal('fetch',vi.fn(async()=>({ok:true,status:200,json:async()=>view})));
+  const {container}=render(<ResearchScreen runId="r1"/>);
+  expect(await screen.findByText('Waiting for the paid evidence')).toBeInTheDocument();
+  view=base();view.run.answer.answer='Updated answer from recovered evidence';
+  await act(async()=>{event?.();});
+  expect(await screen.findByText('Updated answer from recovered evidence')).toBeInTheDocument();
+  expect(within(container).getByRole('link',{name:'[1]'})).toBeInTheDocument();
 });

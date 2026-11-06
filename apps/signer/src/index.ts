@@ -13,10 +13,10 @@ const sign = createSigner({
   network: c.HEDERA_NETWORK,
   maxPerTx: BigInt(c.SIGNER_MAX_PER_TX_ATOMIC),
   maxTotal: BigInt(c.SIGNER_MAX_TOTAL_ATOMIC),
-  store: openPermitStore(c.dbPath),
+  store: openPermitStore(c.dbPath,c.PERMIT_SECRET),
   build: hederaPaymentBuilder(c.AGENT_ACCOUNT_ID, c.agentKey, c.HEDERA_NETWORK),
 });
 
-createApp(sign, (m) => console.log(m)).listen(c.port, c.host, () => {
+createApp(sign, (m) => console.log(m),sign.status).listen(c.port, c.host, () => {
   console.log(`signer for ${c.AGENT_ACCOUNT_ID} on http://${c.host}:${c.port}`);
 });

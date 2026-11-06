@@ -34,6 +34,7 @@ export function hederaPaymentBuilder(accountId: string, key: PrivateKey, network
     if (!paymentHeader) throw new Error("SDK did not produce a PAYMENT-SIGNATURE header");
     return { paymentHeader, transactionB64: String(payload.payload.transaction) };
   };
+
 }
 
 export type SignerDeps = {
@@ -86,7 +87,7 @@ export function createSigner(d: SignerDeps) {
     return ok ? tx.transactionId : null;
   }
 
-  return async function sign(permit: SigningPermit, requirementsB64: string): Promise<SignResult> {
+  const sign = async function sign(permit: SigningPermit, requirementsB64: string): Promise<SignResult> {
     const v = verifyPermit(permit, d.permitSecret, now());
     if (!v.ok) return refuse(v.reason);
 
@@ -108,11 +109,17 @@ export function createSigner(d: SignerDeps) {
         d.store.markFailed(permit.permitId);
         return refuse("SIGNED_TX_MISMATCH");
       }
-      d.store.markSigned(permit.permitId, hederaTxId);
+      if(!verifyPermit(permit,d.permitSecret,now()).ok){d.store.markFailed(permit.permitId);return refuse('EXPIRED');}
+      d.store.markSigned(permit.permitId, hederaTxId, paymentHeader);
       return { ok: true, paymentHeader, hederaTxId };
     } catch {
       d.store.markFailed(permit.permitId);
       return refuse("SIGNING_FAILED");
     }
   };
+  return Object.assign(sign,{status:(permit:SigningPermit): import('@tollbooth/contracts').SignerStatus => {
+    // A valid MAC authorizes status recovery even after signing authority expires.
+    if(!verifyPermit(permit,d.permitSecret,new Date(permit.issuedAt)).ok)return {state:'UNAVAILABLE'};
+    try{return d.store.status(permit.permitId);}catch{return {state:'UNAVAILABLE'};}
+  }});
 }

@@ -1,6 +1,7 @@
 // World ID auth attempts: device flow start/poll, identity binding and the protected actions (SPEC §8.2, §8.4 step 3).
 // Every World call goes through the injected WorldClient, so tests drive the whole flow with a fake.
 import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@tollbooth/contracts";
+import { collectPermit } from "../permit-store.js";
 import { appendAuditEvent } from "../outbox.js";
 import { issuePermitAfterApproval } from "../authorize.js";
 import type { Ctx, Db } from "../db.js";
@@ -23,15 +24,8 @@ export const toPublic = (r: Row): AuthAttemptPublic => ({
   result: r.result, verificationUri: r.verification_uri, userCode: r.user_code,
 });
 
-// Signed-but-unsent permits never touch disk. shortcut: lost on restart; reconciliation treats an unsigned RESERVED
-// purchase as FAILED_FINAL after the permit lifetime. Upgrade if the app ever runs more than one process.
-const permits = new WeakMap<Db, Map<string, SigningPermit>>();
-
 export function getPermitForPurchase(ctx: Ctx, purchaseId: string): SigningPermit | null {
-  const m = permits.get(ctx.db);
-  const p = m?.get(purchaseId) ?? null;
-  m?.delete(purchaseId);
-  return p;
+  return collectPermit(ctx,purchaseId);
 }
 
 /** Checks the target and returns the hash the human approves. Reads only (refreshMandate may persist lazy expiry). */
@@ -195,11 +189,6 @@ function finish(
   }).immediate();
 
   if (!done) return toPublic(a); // lost the race: someone else finished it, nothing done here
-  if (permit) {
-    let m = permits.get(ctx.db);
-    if (!m) permits.set(ctx.db, (m = new Map()));
-    m.set(permit.purchaseId, permit);
-  }
   deps.logger?.("world.attempt.finished", { attemptId, purpose: a.purpose, result, reason });
   return toPublic(a);
 }

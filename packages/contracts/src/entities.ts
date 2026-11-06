@@ -181,6 +181,7 @@ export type LedgerView = {
   mandate: Mandate | null;
   limitAtomic: Atomic; spentAtomic: Atomic; reservedAtomic: Atomic; availableAtomic: Atomic;
   dataSpendAtomic: Atomic;          // sum of CONFIRMED purchases
+  inferenceBillingPending?: boolean;
   inferenceSpend: string;           // sum of 0G total_cost, decimal string in 0G credits; NOT counted against the mandate
   receipts: { purchaseId: string; merchantId: string; amountAtomic: Atomic; hederaTxId: string; zgRequestId?: string; at: string }[];
 };

@@ -7,6 +7,7 @@ export function auditStatuses(ctx: OrchContext, purchaseIds: string[]): Record<s
   const pending = new Set(ctx.deps.trust.listPendingAudit(1000).map((e) => e.payload.pur).filter(Boolean));
   const out: Record<string, AuditStatus> = {};
   for (const id of purchaseIds) {
+    if(ctx.deps.trust.persistence){out[id]=ctx.deps.trust.persistence.audit(id);continue;}
     const a = ctx.audit.get(id);
     out[id] = pending.has(id) ? { state: "PENDING" } : a ? { state: "ANCHORED", ...a } : { state: "UNKNOWN" };
   }

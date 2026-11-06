@@ -20,3 +20,10 @@ Base: origin/main cca19af. Isolated branch fix/production-readiness. No publicat
 - SQLite amount bounds and overflow-safe reservation predicate; unresolved purchases block mandate versioning/replacement activation.
 - Verified: workspace build; brain 34, trust 262, server 31 tests passed.
 - Configured per-request admission ceiling must be a conservative upper bound for the selected model/token policy. Unknown billing retains the ceiling; no automatic assumption of zero cost. Live provider billing validation remains gated.
+
+## Batch 4 — durable payment and delayed-answer recovery
+- Encrypted permits and signer signatures, authenticated durable signer status, one signature claim per purchase, restoration of exact request queries.
+- Ownership indexes/evidence reconstruct from SQLite. Reconciliation covers abandoned approvals, safe unsigned expiry, post-sign crashes and retried delivery after confirmation. Existing transaction is checked before resubmission.
+- Persisted synthesis revision/lease prevents repeated answers after restart; SSE refreshes updated answers/citations. Interrupted planning with no purchase is failed explicitly for a user-controlled rerun rather than repeating paid work blindly.
+- Verified: build; trust 262, signer 22 (1 live test skipped), server 37 and web 24 passed; four compiled startup scenarios.
+- SIGNING/UNAVAILABLE outcomes remain reserved for reconciliation; never assume an ambiguous signer response proves no payment. HCS delivery is at least once; consumers deduplicate event ids.

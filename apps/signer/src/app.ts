@@ -12,11 +12,16 @@ const permitSchema = z.object({
 }).strict();
 const bodySchema = z.object({ permit: permitSchema, requirementsB64: z.string().min(1) }).strict();
 
-export function createApp(sign: (p: SigningPermit, r: string) => Promise<SignResult>, log: (m: string) => void): Express {
+export function createApp(sign: (p: SigningPermit, r: string) => Promise<SignResult>, log: (m: string) => void, status?: (p:SigningPermit)=>import("@tollbooth/contracts").SignerStatus): Express {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "32kb" }));
 
+  app.post('/status',(req,res)=>{
+    const p=permitSchema.safeParse(req.body?.permit);
+    if(!p.success||!status){res.status(403).json({state:'UNAVAILABLE'});return;}
+    res.json(status(p.data));
+  });
   app.post("/sign", async (req: Request, res: Response) => {
     const parsed = bodySchema.safeParse(req.body);
     if (!parsed.success) {

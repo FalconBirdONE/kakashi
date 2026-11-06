@@ -3,6 +3,7 @@ import {
   canonicalJson, subA, mintPermit, newId, sha256Hex,
   type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
 } from "@tollbooth/contracts";
+import { savePermit } from "./permit-store.js";
 import type { Ctx } from "./db.js";
 import { refreshMandate } from "./mandates.js";
 import { appendAuditEvent } from "./outbox.js";
@@ -42,12 +43,14 @@ function permitSecret(ctx: Ctx): string {
   return s;
 }
 
-function mint(p: Purchase, q: Quote, permitId: string, now: Date, secret: string, deadline: number): SigningPermit {
-  return mintPermit({
+function mint(ctx: Ctx, p: Purchase, q: Quote, permitId: string, now: Date, secret: string, deadline: number): SigningPermit {
+  const permit = mintPermit({
     permitId, purchaseId: p.id, mandateId: p.mandateId, mandateVersion: p.mandateVersion,
     network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo, feePayer: q.feePayer,
     quoteHash: p.quoteHash, issuedAt: now.toISOString(), expiresAt: new Date(Math.min(now.getTime() + PERMIT_TTL_MS, deadline)).toISOString(),
   }, secret);
+  savePermit(ctx,permit);
+  return permit;
 }
 
 function deadline(ctx: Ctx, p: Purchase, q: Quote, m: Mandate): number {
@@ -89,7 +92,7 @@ export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
         throw e;
       }
       if (!permitId) return { kind: "NEEDS_APPROVAL", purchase: getPurchase(ctx, p.id)! };
-      return { kind: "PERMIT", permit: mint(p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate)) };
+      return { kind: "PERMIT", permit: mint(ctx, p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate)) };
     };
 
     const out = decide();
@@ -147,7 +150,7 @@ export function issuePermitAfterApproval(
     if (consumed.changes !== 1) throw new Error("APPROVAL_CONSUMED");
     const permitId = newId("pmt_");
     transition(ctx, p.id, "RESERVED", { approvalId, permitId });
-    const permit = mint(p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate));
+    const permit = mint(ctx, p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate));
     appendAuditEvent(ctx, "APPROVAL_GRANTED", audit);
     return { kind: "PERMIT" as const, permit };
   }).immediate();

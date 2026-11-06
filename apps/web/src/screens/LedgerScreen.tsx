@@ -64,6 +64,7 @@ export default function LedgerScreen() {
         <Card title="Data spend (USDC, from mandate)"><p className="text-lg font-semibold text-slate-100">{usdc(ledger.dataSpendAtomic)}</p></Card>
         <Card title="AI inference (0G credits, sponsored)">
           <p className="text-lg font-semibold text-slate-100">{ledger.inferenceSpend} 0G credits</p>
+          {ledger.inferenceBillingPending && <p role="status">Some inference charges are unknown; budget remains reserved pending reconciliation.</p>}
           <p className="text-xs text-slate-400">Inference is not counted against the mandate budget.</p>
         </Card>
       </div>

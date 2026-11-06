@@ -68,6 +68,7 @@ export function getLedgerView(ctx: Ctx, userId: string): LedgerView {
     reservedAtomic: mandate.reservedAtomic,
     availableAtomic: subA(subA(mandate.totalBudgetAtomic, mandate.spentAtomic), mandate.reservedAtomic),
     dataSpendAtomic: receipts.reduce((s, r) => addA(s, r.amountAtomic), "0"),
+    inferenceBillingPending: !!ctx.db.prepare("SELECT 1 FROM inference_reservations i JOIN runs r ON r.id=i.run_id WHERE r.user_id=? LIMIT 1").get(userId),
     inferenceSpend: addDecimals(costs),
     receipts,
   };

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { MERCHANT_REGISTRY, type MerchantId } from "@tollbooth/contracts";
 
 export const PACKAGE_DIR = resolve(import.meta.dirname, "..");
-const ROOT = resolve(PACKAGE_DIR, "../...js");
+const ROOT = resolve(PACKAGE_DIR, "../..");
 
 /** Root .env, then .env.generated, then the process env. Empty values never hide a real one. */
 export function loadEnv(): Record<string, string> {
