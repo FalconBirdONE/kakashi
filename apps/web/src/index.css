@@ -90,6 +90,15 @@
   animation: spin-angle 9s linear infinite;
 }
 
+/* Packets moving along the lit edges of the landing architecture diagram. Dash period is 16, so 32 loops cleanly. */
+@keyframes dash-fwd { to { stroke-dashoffset: -32; } }
+@keyframes dash-back { to { stroke-dashoffset: 32; } }
+@keyframes dash-both { 50% { stroke-dashoffset: -48; } }
+@keyframes fill-x { from { width: 0; } to { width: 100%; } }
+.flow-dash { animation: dash-fwd 0.9s linear infinite; }
+.flow-dash-back { animation: dash-back 0.9s linear infinite; }
+.flow-dash-both { animation: dash-both 3.2s ease-in-out infinite; }
+
 /* Scroll reveal, toggled by <Reveal>. */
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo); }
 .reveal.is-shown { opacity: 1; transform: none; }

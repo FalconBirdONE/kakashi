@@ -9,6 +9,7 @@ import QuotesSection from "../components/timeline/QuotesSection";
 import DecisionsSection from "../components/timeline/DecisionsSection";
 import AnswerSection from "../components/timeline/AnswerSection";
 import RunStateBadge from "../components/timeline/RunStateBadge";
+import { SponsorTag } from "../components/Brand";
 
 const ENDED = ["DONE", "PARTIAL", "FAILED"];
 const MOVING = ["AWAITING_APPROVAL", "RESERVED", "SIGNED", "SUBMITTED", "UNKNOWN"];
@@ -19,7 +20,8 @@ const EYEBROW = "Step 2 of 3 · Research";
 type StepState = "done" | "active" | "idle";
 
 /** One stage of the run on the vertical rail. Live runs light up stage by stage; ended runs mark stages that produced something. */
-function Step({ n, title, state, last, children }: { n: number; title: string; state: StepState; last?: boolean; children: ReactNode }) {
+/** `by` names who does this stage, so the sponsor behind each step is visible in the run. */
+function Step({ n, title, by, state, last, children }: { n: number; title: string; by?: ReactNode; state: StepState; last?: boolean; children: ReactNode }) {
   const marker = {
     done: "bg-gold-400/15 text-gold-300 ring-gold-400/35",
     active: "bg-sky-400/10 text-sky-300 ring-sky-400/40",
@@ -36,7 +38,10 @@ function Step({ n, title, state, last, children }: { n: number; title: string; s
         ) : n}
       </span>
       <section className="min-w-0">
-        <h2 className={`pt-1 text-[15px] font-semibold ${state === "idle" ? "text-zinc-400" : "text-zinc-100"}`}>{title}</h2>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-1">
+          <h2 className={`text-[15px] font-semibold ${state === "idle" ? "text-zinc-400" : "text-zinc-100"}`}>{title}</h2>
+          {by && <span className="flex flex-wrap gap-1.5">{by}</span>}
+        </div>
         <div className="mt-3">{children}</div>
       </section>
     </li>
@@ -125,17 +130,17 @@ export default function ResearchScreen({ runId }: { runId?: string }) {
 
       {view && (
         <ol className="mt-10">
-          <Step n={1} title="Plan" state={steps[0]!}><PlanSection plan={view.run.plan} /></Step>
-          <Step n={2} title="Quotes" state={steps[1]!}><QuotesSection quotes={view.quotes} /></Step>
-          <Step n={3} title="Decisions" state={steps[2]!}><DecisionsSection view={view} /></Step>
-          <Step n={4} title="Purchases" state={steps[3]!}>
+          <Step n={1} title="Plan" by={<SponsorTag id="0g">0G sealed inference</SponsorTag>} state={steps[0]!}><PlanSection plan={view.run.plan} /></Step>
+          <Step n={2} title="Quotes" by={<SponsorTag id="hedera">x402 on Hedera</SponsorTag>} state={steps[1]!}><QuotesSection quotes={view.quotes} /></Step>
+          <Step n={3} title="Decisions" by={<SponsorTag id="0g">0G sealed inference</SponsorTag>} state={steps[2]!}><DecisionsSection view={view} /></Step>
+          <Step n={4} title="Purchases" by={<><SponsorTag id="hedera">USDC on Hedera</SponsorTag><SponsorTag id="world">World ID step-up</SponsorTag></>} state={steps[3]!}>
             {shown.length === 0 ? <Muted>Nothing bought yet.</Muted> : (
               <div className="space-y-4">{shown.map((p) => (
                 <div key={p.id} id={`purchase-${p.id}`} className="scroll-mt-24"><PurchaseCard purchase={p} view={view} onChanged={() => void load()} /></div>
               ))}</div>
             )}
           </Step>
-          <Step n={5} title="Answer" state={steps[4]!} last><AnswerSection answer={view.run.answer} /></Step>
+          <Step n={5} title="Answer" by={<SponsorTag id="0g">0G, no tools</SponsorTag>} state={steps[4]!} last><AnswerSection answer={view.run.answer} /></Step>
         </ol>
       )}
 

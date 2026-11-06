@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { BuiltOn } from "./Brand";
 import { Arrow, btn } from "./ui";
 
 /** App pages in flow order: authorize, research, verify, revisit. */
@@ -119,9 +120,15 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-white/[0.06]">
       <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-10 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-        <div className="flex items-center gap-2.5">
-          <LogoMark className="size-6" />
-          <span className="font-semibold tracking-tight text-zinc-300">Kakashi</span>
+        <div className="space-y-5">
+          <div className="flex items-center gap-2.5">
+            <LogoMark className="size-6" />
+            <span className="font-semibold tracking-tight text-zinc-300">Kakashi</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="text-[11px] uppercase tracking-[0.16em] text-zinc-600">Built on</span>
+            <BuiltOn logo="h-4" className="gap-x-6" />
+          </div>
         </div>
         <div className="max-w-xl space-y-1.5 text-xs leading-relaxed text-zinc-500 sm:text-right">
           <p>Spending limits are enforced by our backend and an isolated signer. In this demo the operator holds the agent key.</p>
