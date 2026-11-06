@@ -4,6 +4,7 @@ import * as mandates from "./mandates";
 import * as purchases from "./purchases";
 import * as runs from "./runs";
 import * as views from "./views";
+import * as authz from "./authorize";
 
 const later = (name: string) => () => {
   throw new Error(`trust.${name}: not implemented yet`);
@@ -32,11 +33,12 @@ export function createTrust(env: Record<string, string | undefined> = process.en
     // read models
     getRunView: (runId) => views.getRunView(ctx, runId),
     getLedgerView: (userId) => views.getLedgerView(ctx, userId),
-    // later prompts: World auth, policy, authorize, audit outbox
+    // policy and authorization
+    precheck: (quoteId) => authz.precheck(ctx, quoteId),
+    authorize: (purchaseId) => authz.authorize(ctx, purchaseId),
+    // later prompts: World auth, permit hand-off, audit outbox
     startAuth: later("startAuth"),
     pollAuth: later("pollAuth"),
-    precheck: later("precheck"),
-    authorize: later("authorize"),
     getPermitForPurchase: later("getPermitForPurchase"),
     listPendingAudit: later("listPendingAudit"),
     markAnchored: later("markAnchored"),
@@ -46,3 +48,6 @@ export function createTrust(env: Record<string, string | undefined> = process.en
 
 export { createCtx } from "./db";
 export type { Ctx } from "./db";
+// Used by the World approval flow (pollAuth, next prompt); not part of the Trust interface.
+export { issuePermitAfterApproval } from "./authorize";
+export { evaluate, policyConfigFromEnv } from "./policy";

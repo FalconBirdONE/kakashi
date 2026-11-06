@@ -96,8 +96,14 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
     let spent: string = m.spent;
     let reserved: string = m.reserved;
     if (from === "PROPOSED" && (to === "RESERVED" || to === "AWAITING_APPROVAL")) {
-      if (cmpA(addA(addA(spent, reserved), amount), m.total_budget) === 1) throw new Error("OVER_BUDGET");
-      reserved = addA(reserved, amount);
+      // Conditional reserve: check and write are one SQL statement, so the budget can never be exceeded (SPEC §8.4).
+      // CAST to INTEGER instead of a parallel column: atomic amounts stay far below SQLite's 64-bit limit.
+      const r = ctx.db.prepare(
+        `UPDATE mandates SET reserved = CAST(CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) AS TEXT)
+         WHERE id = @id AND version = @version AND state = 'ACTIVE' AND expires_at > @now
+           AND CAST(spent AS INTEGER) + CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) <= CAST(total_budget AS INTEGER)`,
+      ).run({ amt: amount, id: p.mandate_id, version: p.mandate_version, now: ctx.now().toISOString() });
+      if (r.changes === 0) throw new Error("OVER_BUDGET");
     } else if (to === "CONFIRMED") {
       reserved = subA(reserved, amount);
       spent = addA(spent, amount);
