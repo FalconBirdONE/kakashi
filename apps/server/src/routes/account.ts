@@ -41,7 +41,12 @@ export function accountRoutes(ctx: OrchContext, opts: { demoUserId: string; secu
 
   r.post("/mandates", (req, res) => {
     const draft: MandateDraft = draftSchema.parse(req.body);
-    const m = conflict(() => trust.createMandateDraft(userOf(res), { ...draft, allowedMerchantIds: [...new Set(draft.allowedMerchantIds)] }));
+    const m = conflict(() => trust.createMandateDraft(userOf(res), {
+      ...draft,
+      allowedMerchantIds: [...new Set(draft.allowedMerchantIds)],
+      // The real 0G brain takes 16-28 s per call; 3 calls do not fit the 120 s spec default.
+      maxRunDurationSeconds: draft.maxRunDurationSeconds ?? (ctx.deps.modes.brain === "real" ? 300 : undefined),
+    }));
     ctx.mandateOwner.set(m.id, userOf(res));
     res.status(201).json(m);
   });

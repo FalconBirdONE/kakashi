@@ -1,4 +1,5 @@
 import { EventBus } from "./bus.js";
+import type { PolicyResult } from "@tollbooth/contracts";
 import type { Deps } from "../wiring.js";
 
 /**
@@ -15,6 +16,8 @@ export type OrchContext = {
   attemptOwner: Map<string, string>;
   runs: Map<string, { userId: string; question: string }>;
   purchases: Map<string, { runId: string; userId: string }>;
+  /** quoteId -> precheck result. The real trust read model does not return it on quotes, so the UI would lose it. */
+  policy: Map<string, PolicyResult>;
   /** purchaseId -> latest HCS anchor, filled by the audit worker. */
   audit: Map<string, { sequenceNumber: number; topicId: string }>;
   /** purchaseId -> delivered body (input to synthesis). */
@@ -34,7 +37,7 @@ export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}
     interruptedRuns:new Set(),
     deps, bus: new EventBus(), approvalPollMs: opts.approvalPollMs ?? 2000,
     mandateOwner: new Map(), attemptOwner: new Map(), runs: new Map(), purchases: new Map(),
-    evidence: new Map(), audit: new Map(), inflight: new Set(), stopped: false,
+    evidence: new Map(), audit: new Map(), policy: new Map(), inflight: new Set(), stopped: false,
     track(p) {
       pending.add(p);
       const done = () => void pending.delete(p);

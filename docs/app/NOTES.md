@@ -34,3 +34,10 @@ Started from `src/index.ts`, stopped on shutdown. Reconciler: every 3 s plus onc
 - Audit status per purchase comes from the audit worker's in-memory anchors; after a server restart it shows "Audit status unknown" until re-anchored.
 - Demo drawer fault selectors are write-only (the server has no fault getter).
 - Not checked: a real browser session (console errors, layout at 375 px). Tests use jsdom; the walkthrough ran through the Vite proxy with curl.
+
+## Real-mode changes (before integration)
+- `POST /api/demo/fault` on real rails forwards `{merchantId, fault}` to `${MERCHANTS_URL}/admin/fault` (URL from env only). Unreachable merchants -> 502 `MERCHANTS_UNREACHABLE`; refused fault -> 400 `FAULT_REJECTED`.
+- The real trust read model does not return `policyResult` on quotes, so the server keeps the precheck result per quote in memory and merges it into `GET /api/runs/:id`. Lost on restart.
+- With the real brain, new mandates default to `maxRunDurationSeconds=300` (measured 16-28 s per 0G call; the spec default of 120 s would cut runs short). Fakes keep 120.
+- `pnpm --filter @tollbooth/server start` runs `node --import tsx dist/index.js` because the workspace packages are TypeScript source.
+- 0G model: `glm-5.3` with `ZG_VERIFY_TEE=false`. The Router returned `tee_verified: null` for it and for `0gm-1.0-35b-a3b`; only `0gm-1.0-35b-a3b-sia` returned `true`, but it writes its reasoning into the answer so the brain's JSON parse fails (`SCHEMA_INVALID`). Measured cost: about $0.0056 per plan call on `glm-5.3`. UI wording must not claim "TEE verified" in this configuration.

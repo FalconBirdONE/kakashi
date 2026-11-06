@@ -17,16 +17,28 @@ export function demoRoutes(ctx: OrchContext, opts: { merchantsUrl: string }): Ro
   const r = Router();
   r.use(requireUser);
 
-  r.post("/demo/fault", (req, res) => {
+  r.post("/demo/fault", async (req, res) => {
     const { merchantId, fault } = faultSchema.parse(req.body);
     if (ctx.deps.fakes.rails) {
       ctx.deps.fakes.rails.setFault(merchantId, fault);
       res.json({ ok: true, merchantId, fault });
       return;
     }
-    // TODO(real mode): POST { merchantId, fault } to `${opts.merchantsUrl}/admin/fault` (apps/merchants, SPEC §9.1).
-    void opts.merchantsUrl;
-    throw new HttpError(501, "NOT_IMPLEMENTED", "fault control for real rails is not wired yet");
+    // Real rails: the merchants service owns the faults. URL comes from env, never from the request.
+    let r2: Response;
+    try {
+      r2 = await fetch(`${opts.merchantsUrl}/admin/fault`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ merchantId, fault }), redirect: "error", signal: AbortSignal.timeout(5000),
+      });
+    } catch {
+      throw new HttpError(502, "MERCHANTS_UNREACHABLE", "could not reach the merchants service");
+    }
+    if (!r2.ok) {
+      const body = (await r2.json().catch(() => ({}))) as { error?: string };
+      throw new HttpError(r2.status === 404 ? 409 : 400, "FAULT_REJECTED", body.error ?? "merchants service refused the fault");
+    }
+    res.json({ ok: true, merchantId, fault });
   });
 
   // Dev-only: simulate World finishing an attempt. Needs the fake trust.

@@ -108,7 +108,9 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
     for (const f of fetched) {
       if (!f.res.ok) { gaps.push(`no quote from ${f.id} (${f.res.error})`); continue; }
       const quote = trust.recordQuote(runId, f.res.quote);
-      candidates.push({ quote, policy: trust.precheck(quote.id) });
+      const policy = trust.precheck(quote.id);
+      ctx.policy.set(quote.id, policy);
+      candidates.push({ quote, policy });
       emit("quote", quote.id);
     }
     // Policy-rejected quotes stay visible in the run view but are never shown to the brain.

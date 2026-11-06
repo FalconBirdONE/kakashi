@@ -44,7 +44,8 @@ export function runRoutes(ctx: OrchContext, opts: { heartbeatMs?: number } = {})
     const id = String(req.params.id);
     own(id, res);
     const view = trust.getRunView(id);
-    res.json({ ...view, audit: auditStatuses(ctx, view.purchases.map((p) => p.id)) });
+    const quotes = view.quotes.map((q) => ({ ...q, policyResult: q.policyResult ?? ctx.policy.get(q.id) }));
+    res.json({ ...view, quotes, audit: auditStatuses(ctx, view.purchases.map((p) => p.id)) });
   });
 
   r.post("/runs/:id/rerun", (req, res) => {
