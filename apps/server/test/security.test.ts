@@ -8,7 +8,7 @@ import { createApp } from '../src/app.js';
 import { createDeps } from '../src/wiring.js';
 import { AuthStore } from '../src/auth/store.js';
 import { loadConfig } from '../src/config.js';
-import { cookieFor, draftBody } from './helpers.js';
+import { cookieFor, draftBody, makeServer } from './helpers.js';
 
 const cleanup: (()=>void)[]=[];
 afterEach(()=>{for(const fn of cleanup.splice(0))fn();});
@@ -28,6 +28,37 @@ describe('persistent invite-only accounts and sessions',()=>{
     store.login('state','verifier','nonce');expect(store.consumeLogin('state')?.nonce).toBe('nonce');expect(store.consumeLogin('state')).toBeUndefined();
     expect(store.limit('key',1)).toBe(true);expect(store.limit('key',1)).toBe(false);
   });
+  it('rejects an old signed demo cookie when demo mode is disabled',async()=>{
+    const demo=await makeServer();cleanup.push(()=>demo.ctx.stop());
+    const login=await request(demo.app).post('/api/session').expect(200);
+    const cookie=String(login.headers['set-cookie'][0]).split(';')[0]!;
+    // Both helper apps use SECRET; verify this is the real route's signed cookie.
+    expect(cookie).toBe(cookieFor(demo.demoUserId));
+    await request(demo.app).get('/api/ledger').set('Cookie',cookie).expect(200);
+
+    const publicServer=await makeServer({demoMode:false});cleanup.push(()=>publicServer.ctx.stop());
+    await request(publicServer.app).get('/api/ledger').set('Cookie',cookie).expect(401);
+  });
+  it.each([
+    {paths:['/api/runs','/api/runs/r/rerun'],limit:10},
+    {paths:['/api/mandates/m/activate','/api/purchases/p/approve'],limit:20},
+  ])('rate limits payment route casing and trailing-slash variants: $paths',async({paths,limit})=>{
+    const store=new AuthStore(':memory:');cleanup.push(()=>store.close());
+    store.invite('rate@example.test');
+    const session=store.issue(store.account('issuer','rate','rate@example.test',true));
+    const deps=await createDeps([],{},()=>{});
+    const {app,ctx}=createApp(deps,{demoMode:false,merchantsUrl:'http://127.0.0.1:4200',sessionSecret:'test-secret',secureCookie:false},{authStore:store});
+    cleanup.push(()=>ctx.stop());
+    const headers={Cookie:cookieFor(session.token),'X-CSRF-Token':session.csrf};
+    for(let i=0;i<limit;i++){
+      const path=paths[i%paths.length]!;
+      const variant=i%2===0?path:path.toUpperCase()+'/';
+      const response=await request(app).post(variant).set(headers).send({question:'rate check'}).expect(503);
+      expect(response.body.error).toBe('PAYMENTS_DISABLED');
+    }
+    const blocked=await request(app).post(paths[0]!.toUpperCase()+'/').set(headers).expect(429);
+    expect(blocked.body.error).toBe('RATE_LIMITED');
+  });
   it('requires a stable production secret',()=>{
     expect(()=>loadConfig({NODE_ENV:'production'})).toThrow('SESSION_SECRET');
   });
@@ -40,7 +71,7 @@ describe('persistent invite-only accounts and sessions',()=>{
     const ctx=createCtx({DB_PATH:':memory:',AGENT_ACCOUNT_ID:'0.0.2000',PERMIT_SECRET:'ab'.repeat(32)});cleanup.push(()=>ctx.db.close());
     deps.trust=createTrust(ctx.env,{ctx});deps.modes.trust='real';
     const cfg={demoMode:false,merchantsUrl:'http://127.0.0.1:4200',sessionSecret:'test-secret',secureCookie:false};
-    let app=createApp(deps,cfg,{authStore:store}).app;
+    let app=createApp(deps,cfg,{authStore:store,paymentsEnabled:true}).app;
     const as=(who:typeof a)=>({Cookie:cookieFor(who.token),'X-CSRF-Token':who.csrf});
     await request(app).post('/api/session').expect(404);
     await request(app).get('/api/session').set(as(a)).expect(200);
@@ -52,7 +83,7 @@ describe('persistent invite-only accounts and sessions',()=>{
     const q=deps.trust.recordQuote(run.id,fq.quote);
     const p=deps.trust.proposePurchase(q.id,{action:'BUY',needId:'n',reasonCode:'FILLS_NEED',expectedUsefulness:1,rationale:'test'});
     ctx.db.prepare("INSERT INTO auth_attempts(id,user_id,purpose,target_hash,started_at,expires_at,result,device_code_ref,verification_uri,user_code,target_id) VALUES ('attempt',?,'ACTIVATE_MANDATE','hash',?,?,'PENDING','dc','https://example.test','code',?)").run(a.userId,new Date().toISOString(),new Date(Date.now()+60000).toISOString(),m.id);
-    app=createApp(deps,cfg,{authStore:store}).app;
+    app=createApp(deps,cfg,{authStore:store,paymentsEnabled:true}).app;
     await request(app).get(`/api/runs/${run.id}`).set(as(a)).expect(200);
     await request(app).get(`/api/runs/${run.id}`).set(as(b)).expect(404);
     await request(app).post(`/api/runs/${run.id}/rerun`).set(as(b)).expect(404);

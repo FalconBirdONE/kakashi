@@ -22,7 +22,7 @@ const METHODS = [
   "transition", "setDelivery", "listUnresolved", "recordInference", "listPendingAudit", "markAnchored", "markAuditRetry",
   "getRunView", "getLedgerView",
 ] as const satisfies readonly (keyof Trust)[];
-const allListed: [Exclude<keyof Trust, (typeof METHODS)[number]>] extends [never] ? true : never = true;
+const allListed: [Exclude<Exclude<keyof Trust, "persistence">, (typeof METHODS)[number]>] extends [never] ? true : never = true;
 
 afterEach(cleanup);
 

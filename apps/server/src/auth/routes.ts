@@ -1,12 +1,21 @@
 import { Router, type RequestHandler } from 'express';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { customFetch, createRemoteJWKSet, jwtVerify } from 'jose';
 import { HttpError } from '../errors.js';
 import { COOKIE, issueCookie } from '../session.js';
 import { AuthStore } from './store.js';
 
 export type LoginConfig = { issuer: string; clientId: string; clientSecret: string; redirectUri: string };
 export function security(store: AuthStore, demoMode: boolean): RequestHandler {
+  const limits = Router();
+  const limit = (category: 'session' | 'run' | 'approval'): RequestHandler => (req,res,next) => {
+    if (!store.limit(`${category}:${res.locals.userId??req.ip}`,category==='run'?10:20)) throw new HttpError(429,'RATE_LIMITED','try again later');
+    next();
+  };
+  limits.all('/session', limit('session'));
+  limits.use('/auth', limit('session'));
+  limits.post(['/runs', '/runs/:id/rerun'], limit('run'));
+  limits.post(['/mandates/:id/activate', '/purchases/:id/approve'], limit('approval'));
   return (req,res,next) => {
     const token = req.signedCookies?.[COOKIE];
     if (typeof token === 'string') {
@@ -18,14 +27,10 @@ export function security(store: AuthStore, demoMode: boolean): RequestHandler {
       const supplied = Buffer.from(req.get('X-CSRF-Token')??''), expected = Buffer.from(res.locals.csrf??'');
       if (!expected.length || supplied.length!==expected.length || !timingSafeEqual(supplied,expected)) throw new HttpError(403,'CSRF','invalid CSRF token');
     }
-    const category = req.path==='/session' || req.path.startsWith('/auth/') ? 'session'
-      : req.method==='POST' && (req.path==='/runs' || req.path.endsWith('/rerun')) ? 'run'
-      : req.method==='POST' && /\/(approve|activate)$/.test(req.path) ? 'approval' : null;
-    if (category && !store.limit(`${category}:${res.locals.userId??req.ip}`,category==='run'?10:20)) throw new HttpError(429,'RATE_LIMITED','try again later');
-    next();
+    limits(req,res,next);
   };
 }
-export function authRoutes(store: AuthStore, cfg: LoginConfig|undefined, secure: boolean): Router {
+export function authRoutes(store: AuthStore, cfg: LoginConfig|undefined, secure: boolean, transport: typeof fetch = fetch): Router {
   const r=Router();
   r.get('/session',(_req,res) => {
     if (!res.locals.userId || !res.locals.csrf) throw new HttpError(401,'UNAUTHENTICATED','sign in required');
@@ -34,7 +39,7 @@ export function authRoutes(store: AuthStore, cfg: LoginConfig|undefined, secure:
   r.post('/logout',(req,res)=>{ const token=req.signedCookies?.[COOKIE]; if(typeof token==='string')store.revoke(token); res.clearCookie(COOKIE,{httpOnly:true,sameSite:'lax',secure});res.json({ok:true}); });
   async function discovery() {
     if (!cfg) throw new HttpError(503,'SIGN_IN_UNCONFIGURED','sign-in provider is not configured');
-    const d=await fetch(cfg.issuer.replace(/\/$/,'')+'/.well-known/openid-configuration',{signal:AbortSignal.timeout(5000)}).then(r=>{if(!r.ok)throw new Error('discovery failed');return r.json();});
+    const d=await transport(cfg.issuer.replace(/\/$/,'')+'/.well-known/openid-configuration',{signal:AbortSignal.timeout(5000)}).then(r=>{if(!r.ok)throw new Error('discovery failed');return r.json();});
     if(d.issuer!==cfg.issuer)throw new Error('issuer mismatch');
     for (const key of ['authorization_endpoint','token_endpoint','jwks_uri']) if(new URL(d[key]).protocol!=='https:')throw new Error('HTTPS issuer endpoints required');
     return d;
@@ -54,10 +59,10 @@ export function authRoutes(store: AuthStore, cfg: LoginConfig|undefined, secure:
     const attempt=store.consumeLogin(state);
     if(!attempt)throw new HttpError(403,'LOGIN_STATE','expired login state');
     const d=await discovery();
-    const response=await fetch(d.token_endpoint,{method:'POST',signal:AbortSignal.timeout(5000),headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code:String(req.query.code??''),redirect_uri:cfg!.redirectUri,client_id:cfg!.clientId,client_secret:cfg!.clientSecret,code_verifier:attempt.verifier})});
+    const response=await transport(d.token_endpoint,{method:'POST',signal:AbortSignal.timeout(5000),headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',code:String(req.query.code??''),redirect_uri:cfg!.redirectUri,client_id:cfg!.clientId,client_secret:cfg!.clientSecret,code_verifier:attempt.verifier})});
     if(!response.ok)throw new HttpError(403,'LOGIN_FAILED','provider rejected login');
     const {id_token}=await response.json();
-    const {payload}=await jwtVerify(id_token,createRemoteJWKSet(new URL(d.jwks_uri)),{issuer:cfg!.issuer,audience:cfg!.clientId,algorithms:['RS256','ES256'],requiredClaims:['exp','iat','sub','nonce']});
+    const {payload}=await jwtVerify(id_token,createRemoteJWKSet(new URL(d.jwks_uri),{[customFetch]:transport}),{issuer:cfg!.issuer,audience:cfg!.clientId,algorithms:['RS256','ES256'],requiredClaims:['exp','iat','sub','nonce']});
     if(payload.nonce!==attempt.nonce || typeof payload.email!=='string' || !payload.sub)throw new HttpError(403,'LOGIN_FAILED','invalid identity claims');
     let userId:string;
     try { userId=store.account(cfg!.issuer,payload.sub,payload.email,payload.email_verified===true); }

@@ -4,7 +4,7 @@ import { planQuery } from '../orchestrator/util.js';
 import { executePurchase } from '../orchestrator/purchase.js';
 import { resumeSynthesis } from '../orchestrator/resume.js';
 export type Reconciler={tick():Promise<void>;stop():void};
-export function createReconciler(ctx:OrchContext,opts:{intervalMs?:number;now?:()=>number;autoStart?:boolean}={}):Reconciler{
+export function createReconciler(ctx:OrchContext,opts:{intervalMs?:number;now?:()=>number;autoStart?:boolean;allowSpending?:boolean}={}):Reconciler{
  const {trust,rails}=ctx.deps,now=opts.now??Date.now,busy=new Set<string>();
  async function handle(listed:Purchase){
   const view=trust.getRunView(listed.runId);let p=view.purchases.find(p=>p.id===listed.id)!;
@@ -25,7 +25,7 @@ export function createReconciler(ctx:OrchContext,opts:{intervalMs?:number;now?:(
     p=trust.getRunView(p.runId).purchases.find(x=>x.id===p.id)!;
    }else if(status.state==='FAILED'||status.state==='REFUSED'||(status.state==='NOT_FOUND'&&now()>=Date.parse(permit.expiresAt))){
     trust.transition(p.id,'FAILED_FINAL');emit();return;
-   }else if(status.state==='NOT_FOUND'){
+   }else if(status.state==='NOT_FOUND'&&opts.allowSpending!==false){
     await executePurchase(ctx,p.id,permit);return;
    }else return;
   }
@@ -53,7 +53,7 @@ export function createReconciler(ctx:OrchContext,opts:{intervalMs?:number;now?:(
    const match=/@(\d+)\.(\d+)$/.exec(p.hederaTxId);
    const validStart=match?Number(match[1])*1000+Number(('0.'+match[2]))*1000:Date.parse(p.updatedAt);
    if(now()>validStart+(q.maxTimeoutSeconds+30)*1000){trust.transition(p.id,'FAILED_FINAL');emit();}
-   else if(permit&&rails.signerStatus){
+   else if(permit&&rails.signerStatus&&opts.allowSpending!==false){
     const signed=await rails.signerStatus(permit);
     if(signed.state==='SIGNED'&&signed.hederaTxId===p.hederaTxId)await executePurchase(ctx,p.id,permit,signed);
    }
@@ -75,7 +75,7 @@ export function createReconciler(ctx:OrchContext,opts:{intervalMs?:number;now?:(
     busy.add(p.id);
     try{await handle(p);}catch(e){console.error('[reconciler]',e instanceof Error?e.message:'recovery pending');}finally{busy.delete(p.id);}
    }
-   if(trust.persistence)for(const run of trust.persistence.runs())await resumeSynthesis(ctx,run.id);
+   if(trust.persistence&&opts.allowSpending!==false)for(const run of trust.persistence.runs())await resumeSynthesis(ctx,run.id);
   }finally{running=false;}
  }
  let timer:NodeJS.Timeout|undefined;
