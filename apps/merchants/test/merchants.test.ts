@@ -226,3 +226,24 @@ describe("demo faults", () => {
     expect((await setFault(off.app, "quickcast", "INJECT_TEXT")).status).toBe(404);
   });
 });
+
+describe("log hygiene", () => {
+  test("redact blanks header-sized tokens and caps length", async () => {
+    const { redact } = await import("../src/app.js");
+    const header = Buffer.from("x".repeat(200)).toString("base64");
+    expect(redact(`facilitator said: bad payload ${header}`)).toBe("facilitator said: bad payload [redacted]");
+    expect(redact("a ".repeat(400))).toHaveLength(300);
+  });
+
+  test("an internal error is logged without the payment header", async () => {
+    const lines: string[] = [];
+    const facilitator = fakeFacilitator();
+    facilitator.client.verify = async () => { throw new Error("verify blew up"); };
+    const app = await createApp({ config: baseConfig, facilitator: facilitator.client, store: openStore(":memory:"), now: () => NOW, log: (m) => lines.push(m) });
+    const header = await paymentHeader(app, "/m/quickcast/forecast");
+    const res = await request(app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header);
+    expect(res.status).toBe(502);
+    expect(lines.join("\n")).not.toContain(header);
+    expect(lines.join("\n")).toContain("verify blew up");
+  });
+});

@@ -24,6 +24,9 @@ export type AppDeps = {
   log?: (msg: string) => void;
 };
 
+/** Error text can echo request data; blank out anything long enough to be a payment header or key. */
+export const redact = (text: string) => text.replace(/[A-Za-z0-9+/=_-]{40,}/g, "[redacted]").slice(0, 300);
+
 /** 0.0.x@seconds.nanos to the mirror node form 0.0.x-seconds-nanos. */
 export const toMirrorTxId = (tx: string) => tx.replace("@", "-").replace(/\.(\d+)$/, "-$1");
 
@@ -210,7 +213,7 @@ export async function createApp(deps: AppDeps): Promise<Express> {
 
   app.use((_req: Request, res: Response) => void res.status(404).json({ error: "not_found" }));
   app.use((err: unknown, _req: Request, res: Response, _next: unknown) => {
-    log(`error: ${(err as Error).message}`);
+    log(`error: ${redact(String((err as Error)?.message ?? err))}`);
     if (!res.headersSent) res.status(502).json({ error: "merchant_error" });
   });
 
