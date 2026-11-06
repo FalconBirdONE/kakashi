@@ -11,7 +11,8 @@ async function main() {
   const deps = await createDeps(config.useReal);
   const auth = new AuthStore(config.authDbPath);
   for (const email of config.invites) auth.invite(email);
-  const { app, ctx } = createApp(deps, config, {authStore:auth,login:config.login,paymentsEnabled:process.env.PAYMENTS_ENABLED==="true",staticDir:process.env.WEB_ROOT});
+  // DEMO_USER_ID keeps the demo user (and its World ID link in the persistent trust DB) across restarts.
+  const { app, ctx } = createApp(deps, config, {demoUserId:process.env.DEMO_USER_ID||undefined,authStore:auth,login:config.login,paymentsEnabled:process.env.PAYMENTS_ENABLED==="true",staticDir:process.env.WEB_ROOT});
   const stopWorkers = startWorkers(ctx,{allowSpending:config.demoMode||process.env.PAYMENTS_ENABLED==="true"});
   const server = app.listen(config.port, () => {
     console.log(`[server] listening on :${config.port} (demoMode=${config.demoMode})`);

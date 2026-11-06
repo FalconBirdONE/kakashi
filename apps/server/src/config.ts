@@ -4,6 +4,7 @@ import { serverEnv } from "@tollbooth/contracts";
 export type Config = {
   port: number;
   demoMode: boolean;
+  liveDemo?: boolean;
   useReal: ("rails" | "brain" | "trust")[];
   merchantsUrl: string;
   sessionSecret: string;
@@ -29,6 +30,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ...(env.LOGIN_ISSUER && env.LOGIN_CLIENT_ID && env.LOGIN_CLIENT_SECRET && env.LOGIN_REDIRECT_URI ? {login:{issuer:env.LOGIN_ISSUER,clientId:env.LOGIN_CLIENT_ID,clientSecret:env.LOGIN_CLIENT_SECRET,redirectUri:env.LOGIN_REDIRECT_URI}}:{}),
     port: Number(env.PORT ?? 4000),
     demoMode: e.DEMO_MODE,
+    liveDemo: env.LIVE_DEMO === "true",
     useReal: e.USE_REAL,
     merchantsUrl: e.MERCHANTS_URL,
     sessionSecret,
