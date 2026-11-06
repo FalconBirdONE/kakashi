@@ -1,5 +1,5 @@
 import type { Rails } from "@tollbooth/contracts";
 
-export function createRails(_env: NodeJS.ProcessEnv): Rails {
-  throw new Error("rails: not implemented");
+export function createRails(_env: Record<string, string | undefined> = process.env): Rails {
+  throw new Error("createRails: not implemented");
 }

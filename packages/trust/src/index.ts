@@ -1,5 +1,5 @@
 import type { Trust } from "@tollbooth/contracts";
 
-export function createTrust(_env: NodeJS.ProcessEnv): Trust {
-  throw new Error("trust: not implemented");
+export function createTrust(_env: Record<string, string | undefined> = process.env): Trust {
+  throw new Error("createTrust: not implemented");
 }

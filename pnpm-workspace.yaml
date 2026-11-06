@@ -1,27 +1,12 @@
 packages:
-  - packages/*
   - apps/*
-  - scripts/*
-  - evals
+  - packages/*
 minimumReleaseAgeExclude:
   - '@tailwindcss/node@4.3.5'
-  - '@tailwindcss/oxide-android-arm64@4.3.5'
-  - '@tailwindcss/oxide-darwin-arm64@4.3.5'
-  - '@tailwindcss/oxide-darwin-x64@4.3.5'
-  - '@tailwindcss/oxide-freebsd-x64@4.3.5'
-  - '@tailwindcss/oxide-linux-arm-gnueabihf@4.3.5'
-  - '@tailwindcss/oxide-linux-arm64-gnu@4.3.5'
-  - '@tailwindcss/oxide-linux-arm64-musl@4.3.5'
-  - '@tailwindcss/oxide-linux-x64-gnu@4.3.5'
-  - '@tailwindcss/oxide-linux-x64-musl@4.3.5'
-  - '@tailwindcss/oxide-wasm32-wasi@4.3.5'
-  - '@tailwindcss/oxide-win32-arm64-msvc@4.3.5'
-  - '@tailwindcss/oxide-win32-x64-msvc@4.3.5'
-  - '@tailwindcss/oxide@4.3.5'
   - '@tailwindcss/vite@4.3.5'
-  - openai@7.53.0
-  - tailwindcss@4.3.5
-allowBuilds:
-  better-sqlite3: true
-  esbuild: true
-  protobufjs: true
+  - openai@7.52.0 || 7.53.0
+onlyBuiltDependencies:
+  - better-sqlite3
+  - esbuild
+ignoredBuiltDependencies:
+  - protobufjs

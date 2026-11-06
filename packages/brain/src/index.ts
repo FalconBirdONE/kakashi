@@ -1,5 +1,5 @@
 import type { Brain } from "@tollbooth/contracts";
 
-export function createBrain(_env: NodeJS.ProcessEnv): Brain {
-  throw new Error("brain: not implemented");
+export function createBrain(_env: Record<string, string | undefined> = process.env): Brain {
+  throw new Error("createBrain: not implemented");
 }

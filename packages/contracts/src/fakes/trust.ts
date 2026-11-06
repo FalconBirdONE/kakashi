@@ -1,370 +1,148 @@
-import type { Trust } from "../interfaces.js";
-import type {
-  AgentDecision, AuditEvent, AuditPayload, AuthAttempt, AuthAttemptPublic, Approval, AuthorizeResult, InferenceCall, LedgerView,
-  Mandate, MandateDraft, PolicyResult, Purchase, Quote, ResearchRun, RunView, UserPreferences,
-} from "../entities.js";
-import type { AuditEventType, AuthAttemptResult, AuthPurpose, DeliveryState, PurchaseState } from "../enums.js";
-import { canTransition } from "../enums.js";
-import { IllegalTransitionError, type PolicyReason } from "../errors.js";
-import { addA, cmpA, subA } from "../money.js";
-import { newId } from "../ids.js";
-import { canonicalJson, sha256Hex } from "../hash.js";
-import { mintPermit, type SigningPermit } from "../permit.js";
-import { MERCHANT_REGISTRY, getMerchant } from "../registry.js";
-import { FAKE_ASSET_ID, FAKE_FEEPAYER, FAKE_NETWORK, FAKE_PAYTO, FAKE_PERMIT_SECRET } from "./shared.js";
+import { addA, cmpA, subA } from "../money";
+import { newId, sha256Hex } from "../hash";
+import { getMerchant } from "../registry";
+import {
+  IllegalTransitionError, PURCHASE_TRANSITIONS,
+  type AuditEvent, type AuditEventType, type AuthAttempt, type InferenceCall, type Mandate, type Purchase,
+  type PolicyReason, type PolicyResult, type Quote, type ResearchRun, type SigningPermit, type Trust, type UserPreferences,
+} from "../types";
 
-export type FakeTrust = Trust & {
-  /** Simulate World finishing (or failing) an auth attempt. */
-  completeAuth(attemptId: string, result: AuthAttemptResult): void;
-  setNow(d: Date): void;
-};
+const now = () => new Date().toISOString();
+const pub = (a: AuthAttempt) => ({ id: a.id, purpose: a.purpose, targetHash: a.targetHash, expiresAt: a.expiresAt,
+  result: a.result, verificationUri: a.verificationUri, userCode: a.userCode });
 
-const RESERVING: PurchaseState[] = ["AWAITING_APPROVAL", "RESERVED", "SIGNED", "SUBMITTED", "UNKNOWN"];
-const COUNTS_TOWARD_LIMIT: PurchaseState[] = [...RESERVING, "CONFIRMED"];
+/** In-memory Trust. Auth attempts auto-VERIFY on first poll (set failNextAuth to exercise the failure path). */
+export function createFakeTrust(opts: { failNextAuth?: "DENIED" | "CANCELLED" | "EXPIRED" } = {}): Trust & { failNextAuth?: string } {
+  const mandates = new Map<string, Mandate>(), attempts = new Map<string, AuthAttempt>(), runs = new Map<string, ResearchRun>(),
+    quotes = new Map<string, Quote>(), purchases = new Map<string, Purchase>(), calls: InferenceCall[] = [],
+    prefs = new Map<string, UserPreferences>(), audit: AuditEvent[] = [], permits = new Map<string, SigningPermit>();
+  const self: Trust & { failNextAuth?: string } = { failNextAuth: opts.failNextAuth } as never;
 
-export function createFakeTrust(opts: { now?: () => Date; walletAccountId?: string } = {}): FakeTrust {
-  let clock = opts.now;
-  const now = () => (clock ? clock() : new Date());
-  const iso = () => now().toISOString();
-  const plus = (s: number) => new Date(now().getTime() + s * 1000).toISOString();
-
-  const mandates = new Map<string, Mandate>();
-  const prefs = new Map<string, UserPreferences>();
-  const runs = new Map<string, ResearchRun>();
-  const quotes = new Map<string, Quote>();
-  const policyByQuote = new Map<string, PolicyResult>();
-  const purchases = new Map<string, Purchase>();
-  const attempts = new Map<string, AuthAttempt & { targetId: string }>();
-  const approvals = new Map<string, Approval>();
-  const inferences = new Map<string, InferenceCall>();
-  const audit: AuditEvent[] = [];
-  const pendingPermits = new Map<string, SigningPermit>();
-
-  // ---------- audit outbox (hash chain) ----------
-  const emit = (type: AuditEventType, extra: Partial<AuditPayload> = {}) => {
-    const prevHash = audit.at(-1)?.hash ?? "GENESIS";
-    const id = newId("evt_");
-    const payload: AuditPayload = { v: 1, type, id, prev: prevHash, ts: iso(), ...extra };
-    audit.push({ id, type, payload, prevHash, hash: sha256Hex(canonicalJson(payload)), state: "PENDING", attempts: 0 });
+  const emit = (type: AuditEventType, extra: Partial<AuditEvent["payload"]> = {}) => {
+    const prev = audit.at(-1)?.hash ?? "0".repeat(64), id = newId("evt");
+    const payload = { v: 1 as const, type, id, prev, ts: now(), ...extra };
+    audit.push({ id, type, payload, prevHash: prev, hash: sha256Hex(payload), state: "PENDING", attempts: 0 });
   };
-
-  const reserve = (m: Mandate, amt: string) => { m.reservedAtomic = addA(m.reservedAtomic, amt); };
-  const release = (m: Mandate, amt: string) => { m.reservedAtomic = subA(m.reservedAtomic, amt); };
-
-  const amountOf = (p: Purchase) => quotes.get(p.quoteId)!.amountAtomic;
-
-  // ---------- state machine with budget effects ----------
-  function move(p: Purchase, to: PurchaseState, data: Partial<Purchase> = {}): Purchase {
-    if (!canTransition(p.state, to)) throw new IllegalTransitionError(p.state, to);
-    const m = mandates.get(p.mandateId)!;
-    const amt = amountOf(p);
-    const from = p.state;
-    if (to === "AWAITING_APPROVAL" || (to === "RESERVED" && from === "PROPOSED")) reserve(m, amt);
-    else if (to === "CONFIRMED") { release(m, amt); m.spentAtomic = addA(m.spentAtomic, amt); }
-    else if (to === "APPROVAL_DENIED" || to === "FAILED_FINAL") release(m, amt);
-    Object.assign(p, data, { state: to, updatedAt: iso() });
-    return p;
-  }
-
-  // ---------- policy (SPEC §11.1) ----------
-  function evaluate(q: Quote, m: Mandate | undefined, run: ResearchRun): PolicyResult {
-    const r: PolicyReason[] = [];
-    if (!m || m.state !== "ACTIVE" || m.revokedAt) r.push("MANDATE_INACTIVE");
-    else if (Date.parse(m.expiresAt) <= now().getTime()) r.push("MANDATE_EXPIRED");
-    else if (m.version !== run.mandateVersion) r.push("MANDATE_INACTIVE");
-    const info = getMerchant(q.merchantId);
-    if (!m || !info || !m.allowedMerchantIds.includes(q.merchantId)) r.push("MERCHANT_NOT_ALLOWED");
-    if (q.payTo !== FAKE_PAYTO[q.merchantId]) r.push("RECIPIENT_MISMATCH");
-    if (m && q.network !== m.network) r.push("NETWORK_MISMATCH");
-    if (m && q.assetId !== m.assetId) r.push("ASSET_MISMATCH");
-    if (q.feePayer !== FAKE_FEEPAYER) r.push("FEEPAYER_NOT_ALLOWED");
-    if (m && cmpA(q.amountAtomic, m.perPaymentCapAtomic) > 0) r.push("OVER_PER_PAYMENT_CAP");
-    if (m && cmpA(addA(addA(m.spentAtomic, m.reservedAtomic), q.amountAtomic), m.totalBudgetAtomic) > 0) r.push("OVER_BUDGET");
-    if (m) {
-      const used = [...purchases.values()].filter((p) => p.runId === run.id && COUNTS_TOWARD_LIMIT.includes(p.state)).length;
-      if (used >= m.maxPurchasesPerRun) r.push("MAX_PURCHASES_REACHED");
-      if (now().getTime() - Date.parse(run.startedAt) > m.maxRunDurationSeconds * 1000) r.push("RUN_TIME_EXCEEDED");
-    }
-    if (info) {
-      const amt = BigInt(q.amountAtomic);
-      if (amt * 2n < BigInt(info.referencePriceAtomic.min) || amt * 2n > BigInt(info.referencePriceAtomic.max) * 3n) r.push("PRICE_ANOMALY");
-    }
-    if (now().getTime() >= Date.parse(q.localExpiresAt)) r.push("QUOTE_EXPIRED");
-    const dup = [...purchases.values()].some((p) => {
-      const pq = quotes.get(p.quoteId)!;
-      return p.runId === run.id && p.quoteId !== q.id && pq.requestHash === q.requestHash && pq.merchantId === q.merchantId
-        && !["POLICY_REJECTED", "AGENT_SKIPPED", "APPROVAL_DENIED", "FAILED_FINAL"].includes(p.state);
-    });
-    if (dup) r.push("DUPLICATE_REQUEST");
-    const needsApproval = !!m && cmpA(q.amountAtomic, m.autoApproveCapAtomic) > 0;
-    return { allowed: r.length === 0, reasons: r, needsApproval };
-  }
-
-  const lazyMandate = (m: Mandate) => {
-    if (m.state === "ACTIVE") {
-      if (Date.parse(m.expiresAt) <= now().getTime()) m.state = "EXPIRED";
-      else if (m.reservedAtomic === "0") {
-        const min = MERCHANT_REGISTRY.reduce((a, x) => (cmpA(x.priceAtomic, a) < 0 ? x.priceAtomic : a), MERCHANT_REGISTRY[0]!.priceAtomic);
-        if (cmpA(subA(m.totalBudgetAtomic, m.spentAtomic), min) < 0) m.state = "EXHAUSTED";
-      }
-    }
-    return m;
+  const evaluate = (q: Quote): PolicyResult => {
+    const run = runs.get(q.runId)!, m = mandates.get(run.mandateId)!, reasons: PolicyReason[] = [];
+    const mer = getMerchant(q.merchantId);
+    if (m.state !== "ACTIVE") reasons.push("MANDATE_INACTIVE");
+    if (!mer || !m.allowedMerchantIds.includes(q.merchantId)) reasons.push("MERCHANT_NOT_ALLOWED");
+    if (cmpA(q.amountAtomic, m.perPaymentCapAtomic) > 0) reasons.push("OVER_PER_PAYMENT_CAP");
+    if (cmpA(addA(addA(m.spentAtomic, m.reservedAtomic), q.amountAtomic), m.totalBudgetAtomic) > 0) reasons.push("OVER_BUDGET");
+    if (mer && (cmpA(q.amountAtomic, (BigInt(mer.referencePriceAtomic.min) / 2n).toString()) < 0 ||
+        cmpA(q.amountAtomic, (BigInt(mer.referencePriceAtomic.max) * 3n / 2n).toString()) > 0)) reasons.push("PRICE_ANOMALY");
+    if ([...purchases.values()].filter((p) => p.runId === q.runId && !["POLICY_REJECTED", "AGENT_SKIPPED"].includes(p.state)).length >= m.maxPurchasesPerRun)
+      reasons.push("MAX_PURCHASES_REACHED");
+    return { allowed: reasons.length === 0, reasons, needsApproval: cmpA(q.amountAtomic, m.autoApproveCapAtomic) > 0 };
   };
-
-  const mintFor = (p: Purchase): SigningPermit => {
+  const mint = (p: Purchase): SigningPermit => {
     const q = quotes.get(p.quoteId)!;
-    const permit = mintPermit({
-      permitId: newId("pmt_"), purchaseId: p.id, mandateId: p.mandateId, mandateVersion: p.mandateVersion,
+    const permit = { permitId: newId("pmt"), purchaseId: p.id, mandateId: p.mandateId, mandateVersion: p.mandateVersion,
       network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo, feePayer: q.feePayer,
-      quoteHash: q.quoteHash, issuedAt: iso(), expiresAt: plus(60),
-    }, FAKE_PERMIT_SECRET);
-    p.permitId = permit.permitId;
+      quoteHash: q.quoteHash, issuedAt: now(), expiresAt: new Date(Date.now() + 60_000).toISOString(), mac: "fake" };
+    permits.set(p.id, permit);
     return permit;
   };
 
-  const pub = (a: AuthAttempt & { targetId: string }): AuthAttemptPublic => ({
-    id: a.id, purpose: a.purpose, targetId: a.targetId, startedAt: a.startedAt, expiresAt: a.expiresAt,
-    result: a.result, verificationUri: a.verificationUri, userCode: a.userCode,
-  });
-
-  const purchaseHashOf = (id: string, q: Quote, version: number) =>
-    sha256Hex(canonicalJson({ purchaseId: id, quoteHash: q.quoteHash, amountAtomic: q.amountAtomic, payTo: q.payTo, mandateVersion: version }));
-
-  // ---------- auth completion ----------
-  function finish(a: AuthAttempt & { targetId: string }, result: AuthAttemptResult) {
-    if (a.result !== "PENDING") return;
-    a.result = result;
-    if (a.purpose === "ACTIVATE_MANDATE") {
-      const m = mandates.get(a.targetId)!;
-      if (result === "VERIFIED" && m.mandateHash === a.targetHash) {
-        for (const o of mandates.values()) if (o.userId === m.userId && o.state === "ACTIVE") o.state = "REVOKED";
-        const apv: Approval = { id: newId("apv_"), attemptId: a.id, purpose: a.purpose, targetHash: a.targetHash, decision: "APPROVED", createdAt: iso(), expiresAt: plus(300), consumedAt: iso() };
-        approvals.set(apv.id, apv);
-        m.activationApprovalId = apv.id; m.state = "ACTIVE";
-        emit("MANDATE_ACTIVATED", { mandateHash: m.mandateHash });
-      } else if (m.state === "PENDING_APPROVAL") m.state = "DRAFT"; // failure path: mandate stays non-active
-    } else {
-      const p = purchases.get(a.targetId)!;
-      if (p.state !== "AWAITING_APPROVAL") return;
-      if (result === "VERIFIED" && p.purchaseHash === a.targetHash) {
-        const apv: Approval = { id: newId("apv_"), attemptId: a.id, purpose: a.purpose, targetHash: a.targetHash, decision: "APPROVED", createdAt: iso(), expiresAt: plus(300), consumedAt: iso() };
-        approvals.set(apv.id, apv);
-        move(p, "RESERVED", { approvalId: apv.id });
-        pendingPermits.set(p.id, mintFor(p));
-        emit("APPROVAL_GRANTED", { pur: p.id, mandateHash: mandates.get(p.mandateId)!.mandateHash });
-      } else {
-        move(p, "APPROVAL_DENIED");
-        emit("APPROVAL_DENIED", { pur: p.id });
-      }
-    }
-  }
-
-  const trust: FakeTrust = {
-    setNow: (d) => void (clock = () => d),
-    completeAuth: (id, result) => {
-      const a = attempts.get(id);
-      if (!a) throw new Error(`unknown attempt ${id}`);
-      finish(a, result);
-    },
-
-    createMandateDraft(userId, d: MandateDraft) {
-      const base = {
-        userId, agentId: `agt_${userId}`, walletAccountId: opts.walletAccountId ?? "0.0.1001",
-        network: FAKE_NETWORK, assetId: FAKE_ASSET_ID, assetDecimals: 6,
-        totalBudgetAtomic: d.totalBudgetAtomic, perPaymentCapAtomic: d.perPaymentCapAtomic, autoApproveCapAtomic: d.autoApproveCapAtomic,
-        allowedMerchantIds: [...d.allowedMerchantIds].sort(),
-        maxPurchasesPerRun: d.maxPurchasesPerRun ?? 3, maxRunDurationSeconds: d.maxRunDurationSeconds ?? 120,
-        expiresAt: d.expiresAt, version: 1,
-      };
-      const m: Mandate = {
-        id: newId("mdt_"), state: "DRAFT", validFrom: iso(), revokedAt: null, spentAtomic: "0", reservedAtomic: "0",
-        mandateHash: sha256Hex(canonicalJson(base)), activationApprovalId: null, createdAt: iso(), ...base,
-      };
+  return Object.assign(self, {
+    createMandateDraft(userId, d) {
+      const m: Mandate = { id: newId("mdt"), version: 1, state: "DRAFT", userId, agentId: "agt_fake", walletAccountId: "0.0.2000",
+        network: "hedera:testnet", assetId: "0.0.429274", assetDecimals: 6, totalBudgetAtomic: d.totalBudgetAtomic,
+        perPaymentCapAtomic: d.perPaymentCapAtomic, autoApproveCapAtomic: d.autoApproveCapAtomic,
+        allowedMerchantIds: d.allowedMerchantIds, maxPurchasesPerRun: d.maxPurchasesPerRun, maxRunDurationSeconds: d.maxRunDurationSeconds,
+        validFrom: now(), expiresAt: new Date(Date.now() + d.expiresInSeconds * 1000).toISOString(), revokedAt: null,
+        spentAtomic: "0", reservedAtomic: "0", mandateHash: "", activationApprovalId: null, createdAt: now() };
+      m.mandateHash = sha256Hex({ ...m, state: undefined, spentAtomic: undefined, reservedAtomic: undefined });
       mandates.set(m.id, m);
-      return { ...m };
+      return m;
     },
-
-    async startAuth(userId, purpose: AuthPurpose, targetId) {
-      let targetHash: string;
-      if (purpose === "ACTIVATE_MANDATE") {
-        const m = mandates.get(targetId);
-        if (!m || m.userId !== userId || !["DRAFT", "PENDING_APPROVAL"].includes(m.state)) throw new Error("mandate not activatable");
-        m.state = "PENDING_APPROVAL";
-        targetHash = m.mandateHash;
-      } else {
-        const p = purchases.get(targetId);
-        if (!p || p.state !== "AWAITING_APPROVAL") throw new Error("purchase not awaiting approval");
-        targetHash = p.purchaseHash;
-      }
-      for (const o of attempts.values()) if (o.userId === userId && o.purpose === purpose && o.targetId === targetId && o.result === "PENDING") o.result = "SUPERSEDED";
-      const a = {
-        id: newId("att_"), userId, purpose, targetHash, targetId, startedAt: iso(), expiresAt: plus(purpose === "APPROVE_PURCHASE" ? 300 : 600),
-        result: "PENDING" as AuthAttemptResult, deviceCodeRef: `fake-device-${attempts.size + 1}`,
-        verificationUri: "https://fake.world.example/device", userCode: `FAKE-${attempts.size + 1}`,
-      };
+    async startAuth(userId, purpose, targetId) {
+      const m = purpose === "ACTIVATE_MANDATE" ? mandates.get(targetId) : undefined;
+      const p = purpose === "APPROVE_PURCHASE" ? purchases.get(targetId) : undefined;
+      if (m) m.state = "PENDING_APPROVAL";
+      for (const a of attempts.values()) if (a.userId === userId && a.result === "PENDING") a.result = "SUPERSEDED";
+      const a: AuthAttempt = { id: newId("att"), userId, purpose, targetHash: m?.mandateHash ?? p?.purchaseHash ?? targetId,
+        startedAt: now(), expiresAt: new Date(Date.now() + 300_000).toISOString(), result: "PENDING", deviceCodeRef: targetId,
+        verificationUri: "https://auth.world.org/fake", userCode: "FAKE-1234" };
       attempts.set(a.id, a);
       return pub(a);
     },
-
-    async pollAuth(id) {
-      const a = attempts.get(id);
-      if (!a) throw new Error(`unknown attempt ${id}`);
-      if (a.result === "PENDING" && now().getTime() >= Date.parse(a.expiresAt)) finish(a, "EXPIRED");
+    async pollAuth(attemptId) {
+      const a = attempts.get(attemptId)!;
+      if (a.result !== "PENDING") return pub(a);
+      if (self.failNextAuth) { a.result = self.failNextAuth as AuthAttempt["result"]; self.failNextAuth = undefined; return pub(a); }
+      a.result = "VERIFIED";
+      if (a.purpose === "ACTIVATE_MANDATE") {
+        const m = mandates.get(a.deviceCodeRef)!; m.state = "ACTIVE"; emit("MANDATE_ACTIVATED", { mandateHash: m.mandateHash });
+      } else {
+        const p = purchases.get(a.deviceCodeRef)!;
+        if (p.state === "AWAITING_APPROVAL") { p.state = "RESERVED"; mint(p); emit("APPROVAL_GRANTED", { pur: p.id }); }
+      }
       return pub(a);
     },
-
-    revokeMandate(id) {
-      const m = mandates.get(id);
-      if (!m) throw new Error("unknown mandate");
-      m.state = "REVOKED"; m.revokedAt = iso();
-      emit("MANDATE_REVOKED", { mandateHash: m.mandateHash });
-      return { ...m };
-    },
-
-    getActiveMandate(userId) {
-      for (const m of mandates.values()) if (m.userId === userId && lazyMandate(m).state === "ACTIVE") return { ...m };
-      return null;
-    },
+    revokeMandate(id) { const m = mandates.get(id)!; m.state = "REVOKED"; m.revokedAt = now(); emit("MANDATE_REVOKED", { mandateHash: m.mandateHash }); return m; },
+    getActiveMandate(userId) { return [...mandates.values()].find((m) => m.userId === userId && m.state === "ACTIVE") ?? null; },
     getPreferences: (u) => prefs.get(u) ?? null,
-    setPreferences: (u, text) => void prefs.set(u, { userId: u, text, updatedAt: iso() }),
-
+    setPreferences(userId, text) { prefs.set(userId, { userId, text, updatedAt: now() }); },
     createRun(userId, question) {
-      const m = trust.getActiveMandate(userId);
-      if (!m) throw new Error("NO_ACTIVE_MANDATE");
-      const r: ResearchRun = { id: newId("run_"), userId, mandateId: m.id, mandateVersion: m.version, question, state: "PLANNING", startedAt: iso() };
+      const m = self.getActiveMandate(userId);
+      if (!m) throw new Error("MANDATE_INACTIVE");
+      const r: ResearchRun = { id: newId("run"), userId, mandateId: m.id, mandateVersion: m.version, question, state: "PLANNING", startedAt: now() };
       runs.set(r.id, r);
-      return { ...r };
+      return r;
     },
-    updateRun(id, patch) {
-      const r = runs.get(id);
-      if (!r) throw new Error("unknown run");
-      Object.assign(r, patch);
-    },
-
-    recordQuote(runId, q) {
-      const full: Quote = { ...q, id: newId("qte_"), runId };
-      quotes.set(full.id, full);
-      policyByQuote.set(full.id, evaluate(full, mandates.get(runs.get(runId)!.mandateId), runs.get(runId)!));
-      return { ...full };
-    },
-
-    precheck(quoteId) {
-      const q = quotes.get(quoteId)!;
-      const run = runs.get(q.runId)!;
-      const res = evaluate(q, mandates.get(run.mandateId), run);
-      policyByQuote.set(quoteId, res);
-      return res;
-    },
-
-    proposePurchase(quoteId, decision: AgentDecision) {
-      const q = quotes.get(quoteId);
-      if (!q) throw new Error("unknown quote");
-      for (const p of purchases.values()) if (p.runId === q.runId && p.quoteId === quoteId) throw new Error("purchase already exists for quote");
-      const run = runs.get(q.runId)!;
-      const id = newId("pur_");
-      const p: Purchase = {
-        id, runId: q.runId, quoteId, quoteHash: q.quoteHash, mandateId: run.mandateId, mandateVersion: run.mandateVersion,
-        state: "PROPOSED", delivery: "NOT_RECEIVED", decision, purchaseHash: purchaseHashOf(id, q, run.mandateVersion),
-        createdAt: iso(), updatedAt: iso(),
-      };
+    updateRun(id, patch) { Object.assign(runs.get(id)!, patch); },
+    recordQuote(runId, q) { const full = { ...q, id: newId("qte"), runId }; quotes.set(full.id, full); return full; },
+    precheck: (qid) => evaluate(quotes.get(qid)!),
+    proposePurchase(qid, decision) {
+      const q = quotes.get(qid)!, run = runs.get(q.runId)!, id = newId("pur");
+      const p: Purchase = { id, runId: q.runId, quoteId: qid, quoteHash: q.quoteHash, mandateId: run.mandateId, mandateVersion: run.mandateVersion,
+        state: "PROPOSED", delivery: "NOT_RECEIVED", decision, amountAtomic: q.amountAtomic,
+        purchaseHash: sha256Hex({ purchaseId: id, quoteHash: q.quoteHash, amountAtomic: q.amountAtomic, payTo: q.payTo, mandateVersion: run.mandateVersion }),
+        createdAt: now(), updatedAt: now() };
       purchases.set(id, p);
-      return { ...p };
+      return p;
     },
-
-    authorize(purchaseId): AuthorizeResult {
-      const p = purchases.get(purchaseId);
-      if (!p) throw new Error("unknown purchase");
-      if (p.state !== "PROPOSED") throw new IllegalTransitionError(p.state, "RESERVED");
-      const q = quotes.get(p.quoteId)!;
-      const run = runs.get(p.runId)!;
-      const res = evaluate(q, mandates.get(p.mandateId), run);
-      p.policyResult = res;
-      if (!res.allowed || q.quoteHash !== p.quoteHash) {
-        move(p, "POLICY_REJECTED");
-        return { kind: "REJECTED", reasons: res.reasons };
-      }
-      if (res.needsApproval) {
-        move(p, "AWAITING_APPROVAL");
-        emit("PURCHASE_DECIDED", { run: p.runId, pur: p.id, quoteHash: p.quoteHash });
-        return { kind: "NEEDS_APPROVAL", purchase: { ...p } };
-      }
-      move(p, "RESERVED");
-      emit("PURCHASE_DECIDED", { run: p.runId, pur: p.id, quoteHash: p.quoteHash });
-      return { kind: "PERMIT", permit: mintFor(p) };
+    authorize(pid) {
+      const p = purchases.get(pid)!, q = quotes.get(p.quoteId)!, m = mandates.get(p.mandateId)!;
+      const r = evaluate(q);
+      if (!r.allowed) { p.state = "POLICY_REJECTED"; p.policyResult = r; return { kind: "REJECTED", reasons: r.reasons }; }
+      m.reservedAtomic = addA(m.reservedAtomic, q.amountAtomic);
+      p.policyResult = r; p.state = r.needsApproval ? "AWAITING_APPROVAL" : "RESERVED";
+      emit("PURCHASE_DECIDED", { pur: p.id, quoteHash: p.quoteHash, mandateHash: m.mandateHash });
+      return r.needsApproval ? { kind: "NEEDS_APPROVAL", purchase: p } : { kind: "PERMIT", permit: mint(p) };
     },
-
-    getPermitForPurchase(id) {
-      const permit = pendingPermits.get(id) ?? null;
-      pendingPermits.delete(id);
-      return permit;
+    getPermitForPurchase(pid) { const p = permits.get(pid) ?? null; permits.delete(pid); return p; },
+    transition(pid, to, data) {
+      const p = purchases.get(pid)!;
+      if (!PURCHASE_TRANSITIONS[p.state].includes(to)) throw new IllegalTransitionError(p.state, to);
+      const m = mandates.get(p.mandateId)!;
+      if (to === "CONFIRMED") { m.reservedAtomic = subA(m.reservedAtomic, p.amountAtomic); m.spentAtomic = addA(m.spentAtomic, p.amountAtomic); }
+      if (to === "APPROVAL_DENIED" || to === "FAILED_FINAL") m.reservedAtomic = subA(m.reservedAtomic, p.amountAtomic);
+      Object.assign(p, data, { state: to, updatedAt: now() });
+      if (to === "CONFIRMED") emit("PURCHASE_CONFIRMED", { pur: p.id, tx: p.hederaTxId, quoteHash: p.quoteHash });
+      if (to === "FAILED_FINAL") emit("PURCHASE_FAILED", { pur: p.id });
+      return p;
     },
-
-    transition(id, to, data) {
-      const p = purchases.get(id);
-      if (!p) throw new Error("unknown purchase");
-      move(p, to, data);
-      if (to === "CONFIRMED") emit("PURCHASE_CONFIRMED", { run: p.runId, pur: p.id, tx: p.hederaTxId, quoteHash: p.quoteHash });
-      if (to === "FAILED_FINAL") emit("PURCHASE_FAILED", { run: p.runId, pur: p.id, tx: p.hederaTxId });
-      return { ...p };
-    },
-
-    setDelivery(id, d: DeliveryState, issues) {
-      const p = purchases.get(id)!;
-      p.delivery = d; p.deliveryIssues = issues; p.updatedAt = iso();
-      emit("DELIVERY_RESULT", { run: p.runId, pur: p.id });
-    },
-
-    listUnresolved: () => [...purchases.values()].filter((p) => ["SIGNED", "SUBMITTED", "UNKNOWN"].includes(p.state)).map((p) => ({ ...p })),
-
-    recordInference(c) {
-      const full: InferenceCall = { ...c, id: newId("inf_") };
-      inferences.set(full.id, full);
-      return full;
-    },
-
-    listPendingAudit: (limit) => audit.filter((e) => e.state === "PENDING" || e.state === "RETRYING").slice(0, limit),
-    markAnchored(id, r) {
-      const e = audit.find((x) => x.id === id);
-      if (e) Object.assign(e, { state: "ANCHORED", topicId: r.topicId, sequenceNumber: r.sequenceNumber, consensusTimestamp: r.consensusTimestamp });
-    },
-    markAuditRetry(id) {
-      const e = audit.find((x) => x.id === id);
-      if (e) { e.state = "RETRYING"; e.attempts++; }
-    },
-
-    getRunView(runId): RunView {
+    setDelivery(pid, d, issues) { const p = purchases.get(pid)!; p.delivery = d; p.deliveryIssues = issues; emit("DELIVERY_RESULT", { pur: pid }); },
+    listUnresolved: () => [...purchases.values()].filter((p) => ["SIGNED", "SUBMITTED", "UNKNOWN"].includes(p.state)),
+    recordInference(c) { const full = { ...c, id: newId("inf") }; calls.push(full); return full; },
+    listPendingAudit: (n) => audit.filter((e) => e.state !== "ANCHORED").slice(0, n),
+    markAnchored(id, r) { Object.assign(audit.find((e) => e.id === id)!, r, { state: "ANCHORED" }); },
+    markAuditRetry(id) { const e = audit.find((x) => x.id === id)!; e.state = "RETRYING"; e.attempts++; },
+    getRunView(runId) {
       const run = runs.get(runId)!;
-      const qs = [...quotes.values()].filter((q) => q.runId === runId);
-      return {
-        run: { ...run },
-        quotes: qs.map((q) => ({ ...q, policyResult: policyByQuote.get(q.id) })),
-        purchases: [...purchases.values()].filter((p) => p.runId === runId).map((p) => ({ ...p })),
-        inferenceCalls: [...inferences.values()].filter((c) => c.runId === runId),
-      };
+      return { run, quotes: [...quotes.values()].filter((q) => q.runId === runId),
+        purchases: [...purchases.values()].filter((p) => p.runId === runId).map((p) => ({ ...p, audit: "PENDING" as const })),
+        inferenceCalls: calls.filter((c) => c.runId === runId) };
     },
-
-    getLedgerView(userId): LedgerView {
-      const ms = [...mandates.values()].filter((m) => m.userId === userId);
-      const m = ms.find((x) => lazyMandate(x).state === "ACTIVE") ?? ms.at(-1) ?? null;
-      const mine = new Set([...runs.values()].filter((r) => r.userId === userId).map((r) => r.id));
-      const confirmed = [...purchases.values()].filter((p) => mine.has(p.runId) && p.state === "CONFIRMED");
-      const calls = [...inferences.values()].filter((c) => mine.has(c.runId));
-      const limit = m?.totalBudgetAtomic ?? "0";
-      const spent = m?.spentAtomic ?? "0";
-      const reserved = m?.reservedAtomic ?? "0";
-      return {
-        mandate: m ? { ...m } : null,
-        limitAtomic: limit, spentAtomic: spent, reservedAtomic: reserved,
-        availableAtomic: subA(limit, addA(spent, reserved)),
-        dataSpendAtomic: confirmed.reduce((s, p) => addA(s, amountOf(p)), "0"),
-        // ponytail: Number sum is fine for display of credit costs; use a decimal lib if precision matters.
-        inferenceSpend: String(calls.reduce((s, c) => s + Number(c.totalCost || 0), 0)),
-        receipts: confirmed.map((p) => ({
-          purchaseId: p.id, merchantId: quotes.get(p.quoteId)!.merchantId, amountAtomic: amountOf(p), hederaTxId: p.hederaTxId ?? "",
-          zgRequestId: p.decision?.inferenceCallId ? inferences.get(p.decision.inferenceCallId)?.zgRequestId : undefined, at: p.updatedAt,
-        })),
-      };
+    getLedgerView(userId) {
+      const m = [...mandates.values()].filter((x) => x.userId === userId).at(-1) ?? null;
+      const receipts = [...purchases.values()].filter((p) => p.state === "CONFIRMED");
+      return { mandate: m, limitAtomic: m?.totalBudgetAtomic ?? "0", spentAtomic: m?.spentAtomic ?? "0", reservedAtomic: m?.reservedAtomic ?? "0",
+        availableAtomic: m ? subA(subA(m.totalBudgetAtomic, m.spentAtomic), m.reservedAtomic) : "0",
+        dataSpendAtomic: m?.spentAtomic ?? "0", inferenceSpend: calls.reduce((s, c) => s + Number(c.totalCost), 0).toString(), receipts };
     },
-  };
-  return trust;
+  } satisfies Trust);
 }
