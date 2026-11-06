@@ -1,3 +1,4 @@
+import { AuthStore } from "./auth/store.js";
 import { createApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDeps } from "./wiring.js";
@@ -6,7 +7,9 @@ import { startWorkers } from "./workers/index.js";
 async function main() {
   const config = loadConfig();
   const deps = await createDeps(config.useReal);
-  const { app, ctx } = createApp(deps, config);
+  const auth = new AuthStore(config.authDbPath);
+  for (const email of config.invites) auth.invite(email);
+  const { app, ctx } = createApp(deps, config, {authStore:auth,login:config.login});
   const stopWorkers = startWorkers(ctx);
   const server = app.listen(config.port, () => {
     console.log(`[server] listening on :${config.port} (demoMode=${config.demoMode})`);
@@ -20,7 +23,7 @@ async function main() {
     console.log(`[server] ${sig}, shutting down`);
     ctx.stop();
     stopWorkers();
-    server.close(() => process.exit(0));
+    server.close(() => { auth.close(); process.exit(0); });
     server.closeAllConnections(); // SSE streams would otherwise hold the server open
     setTimeout(() => process.exit(1), 5000).unref();
   };

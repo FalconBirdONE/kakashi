@@ -15,7 +15,7 @@ export async function makeServer(o: { demoMode?: boolean; brain?: (b: ReturnType
     { approvalPollMs: 10 },
   );
   const agent = request.agent(app);
-  await agent.post("/api/session").expect(200);
+  if (o.demoMode !== false) await agent.post("/api/session").expect(200);
   return { app, ctx, deps, agent, demoUserId };
 }
 

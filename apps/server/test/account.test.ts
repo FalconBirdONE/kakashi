@@ -83,8 +83,9 @@ describe("session ownership", () => {
 describe("demo gating and basics", () => {
   it("demo and dev routes are 404 when DEMO_MODE is off", async () => {
     const s = await makeServer({ demoMode: false });
-    await s.agent.post("/api/demo/fault").send({ merchantId: "quickcast", fault: "NONE" }).expect(404);
-    await s.agent.post("/api/dev/complete-auth/att_x").send({ result: "VERIFIED" }).expect(404);
+    await s.agent.post("/api/session").expect(404);
+    await s.agent.post("/api/demo/fault").send({ merchantId: "quickcast", fault: "NONE" }).expect(401);
+    await s.agent.post("/api/dev/complete-auth/att_x").send({ result: "VERIFIED" }).expect(401);
   });
 
   it("demo fault works when DEMO_MODE is on; healthz and JSON 404", async () => {

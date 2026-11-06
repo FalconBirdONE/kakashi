@@ -44,5 +44,14 @@ export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}
     },
     stop() { ctx.stopped = true; },
   };
+  for (const run of deps.trust.persistence?.runs() ?? []) {
+    ctx.runs.set(run.id,{userId:run.userId,question:run.question});
+    for (const p of deps.trust.getRunView(run.id).purchases) ctx.purchases.set(p.id,{runId:run.id,userId:run.userId});
+  }
   return ctx;
+}
+
+export function owner(ctx: OrchContext, kind: import("@tollbooth/contracts").ResourceKind, id: string): string | null {
+  if (ctx.deps.trust.persistence) return ctx.deps.trust.persistence.owner(kind,id);
+  return (kind === "mandate" ? ctx.mandateOwner.get(id) : kind === "attempt" ? ctx.attemptOwner.get(id) : kind === "run" ? ctx.runs.get(id)?.userId : ctx.purchases.get(id)?.userId) ?? null;
 }

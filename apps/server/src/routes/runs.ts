@@ -2,6 +2,7 @@ import { Router, type Response } from "express";
 import { z } from "zod";
 import { HttpError } from "../errors.js";
 import { requireUser, userOf } from "../session.js";
+import { owner } from "../orchestrator/context.js";
 import type { OrchContext } from "../orchestrator/context.js";
 import { runResearch } from "../orchestrator/run.js";
 import { approvePurchase } from "../orchestrator/approval.js";
@@ -17,7 +18,7 @@ export function runRoutes(ctx: OrchContext, opts: { heartbeatMs?: number } = {})
 
   const own = (runId: string, res: Response) => {
     const e = ctx.runs.get(runId);
-    if (!e || e.userId !== userOf(res)) throw new HttpError(404, "NOT_FOUND", "run not found");
+    if (!e || owner(ctx,"run",runId) !== userOf(res)) throw new HttpError(404, "NOT_FOUND", "run not found");
     return e;
   };
 

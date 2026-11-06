@@ -1,3 +1,4 @@
+import { createPersistence } from "./persistence.js";
 import type { Trust } from "@tollbooth/contracts";
 import { createCtx, type Ctx } from "./db.js";
 import * as mandates from "./mandates.js";
@@ -18,6 +19,7 @@ export function createTrust(env: Record<string, string | undefined> = process.en
   // createWorldClient reads credentials on first use, so a trust without World creds still boots.
   const auth = { world: opts.world ?? createWorldClient(env, { logger: opts.logger }), logger: opts.logger };
   return {
+    persistence: createPersistence(ctx),
     // identity and mandates
     createMandateDraft: (userId, draft) => mandates.createMandateDraft(ctx, userId, draft),
     revokeMandate: (id) => mandates.revokeMandate(ctx, id),

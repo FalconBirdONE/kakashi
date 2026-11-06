@@ -62,6 +62,7 @@ export interface Brain {
 
 // ---- B3 trust ----
 export interface Trust {
+  persistence?: import("./persistence.js").Persistence;
   createMandateDraft(userId: string, draft: MandateDraft): Mandate;
   startAuth(userId: string, purpose: AuthPurpose, targetId: string): Promise<AuthAttemptPublic>;
   pollAuth(attemptId: string): Promise<AuthAttemptPublic>;
