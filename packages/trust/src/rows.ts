@@ -45,7 +45,7 @@ export const purchaseOf = (r: Row): Purchase => ({
 });
 
 export const inferenceOf = (r: Row): InferenceCall => ({
-  id: r.id, runId: r.run_id, kind: r.kind, model: r.model, trustTier: r.trust_tier, zgRequestId: r.zg_request_id,
+  id: r.id, runId: r.run_id, kind: r.kind, requestKey:r.request_key ?? undefined, billingState:r.billing_state ?? "CONFIRMED", model: r.model, trustTier: r.trust_tier, zgRequestId: r.zg_request_id,
   provider: r.provider, teeVerified: r.tee_verified == null ? null : r.tee_verified === 1, totalCost: r.total_cost,
   latencyMs: r.latency_ms, inputHash: r.input_hash, outputHash: r.output_hash, ok: r.ok === 1,
   ...(r.error != null && { error: r.error }),

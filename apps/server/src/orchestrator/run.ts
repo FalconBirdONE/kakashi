@@ -46,19 +46,24 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
   const checkTime = () => { if (ac.signal.aborted) throw new RunAbort(); };
 
   let inferenceCalls = 0;
-  const brainCall = async <T,>(kind: InferenceKind, fn: () => Promise<Traced<T>>):
+  const brainCall = async <T,>(kind: InferenceKind, fn: (accounting?: import("@tollbooth/contracts").InferenceAccounting) => Promise<Traced<T>>):
     Promise<{ ok: true; value: T; callId: string } | { ok: false; error: BrainError }> => {
     if (inferenceCalls >= MAX_INFERENCE_CALLS) return { ok: false, error: "BUDGET_EXCEEDED" };
     inferenceCalls++;
     let r: Traced<T>;
+    const recorded:string[]=[];
+    const accounting: import("@tollbooth/contracts").InferenceAccounting | undefined = trust.persistence ? {
+      reserve: key => trust.persistence!.reserveInference(runId,key,process.env.INFERENCE_MAX_REQUEST_COST??'0.01',process.env.INFERENCE_LIMIT??'0.1'),
+      record: t => {recorded.push(trust.recordInference({...t,runId,kind}).id);emit('inference',recorded.at(-1)!);},
+    } : undefined;
     try {
-      r = await guard(fn());
+      r = await guard(fn(accounting));
     } catch (e) {
       if (e instanceof RunAbort) throw e;
       return { ok: false, error: "ZG_UNAVAILABLE" };
     }
-    let callId = "";
-    if (r.trace) { // only record a trace the brain actually returned; never fabricate one
+    let callId = recorded.at(-1) ?? "";
+    if (r.trace && !recorded.length) { // only record a trace the brain actually returned; never fabricate one
       const t = r.trace;
       callId = trust.recordInference({
         runId, kind, model: t.model, trustTier: t.trustTier, zgRequestId: t.zgRequestId, provider: t.provider,
@@ -81,7 +86,8 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
     const allowed = new Set(mandate0.allowedMerchantIds);
     const catalog = (await guard(rails.getCatalog())).filter((c) => allowed.has(c.id));
     const preferences = trust.getPreferences(userId)?.text;
-    const p = await brainCall("PLAN", () => brain.plan({
+    const p = await brainCall("PLAN", accounting => brain.plan({
+      accounting,
       question, preferences, catalog, budgetRemainingAtomic: budgetLeft(mandate0),
       perPaymentCapAtomic: mandate0.perPaymentCapAtomic, assetDecimals: mandate0.assetDecimals,
     }));
@@ -121,7 +127,8 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
       if (!m || remaining <= 0 || open.length === 0 || uncoveredNeeds(view, planned.needs).length === 0) break;
 
       setState("DECIDING");
-      const dec = await brainCall("DECIDE", () => brain.decide({
+      const dec = await brainCall("DECIDE", accounting => brain.decide({
+        accounting,
         question, preferences, needs: planned.needs,
         quotes: open.map(({ quote: q }) => {
           const meta = catalogById.get(q.merchantId)!; // registry metadata plus normalized quote fields only
@@ -170,7 +177,8 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
           issues: p.deliveryIssues ?? [], data: ctx.evidence.get(p.id),
         }));
       gaps.push(...computeGaps(view, plan.needs));
-      const s = await brainCall("SYNTHESIZE", () => brain.synthesize({
+      const s = await brainCall("SYNTHESIZE", accounting => brain.synthesize({
+        accounting,
         question, preferences: trust.getPreferences(userId)?.text, evidence, gaps,
       }));
       if (s.ok) { answer = s.value; trust.updateRun(runId, { answer }); emit("answer"); }

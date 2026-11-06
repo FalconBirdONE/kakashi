@@ -1,107 +1,77 @@
-import OpenAI from "openai";
-import type { z } from "zod";
-import { canonicalJson, sha256Hex } from "@tollbooth/contracts";
-import type { BrainError, InferenceKind, InferenceTrace, Traced } from "@tollbooth/contracts";
+import OpenAI from 'openai';
+import { randomUUID } from 'node:crypto';
+import type { z } from 'zod';
+import { addD, cmpD, decimal, canonicalJson, sha256Hex } from '@tollbooth/contracts';
+import type { BrainError, InferenceKind, InferenceTrace, InferenceAttempt, InferenceAccounting, Traced } from '@tollbooth/contracts';
 
-export type CallOpts<T> = { kind: InferenceKind; system: string; user: string; schema: z.ZodType<T>; maxTokens?: number };
-export type ClientDeps = {
-  env?: Record<string, string | undefined>;
-  fetch?: typeof fetch;
-  sleep?: (ms: number) => Promise<void>;
-  timeoutMs?: number;
-};
+export type CallOpts<T>={kind:InferenceKind;system:string;user:string;schema:z.ZodType<T>;maxTokens?:number};
+export type ClientDeps={env?:Record<string,string|undefined>;fetch?:typeof fetch;sleep?:(ms:number)=>Promise<void>;timeoutMs?:number;accounting?:InferenceAccounting};
+type Msg={role:'system'|'user'|'assistant';content:string};
+type Raw={content:string;trace:InferenceAttempt};
+type Fail={error:BrainError;trace?:InferenceTrace};
 
-type Tier = InferenceTrace["trustTier"];
-type Msg = { role: "system" | "user" | "assistant"; content: string };
-type Raw = { content: string; requestId: string; provider: string; teeVerified: boolean | null; cost: number; latencyMs: number };
-type Fail = { error: BrainError; trace?: InferenceTrace };
-
-const TIERS: readonly string[] = ["private", "verified", "standard"];
-const NO_PROVIDER = "no_provider_for_trust_mode";
-const sleepReal = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-/** One structured 0G call. Fails closed; never downgrades the trust tier; never fabricates a request id. */
-export async function callStructured<T>(o: CallOpts<T>, deps: ClientDeps = {}): Promise<Traced<T>> {
-  const env = deps.env ?? process.env;
-  const model = env.ZG_MODEL, apiKey = env.ZG_API_KEY, mode = env.ZG_TRUST_MODE ?? "private";
-  const verify = (env.ZG_VERIFY_TEE ?? "true") !== "false";
-  const t0 = Date.now();
-  const done = (result: string, requestId?: string) =>
-    // Only metadata is ever logged: no prompts, responses or keys.
-    console.info(JSON.stringify({ at: "brain.client", kind: o.kind, model, requestId, latencyMs: Date.now() - t0, result }));
-  const fail = (f: Fail): Traced<T> => { done(f.error, f.trace?.zgRequestId); return { ok: false, ...f }; };
-
-  if (!apiKey || !model || !TIERS.includes(mode)) return fail({ error: "ZG_UNAVAILABLE" });
-  const tier = mode as Tier;
-
-  const client = new OpenAI({
-    apiKey, baseURL: env.ZG_BASE_URL ?? "https://router-api.0g.ai/v1", maxRetries: 0,
-    timeout: deps.timeoutMs ?? 30_000, fetch: deps.fetch,
-    defaultHeaders: { "X-0G-Provider-Trust-Mode": mode },
-  });
-  const sleep = deps.sleep ?? sleepReal;
-
-  const call = async (messages: Msg[]): Promise<Raw | Fail> => {
-    for (let attempt = 0; ; attempt++) {
-      const start = Date.now();
+export async function callStructured<T>(o:CallOpts<T>,deps:ClientDeps={}):Promise<Traced<T>> {
+  const env=deps.env??process.env,model=env.ZG_MODEL,apiKey=env.ZG_API_KEY,mode=env.ZG_TRUST_MODE??'private';
+  const verify=(env.ZG_VERIFY_TEE??'true')!=='false';
+  const attempts:InferenceAttempt[]=[];
+  const fail=(f:Fail):Traced<T>=>({ok:false,...f,attempts});
+  if(!apiKey||!model||!['private','verified','standard'].includes(mode))return fail({error:'ZG_UNAVAILABLE'});
+  const tier=mode as InferenceTrace['trustTier'];
+  const limit=decimal(env.INFERENCE_LIMIT??'0.1'),maxCost=decimal(env.INFERENCE_MAX_REQUEST_COST??'0.01');
+  if(cmpD(maxCost,'0')<=0 || cmpD(maxCost,limit)>0)return fail({error:'BUDGET_EXCEEDED'});
+  const client=new OpenAI({apiKey,baseURL:env.ZG_BASE_URL??'https://router-api.0g.ai/v1',maxRetries:0,timeout:deps.timeoutMs??30_000,fetch:deps.fetch,defaultHeaders:{'X-0G-Provider-Trust-Mode':mode}});
+  const sleep=deps.sleep??(ms=>new Promise(r=>setTimeout(r,ms)));
+  let held='0';
+  const record=(trace:InferenceAttempt)=>{ attempts.push(trace);deps.accounting?.record(trace); };
+  const summary=(last:InferenceAttempt):InferenceTrace=>({...last,totalCost:attempts.filter(t=>t.billingState==='CONFIRMED').reduce((s,t)=>addD(s,t.totalCost),'0'),latencyMs:attempts.reduce((s,t)=>s+t.latencyMs,0),inputHash:sha256Hex(canonicalJson({system:o.system,user:o.user}))});
+  const call=async(messages:Msg[]):Promise<Raw|Fail>=>{
+    for(let retry=0;;retry++){
+      const requestKey=randomUUID();
       try {
-        const { data } = await client.chat.completions
-          .create({
-            model, temperature: 0.2, messages, max_tokens: o.maxTokens,
-            verify_tee: verify, // extra body field: the SDK serialises the body whole (see docs/brain/SPIKE.md)
-            ...(env.ZG_JSON_MODE === "true" ? { response_format: { type: "json_object" } } : {}),
-          } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming)
-          .withResponse();
-        const t = (data as unknown as { x_0g_trace?: { request_id?: string; provider?: string; tee_verified?: boolean | null; billing?: { total_cost?: string | number } } }).x_0g_trace;
-        const content = data.choices[0]?.message?.content ?? "";
-        if (!t?.request_id) return { error: "ZG_UNAVAILABLE" };
-        const raw: Raw = {
-          content, requestId: t.request_id, provider: t.provider ?? "unknown", teeVerified: t.tee_verified ?? null,
-          cost: Number(t.billing?.total_cost ?? 0) || 0, latencyMs: Date.now() - start,
-        };
-        if (raw.teeVerified === false || (verify && raw.teeVerified !== true)) {
-          // Discard the content: only the trace survives.
-          return { error: "TEE_NOT_VERIFIED", trace: traceOf(raw, raw) };
+        if(cmpD(addD(held,maxCost),limit)>0)return {error:'BUDGET_EXCEEDED'};
+        deps.accounting?.reserve(requestKey);held=addD(held,maxCost);
+      } catch {return {error:'BUDGET_EXCEEDED'};}
+      const start=Date.now();
+      let data:unknown,error:unknown;
+      try {
+        ({data}=await client.chat.completions.create({model,temperature:0.2,messages,max_tokens:o.maxTokens,verify_tee:verify,...(env.ZG_JSON_MODE==='true'?{response_format:{type:'json_object'}}:{})} as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming).withResponse());
+      } catch(e) {error=e;}
+      const body=data as {choices?:{message?:{content?:string}}[];x_0g_trace?:{request_id?:string;provider?:string;tee_verified?:boolean;billing?:{total_cost?:unknown}}}|undefined;
+      const t=body?.x_0g_trace,content=body?.choices?.[0]?.message?.content??'';
+      let cost:string|undefined;
+      try { if(typeof t?.billing?.total_cost==='string'||typeof t?.billing?.total_cost==='number')cost=decimal(String(t.billing.total_cost)); } catch { /* Unknown billing keeps its admission reservation. */ }
+      const trace:InferenceAttempt={requestKey,model,trustTier:tier,zgRequestId:typeof t?.request_id==='string'?t.request_id:'',provider:t?.provider??'unknown',teeVerified:t?.tee_verified??null,totalCost:cost??'0',billingState:cost===undefined?'UNKNOWN':'CONFIRMED',latencyMs:Date.now()-start,inputHash:sha256Hex(canonicalJson({messages})),outputHash:sha256Hex(content),ok:!error&&!!t?.request_id};
+      if(error)trace.error=error instanceof OpenAI.APIConnectionTimeoutError?'TIMEOUT':'ZG_UNAVAILABLE';
+      record(trace);
+      // Local admission accounting includes actual charges and unknown reservations, across all retries/repairs.
+      held=attempts.reduce((s,a)=>addD(s,a.billingState==='CONFIRMED'?a.totalCost:maxCost),'0');
+      if(error){
+        if(error instanceof OpenAI.APIConnectionTimeoutError)return {error:'TIMEOUT'};
+        if(error instanceof OpenAI.APIError&&error.status===503&&JSON.stringify(error.error??error.message).includes('no_provider_for_trust_mode')){
+          if(retry>=2)return {error:'NO_PROVIDER_FOR_TRUST_MODE'};
+          await sleep(2000);continue;
         }
-        return raw;
-      } catch (e) {
-        if (e instanceof OpenAI.APIConnectionTimeoutError) return { error: "TIMEOUT" };
-        if (e instanceof OpenAI.APIError && e.status === 503 && JSON.stringify(e.error ?? e.message).includes(NO_PROVIDER)) {
-          if (attempt >= 2) return { error: "NO_PROVIDER_FOR_TRUST_MODE" };
-          await sleep(2000);
-          continue;
-        }
-        return { error: "ZG_UNAVAILABLE" };
+        return {error:'ZG_UNAVAILABLE'};
       }
+      if(!t?.request_id)return {error:'ZG_UNAVAILABLE'};
+      if(trace.teeVerified===false||(verify&&trace.teeVerified!==true))return {error:'TEE_NOT_VERIFIED',trace:summary(trace)};
+      if(cost===undefined || cmpD(held,limit)>0)return {error:'BUDGET_EXCEEDED',trace:summary(trace)};
+      return {content,trace};
     }
   };
-
-  const traceOf = (first: Raw, last: Raw, extra?: Raw): InferenceTrace => ({
-    model, trustTier: tier, zgRequestId: last.requestId, provider: last.provider, teeVerified: last.teeVerified,
-    totalCost: String(first.cost + (extra?.cost ?? 0)), latencyMs: first.latencyMs + (extra?.latencyMs ?? 0),
-    inputHash: sha256Hex(canonicalJson({ system: o.system, user: o.user })), outputHash: sha256Hex(last.content),
-  });
-
-  const parse = (content: string): { ok: true; value: T } | { ok: false; why: string } => {
-    let json: unknown;
-    try { json = JSON.parse(content.trim().replace(/^```(?:json)?\s*|\s*```$/g, "")); }
-    catch { return { ok: false, why: "output was not valid JSON" }; }
-    const r = o.schema.safeParse(json);
-    return r.success ? { ok: true, value: r.data } : { ok: false, why: r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ") };
+  const parse=(content:string):{ok:true;value:T}|{ok:false;why:string}=>{
+    let json:unknown;
+    try {json=JSON.parse(content.trim().replace(/^```(?:json)?\s*|\s*```$/g,''));}catch{return {ok:false,why:'output was not valid JSON'};}
+    const result=o.schema.safeParse(json);
+    return result.success?{ok:true,value:result.data}:{ok:false,why:result.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('; ')};
   };
-
-  const messages: Msg[] = [{ role: "system", content: o.system }, { role: "user", content: o.user }];
-  const a = await call(messages);
-  if ("error" in a) return fail(a);
-  const p = parse(a.content);
-  if (p.ok) { done("ok", a.requestId); return { ok: true, value: p.value, trace: traceOf(a, a) }; }
-
-  // One repair attempt: send the validation error back, then give up.
-  const b = await call([...messages, { role: "assistant", content: a.content },
-    { role: "user", content: `Your previous output was rejected: ${p.why}. Reply again with only the corrected JSON.` }]);
-  if ("error" in b) return fail({ error: b.error, trace: b.trace });
-  const p2 = parse(b.content);
-  const trace = traceOf(a, b, b);
-  if (p2.ok) { done("ok_after_repair", b.requestId); return { ok: true, value: p2.value, trace }; }
-  return fail({ error: "SCHEMA_INVALID", trace });
+  const messages:Msg[]=[{role:'system',content:o.system},{role:'user',content:o.user}];
+  const a=await call(messages);
+  if('error'in a)return fail(a);
+  const p=parse(a.content);
+  if(p.ok)return {ok:true,value:p.value,trace:summary(a.trace),attempts};
+  const b=await call([...messages,{role:'assistant',content:a.content},{role:'user',content:`Your previous output was rejected: ${p.why}. Reply again with only the corrected JSON.`}]);
+  if('error'in b)return fail({...b,trace:b.trace??summary(a.trace)});
+  const p2=parse(b.content),trace=summary(b.trace);
+  return p2.ok?{ok:true,value:p2.value,trace,attempts}:fail({error:'SCHEMA_INVALID',trace});
 }

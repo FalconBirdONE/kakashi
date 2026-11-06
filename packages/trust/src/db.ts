@@ -127,6 +127,12 @@ ALTER TABLE auth_attempts ADD COLUMN next_poll_at TEXT;
 CREATE INDEX auth_attempts_target ON auth_attempts(purpose, target_id, result);
 `,
   },
+  {version:4,sql:`
+ALTER TABLE inference_calls ADD COLUMN request_key TEXT;
+ALTER TABLE inference_calls ADD COLUMN billing_state TEXT NOT NULL DEFAULT 'CONFIRMED';
+CREATE UNIQUE INDEX inference_request_once ON inference_calls(request_key) WHERE request_key IS NOT NULL;
+CREATE TABLE inference_reservations(request_key TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES runs(id),amount TEXT NOT NULL);
+`},
 ];
 
 export function migrate(db: Db): void {

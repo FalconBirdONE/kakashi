@@ -31,14 +31,16 @@ export interface Rails {
 
 // ---- B2 brain ----
 export type Traced<T> =
-  | { ok: true; value: T; trace: InferenceTrace }
-  | { ok: false; error: BrainError; trace?: InferenceTrace };
+  | { ok: true; value: T; trace: InferenceTrace; attempts?: import("./inference.js").InferenceAttempt[] }
+  | { ok: false; error: BrainError; trace?: InferenceTrace; attempts?: import("./inference.js").InferenceAttempt[] };
 
 export type PlanInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string; catalog: CatalogEntry[];
   budgetRemainingAtomic: Atomic; perPaymentCapAtomic: Atomic; assetDecimals: number;
 };
 export type DecideInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string; needs: Need[];
   quotes: {
     quoteId: string; merchantId: string; amountAtomic: Atomic;
@@ -49,6 +51,7 @@ export type DecideInput = {
   budgetRemainingAtomic: Atomic; purchasesRemaining: number; round: 1 | 2;
 };
 export type SynthesisInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string;
   evidence: { purchaseId: string; merchantId: string; valid: boolean; issues: string[]; data: unknown }[];
   gaps: string[];

@@ -1,6 +1,6 @@
 // Policy precheck, authorization and post-approval permits (SPEC §8.4 steps 1-3, §11.1, §7.7).
 import {
-  canonicalJson, mintPermit, newId, sha256Hex,
+  canonicalJson, subA, mintPermit, newId, sha256Hex,
   type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
 } from "@tollbooth/contracts";
 import type { Ctx } from "./db.js";
@@ -42,12 +42,17 @@ function permitSecret(ctx: Ctx): string {
   return s;
 }
 
-function mint(p: Purchase, q: Quote, permitId: string, now: Date, secret: string): SigningPermit {
+function mint(p: Purchase, q: Quote, permitId: string, now: Date, secret: string, deadline: number): SigningPermit {
   return mintPermit({
     permitId, purchaseId: p.id, mandateId: p.mandateId, mandateVersion: p.mandateVersion,
     network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo, feePayer: q.feePayer,
-    quoteHash: p.quoteHash, issuedAt: now.toISOString(), expiresAt: new Date(now.getTime() + PERMIT_TTL_MS).toISOString(),
+    quoteHash: p.quoteHash, issuedAt: now.toISOString(), expiresAt: new Date(Math.min(now.getTime() + PERMIT_TTL_MS, deadline)).toISOString(),
   }, secret);
+}
+
+function deadline(ctx: Ctx, p: Purchase, q: Quote, m: Mandate): number {
+  const run=ctx.db.prepare('SELECT started_at FROM runs WHERE id=?').get(p.runId) as {started_at:string};
+  return Math.min(Date.parse(q.localExpiresAt),Date.parse(m.expiresAt),Date.parse(run.started_at)+m.maxRunDurationSeconds*1000);
 }
 
 export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
@@ -84,7 +89,7 @@ export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
         throw e;
       }
       if (!permitId) return { kind: "NEEDS_APPROVAL", purchase: getPurchase(ctx, p.id)! };
-      return { kind: "PERMIT", permit: mint(p, quote, permitId, now, secret) };
+      return { kind: "PERMIT", permit: mint(p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate)) };
     };
 
     const out = decide();
@@ -97,7 +102,7 @@ export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
 }
 
 export type ApprovalDenial =
-  | "APPROVAL_NOT_APPROVED" | "APPROVAL_EXPIRED" | "APPROVAL_CONSUMED" | "TARGET_MISMATCH" | "QUOTE_CHANGED" | "MANDATE_INACTIVE";
+  | "QUOTE_EXPIRED" | "RUN_TIME_EXCEEDED" | "POLICY_CHANGED" | "APPROVAL_NOT_APPROVED" | "APPROVAL_EXPIRED" | "APPROVAL_CONSUMED" | "TARGET_MISMATCH" | "QUOTE_CHANGED" | "MANDATE_INACTIVE";
 
 export function issuePermitAfterApproval(
   ctx: Ctx, purchaseId: string, approvalId: string,
@@ -118,13 +123,19 @@ export function issuePermitAfterApproval(
     const audit = { run: p.runId, pur: p.id, mandateHash: mandate.mandateHash, quoteHash: p.quoteHash };
 
     // EXHAUSTED is allowed: this purchase's own reservation can push available below the cheapest price.
+    const policy = evaluate(quote, {...mandate, state: mandate.state === 'EXHAUSTED' ? 'ACTIVE' : mandate.state,
+      reservedAtomic: subA(mandate.reservedAtomic, (ctx.db.prepare('SELECT amount FROM purchases WHERE id=?').get(p.id) as {amount:string}).amount ?? quote.amountAtomic)},
+      runStatsFor(ctx,p.runId,quote.requestHash,p.id),now,policyConfigFromEnv(ctx.env));
     const reason: ApprovalDenial | null =
-      a.decision !== "APPROVED" ? "APPROVAL_NOT_APPROVED"
-      : Date.parse(a.expires_at) <= now.getTime() ? "APPROVAL_EXPIRED"
+      a.decision !== "APPROVED" || a.purpose !== "APPROVE_PURCHASE" ? "APPROVAL_NOT_APPROVED"
+      : !(Date.parse(a.expires_at) > now.getTime()) || !(Date.parse(a.created_at) <= now.getTime()) ? "APPROVAL_EXPIRED"
       : a.consumed_at != null ? "APPROVAL_CONSUMED"
       : quoteHash !== p.quoteHash ? "QUOTE_CHANGED"
       : a.target_hash !== purchaseHash || a.target_hash !== p.purchaseHash ? "TARGET_MISMATCH"
+      : policy.reasons.includes("QUOTE_EXPIRED") ? "QUOTE_EXPIRED"
+      : policy.reasons.includes("RUN_TIME_EXCEEDED") ? "RUN_TIME_EXCEEDED"
       : mandate.state !== "ACTIVE" && mandate.state !== "EXHAUSTED" ? "MANDATE_INACTIVE"
+      : !policy.allowed ? "POLICY_CHANGED"
       : null;
     if (reason) {
       transition(ctx, p.id, "APPROVAL_DENIED", { approvalId });
@@ -136,7 +147,7 @@ export function issuePermitAfterApproval(
     if (consumed.changes !== 1) throw new Error("APPROVAL_CONSUMED");
     const permitId = newId("pmt_");
     transition(ctx, p.id, "RESERVED", { approvalId, permitId });
-    const permit = mint(p, quote, permitId, now, secret);
+    const permit = mint(p, quote, permitId, now, secret, deadline(ctx,p,quote,mandate));
     appendAuditEvent(ctx, "APPROVAL_GRANTED", audit);
     return { kind: "PERMIT" as const, permit };
   }).immediate();

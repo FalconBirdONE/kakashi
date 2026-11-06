@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { z } from "zod";
-import { MERCHANT_IDS, cmpA, isAtomic, type MandateDraft, type MerchantId } from "@tollbooth/contracts";
+import { MERCHANT_IDS, cmpA, boundedAtomic, type MandateDraft, type MerchantId } from "@tollbooth/contracts";
 import { HttpError, conflict } from "../errors.js";
 import { issueCookie, requireUser, userOf } from "../session.js";
 import { owner } from "../orchestrator/context.js";
 import type { OrchContext } from "../orchestrator/context.js";
 
-const atomic = z.string().refine(isAtomic, "must be a non-negative integer string (atomic units)");
+const atomic = z.string().refine(boundedAtomic, "must be a non-negative integer string (atomic units)");
 const draftSchema = z.object({
   totalBudgetAtomic: atomic,
   perPaymentCapAtomic: atomic,
@@ -16,7 +16,7 @@ const draftSchema = z.object({
   maxRunDurationSeconds: z.number().int().min(10).max(600).optional(),
   expiresAt: z.iso.datetime(),
 }).strict().superRefine((d, c) => {
-  if (![d.totalBudgetAtomic, d.perPaymentCapAtomic, d.autoApproveCapAtomic].every(isAtomic)) return; // field errors already reported
+  if (![d.totalBudgetAtomic, d.perPaymentCapAtomic, d.autoApproveCapAtomic].every(boundedAtomic)) return; // field errors already reported
   if (cmpA(d.autoApproveCapAtomic, d.perPaymentCapAtomic) > 0) c.addIssue({ code: "custom", path: ["autoApproveCapAtomic"], message: "must not exceed perPaymentCapAtomic" });
   if (cmpA(d.perPaymentCapAtomic, d.totalBudgetAtomic) > 0) c.addIssue({ code: "custom", path: ["perPaymentCapAtomic"], message: "must not exceed totalBudgetAtomic" });
   if (Date.parse(d.expiresAt) <= Date.now()) c.addIssue({ code: "custom", path: ["expiresAt"], message: "must be in the future" });

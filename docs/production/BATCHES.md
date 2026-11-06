@@ -13,3 +13,10 @@ Base: origin/main cca19af. Isolated branch fix/production-readiness. No publicat
 - Demo sessions are restricted to demo mode; real trust/rails are forbidden in demo mode. Database-backed ownership replaces production map authority.
 - Verified: workspace build, server 31 tests, web 23 tests, four plain-Node compiled startups.
 - Decision pending: production sign-in provider. Generic OIDC plumbing is locally implemented; sign-in is unavailable without issuer/client/redirect configuration. No provider connection or live approval performed.
+
+## Batch 3 — accounting, deadlines, budgets
+- Exact decimal normalization/arithmetic; per-provider request keys and billing status, persistence callbacks before/after every retry/repair, admission reservations retained for unknown billing, idempotent confirmed charges.
+- Quote/run/mandate deadlines rechecked after human approval; permits capped to earliest deadline; invalid permit timestamps fail closed.
+- SQLite amount bounds and overflow-safe reservation predicate; unresolved purchases block mandate versioning/replacement activation.
+- Verified: workspace build; brain 34, trust 262, server 31 tests passed.
+- Configured per-request admission ceiling must be a conservative upper bound for the selected model/token policy. Unknown billing retains the ceiling; no automatic assumption of zero cost. Live provider billing validation remains gated.

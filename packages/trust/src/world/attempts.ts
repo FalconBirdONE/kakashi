@@ -132,6 +132,7 @@ const INSERT_APPROVAL = `INSERT INTO approvals (id, attempt_id, purpose, target_
 function activateMandate(ctx: Ctx, a: Row, nowIso: string): AuthAttemptResult {
   const m = latestMandate(ctx, a.target_id);
   if (!m || m.state !== "PENDING_APPROVAL" || m.mandate_hash !== a.target_hash || Date.parse(m.expires_at) <= Date.parse(nowIso)) return "ERROR";
+  if (ctx.db.prepare("SELECT 1 FROM purchases p JOIN mandates m ON m.id=p.mandate_id AND m.version=p.mandate_version WHERE m.user_id=? AND p.state IN ('PROPOSED','AWAITING_APPROVAL','RESERVED','SIGNED','SUBMITTED','UNKNOWN') LIMIT 1").get(a.user_id)) return 'ERROR';
   const apv = newId("apv_");
   ctx.db.prepare(INSERT_APPROVAL).run(apv, a.id, a.purpose, a.target_hash, "APPROVED", nowIso, new Date(Date.parse(nowIso) + APPROVAL_TTL_MS).toISOString(), nowIso);
   // One ACTIVE mandate per user (unique index): retire whatever is live now.

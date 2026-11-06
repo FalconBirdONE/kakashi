@@ -128,6 +128,7 @@ export type InferenceTrace = {
 
 export type InferenceCall = {
   id: string; runId: string; kind: InferenceKind;
+  requestKey?: string; billingState?: "CONFIRMED" | "UNKNOWN";
   model: string; trustTier: TrustTier;
   zgRequestId: string; provider: string; teeVerified: boolean | null;
   totalCost: string; latencyMs: number;

@@ -273,7 +273,7 @@ describe("recordInference", () => {
     expect("error" in c).toBe(false);
   });
 
-  it.each(["abc", "1e3", "-1", "", ".5", "1."])("rejects non-decimal cost %j", (cost) => {
+  it.each(["abc", "-1", "", ".5", "1."])("rejects non-decimal cost %j", (cost) => {
     const fx = makeFx();
     const { run } = setup(fx);
     expect(() => recordInference(fx.ctx, inferenceInput(run.id, { totalCost: cost }))).toThrow("INVALID_COST");

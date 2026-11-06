@@ -1,3 +1,4 @@
+import { addD, cmpD } from '@tollbooth/contracts';
 import type { Persistence, ResourceKind } from '@tollbooth/contracts';
 import type { Ctx } from './db.js';
 import { runOf } from './rows.js';
@@ -11,6 +12,12 @@ export function createPersistence(ctx: Ctx): Persistence {
   };
   return {
     owner: (kind, id) => (ctx.db.prepare(statements[kind]).get(id) as {user_id: string} | undefined)?.user_id ?? null,
+    reserveInference: (runId,key,maxCost,limit) => ctx.db.transaction(()=>{
+      const costs=ctx.db.prepare("SELECT total_cost AS amount FROM inference_calls WHERE run_id=? AND billing_state='CONFIRMED' UNION ALL SELECT amount FROM inference_reservations WHERE run_id=?").all(runId,runId) as {amount:string}[];
+      const used=costs.reduce((sum,r)=>addD(sum,r.amount),'0');
+      if(cmpD(addD(used,maxCost),limit)>0)throw new Error('INFERENCE_BUDGET_EXCEEDED');
+      ctx.db.prepare('INSERT INTO inference_reservations VALUES (?,?,?)').run(key,runId,maxCost);
+    }).immediate(),
     runs: () => ctx.db.prepare('SELECT * FROM runs ORDER BY started_at').all().map(r => runOf(r as Record<string, any>)),
   };
 }
