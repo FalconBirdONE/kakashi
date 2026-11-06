@@ -28,3 +28,15 @@ Differences between SPEC/prompts and the installed SDKs, plus decisions made on 
 ## Tooling
 
 - Run package binaries directly, for example `./node_modules/.bin/tsx setup.ts` in `scripts/hedera`. Running `npx pnpm@12.18.0 --filter ...` made pnpm self-install globally and edit `~/.zshrc`, so avoid it.
+
+## Merchants service (prompt 1.3)
+
+- Paths come from the frozen registry: `/m/quickcast/forecast`, `/m/hourlypro/forecast`, `/m/groundtruth/observations`, `/m/gouger/premium`. Prompt 1.3 says `/m/hourlypro/hourly`, but the registry wins.
+- Query: `lat`, `lon` (required), and `startDate`, `endDate` (`YYYY-MM-DD`, optional). Anything else returns 400 before a quote is issued. `requestHash` uses the contracts `requestHash("GET", path, query)` over the exact query string values.
+- Prices are the registry `priceAtomic` in the active asset: USDC units with `ASSET_MODE=usdc`, tinybars with `ASSET_MODE=hbar`.
+- Body shape: `{ merchant, source: "open-meteo" | "fixture", location: { lat, lon, name }, window: { start, end }, generatedAt, units: "metric", fieldUnits, daily | hourly | current, note? }`. The contracts fake rails uses `window: { startDate, endDate }` instead. `validateDelivery` (prompt 1.5) checks the real shape.
+- Idempotency: a paid retry is verified with the facilitator first, which authenticates the payer. If the same payer and `requestHash` settled within 10 minutes, the cached body and the original `PAYMENT-RESPONSE` are returned and the new signed transaction is never submitted. Verified live: the replay of `0.0.9185802@1793982021.177130660` left one transfer on the mirror node.
+- Every 402 records `requestHash -> query` in `merchants.sqlite`. That lets `/recover` regenerate a body from a mirror-node confirmation when the settlement row is missing.
+- `GET /recover?tx=&requestHash=[&merchant=]` returns the body JSON directly (200) or 404.
+- `/admin/fault` returns 404 unless `DEMO_MODE=true`. `SWAP_PAYTO` advertises `HEDERA_OPERATOR_ID`.
+- Fixtures in `apps/merchants/fixtures` are real Open-Meteo responses for Mumbai, recorded 2026-11-06. They're used with `FIXTURE_MODE=true` or when Open-Meteo fails or takes longer than 5 s.
