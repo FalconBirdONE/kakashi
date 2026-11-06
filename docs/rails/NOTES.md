@@ -40,3 +40,16 @@ Differences between SPEC/prompts and the installed SDKs, plus decisions made on 
 - `GET /recover?tx=&requestHash=[&merchant=]` returns the body JSON directly (200) or 404.
 - `/admin/fault` returns 404 unless `DEMO_MODE=true`. `SWAP_PAYTO` advertises `HEDERA_OPERATOR_ID`.
 - Fixtures in `apps/merchants/fixtures` are real Open-Meteo responses for Mumbai, recorded 2026-11-06. They're used with `FIXTURE_MODE=true` or when Open-Meteo fails or takes longer than 5 s.
+
+## Signer (prompt 1.4)
+
+- `apps/signer` reads `apps/signer/.env.local`, then the process env. It never reads the root `.env`. Required: `AGENT_ACCOUNT_ID`, `AGENT_PRIVATE_KEY` (written by setup), `PERMIT_SECRET` (the same value trust uses), `SIGNER_MAX_PER_TX_ATOMIC` and `SIGNER_MAX_TOTAL_ATOMIC`. Add the last three to `.env.local` by hand.
+- It binds `127.0.0.1:4100` (`SIGNER_PORT`). Any other `SIGNER_HOST` makes it refuse to start.
+- `POST /sign {permit, requirementsB64}` returns `200 {paymentHeader, hederaTxId}`, or `403 {error: "SIGNER_REFUSED", reason}`. `paymentHeader` is the value for the `PAYMENT-SIGNATURE` request header. Malformed bodies return `400`, bodies over 32 KB return `413` (both `reason: "BAD_REQUEST"`), and every other route returns `404`.
+- Refusal reasons: `BAD_MAC`, `EXPIRED`, `NOT_YET_VALID`, `PERMIT_REUSED`, `BAD_REQUIREMENTS`, `NETWORK_MISMATCH`, `ASSET_MISMATCH`, `AMOUNT_MISMATCH`, `PAYTO_MISMATCH`, `FEEPAYER_MISMATCH`, `OVER_PER_TX_CEILING`, `OVER_TOTAL_CEILING`, `SIGNED_TX_MISMATCH`, `SIGNING_FAILED`, `BAD_REQUEST`.
+- Single use: any permit with a valid MAC is burned in `signer.sqlite` on first presentation, even if it's refused. Permits with a bad MAC are not recorded, so nobody can burn another party's permit.
+- The total ceiling counts permits in `SIGNING` and `SIGNED` state. A signing exception moves the permit to `FAILED` and releases its amount. The check and insert run in one synchronous SQLite transaction (tested with 10 concurrent permits against a ceiling that fits 3).
+- After signing, the signer decodes its own bytes and requires exactly two transfers in the permit asset (agent `-amount`, payTo `+amount`), no other assets, no other operations, and the fee payer as the transaction ID account. Otherwise it refuses with `SIGNED_TX_MISMATCH`.
+- The x402 client's own spend controls are turned off inside the signer (`spendControls: false`), because the permit match and the ceilings replace them.
+- Logs carry only permitId, purchaseId, decision, reason and tx ID.
+- Live check (`REAL_HEDERA=1`): `0.0.9185802@1793982220.036767062` paid quickcast 10000 tinybars. The mirror node shows `SUCCESS`.
