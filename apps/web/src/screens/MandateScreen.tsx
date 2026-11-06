@@ -5,6 +5,7 @@ import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api, ApiError } from "../api";
 import { AuthFlow } from "../components/AuthFlow";
 import MandateSummary from "../components/MandateSummary";
+import { SponsorMark } from "../components/Brand";
 import { Arrow, btn, Button, Card, ErrorText, inputCls, Label, PageHeader, usdc } from "../components/ui";
 
 const errMsg = (e: unknown) => (e instanceof ApiError || e instanceof Error ? e.message : "Something went wrong");
@@ -99,10 +100,10 @@ export default function MandateScreen() {
                 <Card frame="gold">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h2 className="text-[15px] font-semibold text-zinc-100">Activate with your World ID</h2>
+                      <h2 className="flex items-center gap-2 text-[15px] font-semibold text-zinc-100"><SponsorMark id="world" className="h-4 text-sky-300" />Activate with your World ID</h2>
                       <p className="mt-1 text-sm text-zinc-400">Check the short code, then approve this exact mandate version.</p>
                     </div>
-                    {!attempt && <Button onClick={activate} className="shrink-0">Activate with World ID</Button>}
+                    {!attempt && <Button onClick={activate} className="shrink-0"><SponsorMark id="world" className="h-4" />Activate with World ID</Button>}
                   </div>
                   {attempt && (
                     <div className="mt-5 border-t border-white/[0.06] pt-5">

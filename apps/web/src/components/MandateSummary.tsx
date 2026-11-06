@@ -1,5 +1,6 @@
 import type { Mandate } from "@kakashi/contracts";
 import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
+import { SponsorMark } from "./Brand";
 import { Badge, Card, fmtTime, shortCode, usdc, type Tone } from "./ui";
 
 const TONES: Record<string, Tone> = { ACTIVE: "green", DRAFT: "gray", PENDING_APPROVAL: "yellow", EXPIRED: "red", REVOKED: "red", EXHAUSTED: "red" };
@@ -43,7 +44,8 @@ export default function MandateSummary({ mandate: m }: { mandate: Mandate }) {
         </div>
         {rows.map(([k, v]) => (
           <div key={k} className="flex justify-between gap-4 border-b border-white/[0.05] py-2.5">
-            <dt className="shrink-0 text-zinc-500">{k}</dt><dd className="text-right text-zinc-200 [overflow-wrap:anywhere]">{v}</dd>
+            <dt className="shrink-0 text-zinc-500">{k}</dt>
+            <dd className="text-right text-zinc-200 [overflow-wrap:anywhere]">{k === "Network" ? <span className="inline-flex items-center gap-1.5"><SponsorMark id="hedera" className="h-3.5 text-zinc-400" />{v}</span> : v}</dd>
           </div>
         ))}
       </dl>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { LedgerView } from "@kakashi/contracts";
 import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api, type PurchaseRow } from "../api";
+import { SponsorMark } from "../components/Brand";
 import { Badge, Card, ErrorText, fmtTime, hashscanTx, Muted, PageHeader, usdc } from "../components/ui";
 import { usePoll } from "../hooks";
 
@@ -83,8 +84,8 @@ export default function LedgerScreen() {
       )}
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <Card title="Data spend (USDC, from mandate)"><p className="font-mono text-2xl text-zinc-50">{usdc(ledger.dataSpendAtomic)}</p></Card>
-        <Card title="AI inference (0G credits, sponsored)">
+        <Card title={<><SponsorMark id="hedera" className="h-4 text-zinc-400" />Data spend (USDC, from mandate)</>}><p className="font-mono text-2xl text-zinc-50">{usdc(ledger.dataSpendAtomic)}</p></Card>
+        <Card title={<><SponsorMark id="0g" className="h-3 text-zinc-400" />AI inference (0G credits, sponsored)</>}>
           <p className="font-mono text-2xl text-zinc-50">{ledger.inferenceSpend} 0G credits</p>
           {ledger.inferenceBillingPending && <p role="status" className="mt-2 text-sm text-amber-200">Some inference charges are unknown; budget remains reserved pending reconciliation.</p>}
           <p className="mt-2 text-xs text-zinc-500">Inference is not counted against the mandate budget.</p>
@@ -110,9 +111,9 @@ export default function LedgerScreen() {
                       <td className="px-3 py-3 text-zinc-400">{p ? DELIVERY_WORDS[p.delivery] ?? p.delivery : "-"}</td>
                       <td className="whitespace-nowrap px-3 py-3 text-zinc-400">{auditText(p)}</td>
                       <td className="px-3 py-3">
-                        <a className="text-link font-mono text-xs" target="_blank" rel="noreferrer" href={hashscanTx(r.hederaTxId)}>{r.hederaTxId.length > 14 ? `${r.hederaTxId.slice(0, 14)}...` : r.hederaTxId}</a>
+                        <a className="text-link inline-flex items-center gap-1.5 font-mono text-xs" target="_blank" rel="noreferrer" href={hashscanTx(r.hederaTxId)}><SponsorMark id="hedera" className="h-3" />{r.hederaTxId.length > 14 ? `${r.hederaTxId.slice(0, 14)}...` : r.hederaTxId}</a>
                       </td>
-                      <td className="px-3 py-3 pr-5 font-mono text-xs text-zinc-400 sm:pr-6">{r.zgRequestId ?? "-"}</td>
+                      <td className="px-3 py-3 pr-5 font-mono text-xs text-zinc-400 sm:pr-6">{r.zgRequestId ? <span className="inline-flex items-center gap-1.5"><SponsorMark id="0g" className="h-2.5" />{r.zgRequestId}</span> : "-"}</td>
                     </tr>
                   );
                 })}

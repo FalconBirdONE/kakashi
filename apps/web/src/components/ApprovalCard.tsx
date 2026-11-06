@@ -3,6 +3,7 @@ import type { AuthAttemptPublic, AuthAttemptResult, Purchase } from "@kakashi/co
 import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api, type RunViewWithAudit } from "../api";
 import { AuthFlow } from "./AuthFlow";
+import { SponsorMark } from "./Brand";
 import { Button, ErrorText, shortCode, usdc } from "./ui";
 
 export default function ApprovalCard({ purchase, view, onChanged }: { purchase: Purchase; view: RunViewWithAudit; onChanged: () => void }) {
@@ -32,7 +33,7 @@ export default function ApprovalCard({ purchase, view, onChanged }: { purchase: 
         <dt className="text-zinc-500">Short code</dt><dd className="font-mono font-semibold tracking-[0.15em] text-gold-200" data-testid="short-code">{shortCode(purchase.purchaseHash)}</dd>
       </dl>
       <p className="text-xs text-zinc-500">World authenticates the human. Kakashi records your approval of this specific purchase.</p>
-      {!attempt && <Button onClick={start} disabled={busy}>Approve with World ID</Button>}
+      {!attempt && <Button onClick={start} disabled={busy}><SponsorMark id="world" className="h-4" />Approve with World ID</Button>}
       {err && <ErrorText>{err}</ErrorText>}
       {attempt && <AuthFlow attempt={attempt} onResult={done} />}
       {failed && <p className="text-sm text-zinc-200">This purchase was not approved. No payment was made and the reserved budget was released.</p>}

@@ -13,10 +13,10 @@ const frames = {
   green: "border-emerald-400/20 bg-[radial-gradient(120%_140%_at_0%_0%,rgba(52,211,153,0.07),transparent_60%)]",
 } as const;
 
-export function Card({ title, children, className = "", frame = "plain" }: { title?: string; children: ReactNode; className?: string; frame?: keyof typeof frames }) {
+export function Card({ title, children, className = "", frame = "plain" }: { title?: ReactNode; children: ReactNode; className?: string; frame?: keyof typeof frames }) {
   return (
     <section className={`rounded-2xl border p-5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] sm:p-6 ${frames[frame]} ${className}`}>
-      {title && <h2 className="mb-4 text-[15px] font-semibold tracking-tight text-zinc-100">{title}</h2>}
+      {title && <h2 className="mb-4 flex items-center gap-2 text-[15px] font-semibold tracking-tight text-zinc-100">{title}</h2>}
       {children}
     </section>
   );

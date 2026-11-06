@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AuthAttemptPublic, AuthAttemptResult } from "@kakashi/contracts";
 import { api, type DevAuthResult } from "../api";
 import { useConfig, usePoll } from "../hooks";
+import { SponsorLogo } from "./Brand";
 import { Badge, Button, ErrorText, type Tone } from "./ui";
 
 export const RESULT_WORDS: Record<AuthAttemptResult, { text: string; tone: Tone }> = {
@@ -43,6 +44,7 @@ export function AuthFlow({ attempt, onResult }: { attempt: AuthAttemptPublic; on
       <Badge tone={words.tone}>{words.text}</Badge>
       {pending && (
         <div className="animate-page-in rounded-xl border border-white/[0.08] bg-black/30 p-4 sm:p-5">
+          <SponsorLogo id="world" className="mb-3 h-5 text-zinc-200" />
           <p className="text-sm text-zinc-400">
             Open <a href={current.verificationUri} target="_blank" rel="noreferrer" className="text-link break-all">{current.verificationUri}</a> and enter this code:
           </p>

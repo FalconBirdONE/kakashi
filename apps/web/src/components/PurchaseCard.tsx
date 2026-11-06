@@ -3,6 +3,7 @@ import type { DeliveryState, Purchase, PurchaseState } from "@kakashi/contracts"
 import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import type { RunViewWithAudit } from "../api";
 import ApprovalCard from "./ApprovalCard";
+import { SponsorMark } from "./Brand";
 import { Badge, Card, hashscanTx, usdc, type Tone } from "./ui";
 
 // SPEC A5: the standalone word "Paid" belongs to CONFIRMED only. UNKNOWN is never "Failed".
@@ -53,10 +54,10 @@ export default function PurchaseCard({ purchase, view, onChanged }: { purchase: 
       <dl className="mt-4 divide-y divide-white/[0.05] border-t border-white/[0.05] text-sm">
         <Row k="Recipient"><span className="font-mono text-xs">{quote?.payTo ?? "unknown"}</span></Row>
         {purchase.hederaTxId && (
-          <Row k="Transaction"><a className="text-link" href={hashscanTx(purchase.hederaTxId)} target="_blank" rel="noreferrer">View on HashScan</a></Row>
+          <Row k="Transaction"><a className="text-link inline-flex items-center gap-1.5" href={hashscanTx(purchase.hederaTxId)} target="_blank" rel="noreferrer"><SponsorMark id="hedera" className="h-3.5" />View on HashScan</a></Row>
         )}
         {call && (<>
-          <Row k="0G request"><span className="font-mono text-xs">{call.zgRequestId}</span></Row>
+          <Row k="0G request"><span className="inline-flex items-center gap-1.5 font-mono text-xs"><SponsorMark id="0g" className="h-2.5 text-zinc-400" />{call.zgRequestId}</span></Row>
           <Row k="Trust tier">{call.trustTier}</Row>
         </>)}
       </dl>
