@@ -29,7 +29,7 @@ export function evaluate(
 
   // 1. `!(x > t)` so an unparseable expiresAt (NaN) fails closed.
   if (mandate.state === "EXPIRED" || !(Date.parse(mandate.expiresAt) > t)) reasons.push("MANDATE_EXPIRED");
-  else fail(mandate.state !== "ACTIVE" || mandate.revokedAt != null || mandate.version !== run.runMandateVersion, "MANDATE_INACTIVE");
+  else fail(!(Date.parse(mandate.validFrom) <= t) || mandate.state !== "ACTIVE" || mandate.revokedAt != null || mandate.version !== run.runMandateVersion, "MANDATE_INACTIVE");
 
   // 2.
   const merchant = getMerchant(quote.merchantId);
@@ -50,7 +50,7 @@ export function evaluate(
 
   // 8. NaN runStartedAt fails closed (comparison is false).
   fail(run.purchasesCounted >= mandate.maxPurchasesPerRun, "MAX_PURCHASES_REACHED");
-  fail(!(t - Date.parse(run.runStartedAt) <= mandate.maxRunDurationSeconds * 1000), "RUN_TIME_EXCEEDED");
+  fail(!(t >= Date.parse(run.runStartedAt) && t - Date.parse(run.runStartedAt) <= mandate.maxRunDurationSeconds * 1000), "RUN_TIME_EXCEEDED");
 
   // 9. 0.5*min <= amt <= 1.5*max, as 2*amt >= min and 2*amt <= 3*max. Unknown merchant already failed rule 2.
   if (merchant) {

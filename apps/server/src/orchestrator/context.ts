@@ -7,6 +7,7 @@ import type { Deps } from "../wiring.js";
  * bodies live here. ponytail: lost on restart; persist via trust once it exposes lookups.
  */
 export type OrchContext = {
+  interruptedRuns: Set<string>;
   deps: Deps;
   bus: EventBus;
   approvalPollMs: number;
@@ -30,6 +31,7 @@ export type OrchContext = {
 export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}): OrchContext {
   const pending = new Set<Promise<unknown>>();
   const ctx: OrchContext = {
+    interruptedRuns:new Set(),
     deps, bus: new EventBus(), approvalPollMs: opts.approvalPollMs ?? 2000,
     mandateOwner: new Map(), attemptOwner: new Map(), runs: new Map(), purchases: new Map(),
     evidence: new Map(), audit: new Map(), inflight: new Set(), stopped: false,
@@ -44,5 +46,18 @@ export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}
     },
     stop() { ctx.stopped = true; },
   };
+  for (const run of deps.trust.persistence?.runs() ?? []) {
+    if(!["DONE","PARTIAL","FAILED"].includes(run.state))ctx.interruptedRuns.add(run.id);
+    ctx.runs.set(run.id,{userId:run.userId,question:run.question});
+    for (const p of deps.trust.getRunView(run.id).purchases) {
+      ctx.purchases.set(p.id,{runId:run.id,userId:run.userId});
+      const evidence=deps.trust.persistence?.evidence(p.id);if(evidence!==undefined)ctx.evidence.set(p.id,evidence);
+    }
+  }
   return ctx;
+}
+
+export function owner(ctx: OrchContext, kind: import("@tollbooth/contracts").ResourceKind, id: string): string | null {
+  if (ctx.deps.trust.persistence) return ctx.deps.trust.persistence.owner(kind,id);
+  return (kind === "mandate" ? ctx.mandateOwner.get(id) : kind === "attempt" ? ctx.attemptOwner.get(id) : kind === "run" ? ctx.runs.get(id)?.userId : ctx.purchases.get(id)?.userId) ?? null;
 }

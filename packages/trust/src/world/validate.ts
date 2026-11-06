@@ -1,6 +1,6 @@
 // Server-side ID token validation (SPEC §8.2 step 5). Never throws for a bad token; never logs.
 import { errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from "jose";
-import type { ValidateFailure, ValidateResult } from "./types";
+import type { ValidateFailure, ValidateResult } from "./types.js";
 
 export type ValidateConfig = { issuer: string; clientId: string; requiredAcr?: string; requiredAmr?: string[]; clockToleranceSec?: number };
 

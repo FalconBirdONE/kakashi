@@ -11,7 +11,12 @@ import type {
 // SPEC §7.6
 
 // ---- B1 rails ----
+export type SignerStatus =
+  | {state:'SIGNED';paymentHeader:string;hederaTxId:string}
+  | {state:'NOT_FOUND'|'SIGNING'|'FAILED'|'REFUSED'|'UNAVAILABLE'};
 export interface Rails {
+  restoreRequest?(quote:Quote,query:Record<string,string>):void;
+  signerStatus?(permit:SigningPermit):Promise<SignerStatus>;
   getCatalog(): Promise<CatalogEntry[]>;
   fetchQuote(merchantId: string, query: Record<string, string>):
     Promise<{ ok: true; quote: Omit<Quote, "id" | "runId"> } | { ok: false; error: RailsError }>;
@@ -31,14 +36,16 @@ export interface Rails {
 
 // ---- B2 brain ----
 export type Traced<T> =
-  | { ok: true; value: T; trace: InferenceTrace }
-  | { ok: false; error: BrainError; trace?: InferenceTrace };
+  | { ok: true; value: T; trace: InferenceTrace; attempts?: import("./inference.js").InferenceAttempt[] }
+  | { ok: false; error: BrainError; trace?: InferenceTrace; attempts?: import("./inference.js").InferenceAttempt[] };
 
 export type PlanInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string; catalog: CatalogEntry[];
   budgetRemainingAtomic: Atomic; perPaymentCapAtomic: Atomic; assetDecimals: number;
 };
 export type DecideInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string; needs: Need[];
   quotes: {
     quoteId: string; merchantId: string; amountAtomic: Atomic;
@@ -49,6 +56,7 @@ export type DecideInput = {
   budgetRemainingAtomic: Atomic; purchasesRemaining: number; round: 1 | 2;
 };
 export type SynthesisInput = {
+  accounting?: import("./inference.js").InferenceAccounting;
   question: string; preferences?: string;
   evidence: { purchaseId: string; merchantId: string; valid: boolean; issues: string[]; data: unknown }[];
   gaps: string[];
@@ -62,6 +70,7 @@ export interface Brain {
 
 // ---- B3 trust ----
 export interface Trust {
+  persistence?: import("./persistence.js").Persistence;
   createMandateDraft(userId: string, draft: MandateDraft): Mandate;
   startAuth(userId: string, purpose: AuthPurpose, targetId: string): Promise<AuthAttemptPublic>;
   pollAuth(attemptId: string): Promise<AuthAttemptPublic>;

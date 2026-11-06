@@ -1,8 +1,8 @@
 import { addA, subA, type LedgerView, type Mandate, type RunView } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { refreshMandate } from "./mandates";
-import { inferenceOf, mandateOf, purchaseOf, quoteOf } from "./rows";
-import { getRun } from "./runs";
+import type { Ctx } from "./db.js";
+import { refreshMandate } from "./mandates.js";
+import { inferenceOf, mandateOf, purchaseOf, quoteOf } from "./rows.js";
+import { getRun } from "./runs.js";
 
 export function getRunView(ctx: Ctx, runId: string): RunView {
   const run = getRun(ctx, runId);
@@ -68,6 +68,7 @@ export function getLedgerView(ctx: Ctx, userId: string): LedgerView {
     reservedAtomic: mandate.reservedAtomic,
     availableAtomic: subA(subA(mandate.totalBudgetAtomic, mandate.spentAtomic), mandate.reservedAtomic),
     dataSpendAtomic: receipts.reduce((s, r) => addA(s, r.amountAtomic), "0"),
+    inferenceBillingPending: !!ctx.db.prepare("SELECT 1 FROM inference_reservations i JOIN runs r ON r.id=i.run_id WHERE r.user_id=? LIMIT 1").get(userId),
     inferenceSpend: addDecimals(costs),
     receipts,
   };

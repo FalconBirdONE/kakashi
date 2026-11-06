@@ -2,6 +2,7 @@ import type { ResearchRun } from "@tollbooth/contracts";
 import { Badge } from "../ui";
 
 const REASONS: Record<string, string> = {
+  PROCESS_RESTART: "The server restarted; recorded payments are being recovered. A run with no purchases can be rerun",
   SYNTHESIZE_ZG_UNAVAILABLE: "The AI service was unavailable; no new decisions were made",
   RUN_TIME_EXCEEDED: "The run took longer than its time limit",
   MANDATE_INACTIVE: "Your mandate is not active",

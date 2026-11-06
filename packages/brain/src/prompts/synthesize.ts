@@ -1,5 +1,5 @@
 import type { SynthesisInput } from "@tollbooth/contracts";
-import { SHARED_RULES, neutralise, wrapPreferences } from "./shared";
+import { SHARED_RULES, neutralise, wrapPreferences } from "./shared.js";
 
 export const PROMPT_VERSION = "synthesize.v1";
 

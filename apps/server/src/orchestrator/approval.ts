@@ -1,4 +1,5 @@
 import { HttpError } from "../errors.js";
+import { owner } from "./context.js";
 import type { OrchContext } from "./context.js";
 import { executePurchase } from "./purchase.js";
 
@@ -9,7 +10,7 @@ import { executePurchase } from "./purchase.js";
 export async function approvePurchase(ctx: OrchContext, userId: string, purchaseId: string) {
   const { trust } = ctx.deps;
   const idx = ctx.purchases.get(purchaseId);
-  if (!idx || idx.userId !== userId) throw new HttpError(404, "NOT_FOUND", "purchase not found");
+  if (!idx || owner(ctx,"purchase",purchaseId) !== userId) throw new HttpError(404, "NOT_FOUND", "purchase not found");
   const p = trust.getRunView(idx.runId).purchases.find((x) => x.id === purchaseId);
   if (p?.state !== "AWAITING_APPROVAL") throw new HttpError(409, "INVALID_STATE", `purchase is ${p?.state ?? "unknown"}, not AWAITING_APPROVAL`);
 

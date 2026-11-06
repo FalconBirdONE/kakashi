@@ -1,12 +1,12 @@
 // Quotes, purchases (SPEC §7.3 state machine + §8.4 budget effects) and 0G inference records.
 import {
-  IllegalTransitionError, addA, canTransition, canonicalJson, cmpA, newId, sha256Hex, subA,
+  IllegalTransitionError, boundedAtomic, decimal, addA, canTransition, canonicalJson, cmpA, newId, sha256Hex, subA,
   type AgentDecision, type DeliveryState, type InferenceCall, type Purchase, type PurchaseState, type Quote,
 } from "@tollbooth/contracts";
-import type { Ctx } from "./db";
-import { refreshMandate } from "./mandates";
-import { FORMATS, appendAuditEvent } from "./outbox";
-import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows";
+import type { Ctx } from "./db.js";
+import { refreshMandate } from "./mandates.js";
+import { FORMATS, appendAuditEvent } from "./outbox.js";
+import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows.js";
 
 type Row = Record<string, any>;
 
@@ -29,6 +29,7 @@ export function zgOf(ctx: Ctx, d: AgentDecision | undefined | null): string | un
 const runRow = (ctx: Ctx, runId: string) => ctx.db.prepare("SELECT * FROM runs WHERE id = ?").get(runId) as Row | undefined;
 
 export function recordQuote(ctx: Ctx, runId: string, q: Omit<Quote, "id" | "runId">): Quote {
+  if (!boundedAtomic(q.amountAtomic)) throw new Error("INVALID_AMOUNT");
   if (!runRow(ctx, runId)) throw new Error("RUN_NOT_FOUND");
   const id = newId("qte_");
   const quoteHash = computeQuoteHash(q);
@@ -112,7 +113,8 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
       const r = ctx.db.prepare(
         `UPDATE mandates SET reserved = CAST(CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) AS TEXT)
          WHERE id = @id AND version = @version AND state = 'ACTIVE' AND expires_at > @now
-           AND CAST(spent AS INTEGER) + CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) <= CAST(total_budget AS INTEGER)`,
+           AND CAST(reserved AS INTEGER) <= CAST(total_budget AS INTEGER) - CAST(spent AS INTEGER)
+           AND CAST(@amt AS INTEGER) <= CAST(total_budget AS INTEGER) - CAST(spent AS INTEGER) - CAST(reserved AS INTEGER)`,
       ).run({ amt: amount, id: p.mandate_id, version: p.mandate_version, now: ctx.now().toISOString() });
       if (r.changes === 0) throw new Error("OVER_BUDGET");
     } else if (to === "CONFIRMED") {
@@ -160,15 +162,22 @@ export function listUnresolved(ctx: Ctx): Purchase[] {
 }
 
 export function recordInference(ctx: Ctx, c: Omit<InferenceCall, "id">): InferenceCall {
-  if (!/^\d+(\.\d+)?$/.test(c.totalCost)) throw new Error("INVALID_COST");
-  if (!FORMATS.zg.test(c.zgRequestId)) throw new Error("INVALID_ZG_REQUEST_ID"); // same reason as INVALID_TX_ID
+  let cost: string;
+  try { cost=decimal(c.totalCost); } catch { throw new Error("INVALID_COST"); }
+  if ((!c.zgRequestId && !c.requestKey) || (c.zgRequestId && !FORMATS.zg.test(c.zgRequestId))) throw new Error("INVALID_ZG_REQUEST_ID");
   if (!runRow(ctx, c.runId)) throw new Error("RUN_NOT_FOUND");
-  const id = newId("inf_");
-  ctx.db.prepare(
-    `INSERT INTO inference_calls (id, run_id, kind, model, trust_tier, zg_request_id, provider, tee_verified, total_cost,
-       latency_ms, input_hash, output_hash, ok, error, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-  ).run(id, c.runId, c.kind, c.model, c.trustTier, c.zgRequestId, c.provider, c.teeVerified == null ? null : c.teeVerified ? 1 : 0,
-    c.totalCost, c.latencyMs, c.inputHash, c.outputHash, c.ok ? 1 : 0, c.error ?? null, ctx.now().toISOString());
-  const r = ctx.db.prepare("SELECT * FROM inference_calls WHERE id = ?").get(id) as Row;
-  return inferenceOf(r);
+  return ctx.db.transaction(()=>{
+    if(c.requestKey){
+      const existing=ctx.db.prepare('SELECT * FROM inference_calls WHERE request_key=?').get(c.requestKey) as Row|undefined;
+      if(existing) {
+        if(existing.run_id!==c.runId || existing.total_cost!==cost || existing.billing_state!==(c.billingState??'CONFIRMED'))throw new Error('INFERENCE_RECORD_CONFLICT');
+        return inferenceOf(existing);
+      }
+    }
+    const id = newId("inf_");
+    ctx.db.prepare(`INSERT INTO inference_calls (id,run_id,kind,model,trust_tier,zg_request_id,provider,tee_verified,total_cost,latency_ms,input_hash,output_hash,ok,error,created_at,request_key,billing_state) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(id,c.runId,c.kind,c.model,c.trustTier,c.zgRequestId,c.provider,c.teeVerified==null?null:c.teeVerified?1:0,cost,c.latencyMs,c.inputHash,c.outputHash,c.ok?1:0,c.error??null,ctx.now().toISOString(),c.requestKey??null,c.billingState??'CONFIRMED');
+    if(c.requestKey && c.billingState!=='UNKNOWN')ctx.db.prepare('DELETE FROM inference_reservations WHERE request_key=?').run(c.requestKey);
+    return inferenceOf(ctx.db.prepare('SELECT * FROM inference_calls WHERE id=?').get(id) as Row);
+  }).immediate();
 }

@@ -1,7 +1,7 @@
 // Mandates: draft, hash, version, lazy state refresh, revoke, preferences (SPEC §8.2, §9.3.3).
 // Activation (World ID approval, retiring the old version) lives elsewhere.
 import {
-  MERCHANT_REGISTRY, addA, canonicalJson, cmpA, isAtomic, newId, sha256Hex, subA,
+  MERCHANT_REGISTRY, boundedAtomic, addA, canonicalJson, cmpA, isAtomic, newId, sha256Hex, subA,
   type Mandate, type MandateDraft, type UserPreferences,
 } from "@tollbooth/contracts";
 import type { Ctx } from "./db.js";
@@ -37,7 +37,7 @@ export function computeMandateHash(m: Mandate): string {
 /** Validates and normalizes a draft (defaults filled, expiresAt as canonical ISO, merchants de-duplicated). */
 function validateDraft(d: MandateDraft, now: Date): Required<MandateDraft> {
   for (const k of ["totalBudgetAtomic", "perPaymentCapAtomic", "autoApproveCapAtomic"] as const) {
-    if (!isAtomic(d[k])) bad(`${k} must be an atomic integer string`);
+    if (!boundedAtomic(d[k])) bad(`${k} must be an atomic integer string`);
   }
   if (cmpA(d.perPaymentCapAtomic, d.totalBudgetAtomic) > 0) bad("perPaymentCap exceeds totalBudget");
   if (cmpA(d.autoApproveCapAtomic, d.perPaymentCapAtomic) > 0) bad("autoApproveCap exceeds perPaymentCap");
@@ -104,6 +104,7 @@ export function createMandateVersion(ctx: Ctx, mandateId: string, patch: Partial
     const r = latestRow(ctx, mandateId);
     if (!r) throw new Error("MANDATE_NOT_FOUND");
     const prev = mandateOf(r);
+    if (ctx.db.prepare("SELECT 1 FROM purchases WHERE mandate_id=? AND state IN ('PROPOSED','AWAITING_APPROVAL','RESERVED','SIGNED','SUBMITTED','UNKNOWN') LIMIT 1").get(mandateId)) bad('UNRESOLVED_PURCHASES');
     if (prev.state === "REVOKED" || prev.revokedAt) bad("REVOKED");
     const merged: MandateDraft = {
       totalBudgetAtomic: prev.totalBudgetAtomic, perPaymentCapAtomic: prev.perPaymentCapAtomic,

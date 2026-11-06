@@ -19,19 +19,23 @@ export class ApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
 
+let csrf: string | undefined;
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method, credentials: "same-origin",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: { ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(csrf ? { "X-CSRF-Token": csrf } : {}) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, data.error ?? "ERROR", data.message ?? res.statusText);
+  if (typeof data.csrf === "string") csrf = data.csrf;
   return data as T;
 }
 
 export const api = {
   session: () => call<{ userId: string }>("POST", "/session"),
+  currentSession: () => call<{userId:string;csrf:string}>("GET","/session"),
+  logout: () => call<{ok:true}>("POST","/logout"),
   config: () => call<AppConfig>("GET", "/config"),
 
   getMandate: () => call<{ mandate: Mandate | null }>("GET", "/mandate"),

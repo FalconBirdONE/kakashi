@@ -1,14 +1,15 @@
+import { createPersistence } from "./persistence.js";
 import type { Trust } from "@tollbooth/contracts";
-import { createCtx, type Ctx } from "./db";
-import * as mandates from "./mandates";
-import * as purchases from "./purchases";
-import * as runs from "./runs";
-import * as views from "./views";
-import * as authz from "./authorize";
-import * as attempts from "./world/attempts";
-import * as outbox from "./outbox";
-import { createWorldClient } from "./world/client";
-import type { WorldClient, WorldLogger } from "./world/types";
+import { createCtx, type Ctx } from "./db.js";
+import * as mandates from "./mandates.js";
+import * as purchases from "./purchases.js";
+import * as runs from "./runs.js";
+import * as views from "./views.js";
+import * as authz from "./authorize.js";
+import * as attempts from "./world/attempts.js";
+import * as outbox from "./outbox.js";
+import { createWorldClient } from "./world/client.js";
+import type { WorldClient, WorldLogger } from "./world/types.js";
 
 /** `world` is the test seam: inject a fake WorldClient to simulate every World result. */
 export type TrustOptions = { now?: () => Date; ctx?: Ctx; world?: WorldClient; logger?: WorldLogger };
@@ -18,6 +19,7 @@ export function createTrust(env: Record<string, string | undefined> = process.en
   // createWorldClient reads credentials on first use, so a trust without World creds still boots.
   const auth = { world: opts.world ?? createWorldClient(env, { logger: opts.logger }), logger: opts.logger };
   return {
+    persistence: createPersistence(ctx),
     // identity and mandates
     createMandateDraft: (userId, draft) => mandates.createMandateDraft(ctx, userId, draft),
     revokeMandate: (id) => mandates.revokeMandate(ctx, id),
@@ -50,10 +52,10 @@ export function createTrust(env: Record<string, string | undefined> = process.en
   } satisfies Trust;
 }
 
-export { createCtx } from "./db";
-export type { Ctx } from "./db";
+export { createCtx } from "./db.js";
+export type { Ctx } from "./db.js";
 // Internal to the World approval flow; exported for tests and scripts, not part of the Trust interface.
-export { issuePermitAfterApproval } from "./authorize";
-export { verifyAuditChain } from "./outbox";
-export type { WorldClient, WorldClaims, PollResult, DeviceStart, ValidateResult, WorldLogger } from "./world/types";
-export { evaluate, policyConfigFromEnv } from "./policy";
+export { issuePermitAfterApproval } from "./authorize.js";
+export { verifyAuditChain } from "./outbox.js";
+export type { WorldClient, WorldClaims, PollResult, DeviceStart, ValidateResult, WorldLogger } from "./world/types.js";
+export { evaluate, policyConfigFromEnv } from "./policy.js";

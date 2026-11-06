@@ -10,3 +10,8 @@ data/
 # Generated and OS files
 coverage/
 .DS_Store
+
+output/playwright/
+.playwright-cli/
+*.auth
+*.auth-*

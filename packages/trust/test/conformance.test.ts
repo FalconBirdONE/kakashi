@@ -22,7 +22,7 @@ const METHODS = [
   "transition", "setDelivery", "listUnresolved", "recordInference", "listPendingAudit", "markAnchored", "markAuditRetry",
   "getRunView", "getLedgerView",
 ] as const satisfies readonly (keyof Trust)[];
-const allListed: [Exclude<keyof Trust, (typeof METHODS)[number]>] extends [never] ? true : never = true;
+const allListed: [Exclude<Exclude<keyof Trust, "persistence">, (typeof METHODS)[number]>] extends [never] ? true : never = true;
 
 afterEach(cleanup);
 
@@ -161,7 +161,7 @@ describe("Trust conformance", () => {
     expect(t.getActiveMandate(USER)).toBeNull();
 
     // Completeness: every method of the returned object was called, and that object is exactly the Trust interface.
-    const keys = Object.keys(raw).sort();
+    const keys = Object.keys(raw).filter(k => typeof (raw as unknown as Record<string,unknown>)[k] === "function").sort();
     expect(keys).toEqual([...METHODS].sort());
     expect(keys).toHaveLength(23);
     expect([...called].sort()).toEqual(keys);

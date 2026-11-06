@@ -1,8 +1,8 @@
 // World ID Agent Pass OIDC device-flow client (SPEC §8.2). Approach validated by scripts/world-spike.ts.
 // The client secret is read only here. Logs are metadata only: no tokens, device/user codes, secret or `sub`.
-import { createRemoteJWKSet, type JWTVerifyGetKey } from "jose";
-import type { DeviceStart, PollResult, WorldClient, WorldLogger } from "./types";
-import { validateIdToken } from "./validate";
+import { customFetch, createRemoteJWKSet, type JWTVerifyGetKey } from "jose";
+import type { DeviceStart, PollResult, WorldClient, WorldLogger } from "./types.js";
+import { validateIdToken } from "./validate.js";
 
 type Discovery = { tokenEndpoint: string; deviceEndpoint: string; jwks: JWTVerifyGetKey };
 type Json = Record<string, unknown>;
@@ -32,7 +32,7 @@ export function createWorldClient(
   let discovery: Promise<Discovery> | undefined;
   const discover = () => {
     discovery ??= (async () => {
-      const res = await doFetch(`${issuer}/.well-known/openid-configuration`, { headers: { accept: "application/json" } });
+      const res = await doFetch(`${issuer}/.well-known/openid-configuration`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(5000) });
       log("discovery", { httpStatus: res.status });
       if (!res.ok) throw new Error(`WORLD_DISCOVERY_FAILED: ${res.status}`);
       const d = (await res.json()) as Json;
@@ -40,7 +40,7 @@ export function createWorldClient(
       const deviceEndpoint = str(d.device_authorization_endpoint), tokenEndpoint = str(d.token_endpoint), jwksUri = str(d.jwks_uri);
       if (!deviceEndpoint) throw new Error("WORLD_DISCOVERY_FAILED: no device_authorization_endpoint");
       if (!tokenEndpoint || !jwksUri) throw new Error("WORLD_DISCOVERY_FAILED: no token_endpoint/jwks_uri");
-      return { deviceEndpoint, tokenEndpoint, jwks: createRemoteJWKSet(new URL(jwksUri)) };
+      return { deviceEndpoint, tokenEndpoint, jwks: createRemoteJWKSet(new URL(jwksUri), { [customFetch]: doFetch }) };
     })();
     discovery.catch(() => { discovery = undefined; }); // retry on a later call
     return discovery;
@@ -48,7 +48,7 @@ export function createWorldClient(
 
   const post = async (url: string, form: Record<string, string>) => {
     const res = await doFetch(url, {
-      method: "POST",
+      method: "POST", signal: AbortSignal.timeout(5000),
       headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
       body: new URLSearchParams(form),
     });

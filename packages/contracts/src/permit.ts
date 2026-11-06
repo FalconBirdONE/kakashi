@@ -27,7 +27,7 @@ export function verifyPermit(
   const got = Buffer.from(typeof given === "string" ? given : "", "hex");
   if (got.length !== want.length || !timingSafeEqual(got, want)) return { ok: false, reason: "BAD_MAC" };
   const t = now.getTime();
-  if (t >= Date.parse(fields.expiresAt)) return { ok: false, reason: "EXPIRED" };
-  if (t < Date.parse(fields.issuedAt)) return { ok: false, reason: "NOT_YET_VALID" };
+  if (!Number.isFinite(t) || !(t < Date.parse(fields.expiresAt))) return { ok: false, reason: "EXPIRED" };
+  if (!(t >= Date.parse(fields.issuedAt))) return { ok: false, reason: "NOT_YET_VALID" };
   return { ok: true };
 }

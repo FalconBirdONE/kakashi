@@ -10,3 +10,7 @@ export * from "./errors.js";
 export * from "./registry.js";
 export * from "./env.js";
 export * from "./fakes/index.js";
+export * from "./persistence.js";
+export * from "./decimal.js";
+export * from "./inference.js";
+export * from "./seal.js";

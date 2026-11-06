@@ -30,10 +30,11 @@ function useRoute(): { page: string; arg?: string } {
 export default function App() {
   const { page, arg } = useRoute();
   const [config, setConfig] = useState<AppConfig | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.session().then(() => api.config()).then(setConfig).catch((e) => setError(e instanceof Error ? e.message : "cannot reach the server"));
+    api.config().then(async c => { setConfig(c); if(c.demoMode) await api.session(); else await api.currentSession(); setSignedIn(true); }).catch((e) => setError(e instanceof Error ? e.message : "cannot reach the server"));
   }, []);
 
   return (
@@ -48,12 +49,14 @@ export default function App() {
             </a>
           ))}
         </nav>
+        {signedIn && !config?.demoMode && <button onClick={() => api.logout().then(() => setSignedIn(false))}>Sign out</button>}
       </header>
       <p className="mb-4 text-xs text-slate-400">
         Spending limits are enforced by our backend and an isolated signer. In this demo the operator holds the agent key.
       </p>
       {error && <p role="alert" className="mb-4 text-rose-300">Could not reach the server: {error}</p>}
-      {config && (
+      {config && !signedIn && !config.demoMode && <main><p>Access is invite-only.</p><a href="/api/auth/login">Sign in</a></main>}
+      {config && signedIn && (
         <ConfigProvider value={config}>
           <main>
             {page === "mandate" && <MandateScreen />}

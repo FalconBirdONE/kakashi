@@ -1,12 +1,13 @@
 // World ID auth attempts: device flow start/poll, identity binding and the protected actions (SPEC §8.2, §8.4 step 3).
 // Every World call goes through the injected WorldClient, so tests drive the whole flow with a fake.
 import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@tollbooth/contracts";
-import { appendAuditEvent } from "../outbox";
-import { issuePermitAfterApproval } from "../authorize";
-import type { Ctx, Db } from "../db";
-import { refreshMandate } from "../mandates";
-import { getPurchase } from "../purchases";
-import type { WorldClaims, WorldClient, WorldLogger } from "./types";
+import { collectPermit } from "../permit-store.js";
+import { appendAuditEvent } from "../outbox.js";
+import { issuePermitAfterApproval } from "../authorize.js";
+import type { Ctx, Db } from "../db.js";
+import { refreshMandate } from "../mandates.js";
+import { getPurchase } from "../purchases.js";
+import type { WorldClaims, WorldClient, WorldLogger } from "./types.js";
 
 export type AuthDeps = { world: WorldClient; logger?: WorldLogger };
 
@@ -23,15 +24,8 @@ export const toPublic = (r: Row): AuthAttemptPublic => ({
   result: r.result, verificationUri: r.verification_uri, userCode: r.user_code,
 });
 
-// Signed-but-unsent permits never touch disk. shortcut: lost on restart; reconciliation treats an unsigned RESERVED
-// purchase as FAILED_FINAL after the permit lifetime. Upgrade if the app ever runs more than one process.
-const permits = new WeakMap<Db, Map<string, SigningPermit>>();
-
 export function getPermitForPurchase(ctx: Ctx, purchaseId: string): SigningPermit | null {
-  const m = permits.get(ctx.db);
-  const p = m?.get(purchaseId) ?? null;
-  m?.delete(purchaseId);
-  return p;
+  return collectPermit(ctx,purchaseId);
 }
 
 /** Checks the target and returns the hash the human approves. Reads only (refreshMandate may persist lazy expiry). */
@@ -132,6 +126,7 @@ const INSERT_APPROVAL = `INSERT INTO approvals (id, attempt_id, purpose, target_
 function activateMandate(ctx: Ctx, a: Row, nowIso: string): AuthAttemptResult {
   const m = latestMandate(ctx, a.target_id);
   if (!m || m.state !== "PENDING_APPROVAL" || m.mandate_hash !== a.target_hash || Date.parse(m.expires_at) <= Date.parse(nowIso)) return "ERROR";
+  if (ctx.db.prepare("SELECT 1 FROM purchases p JOIN mandates m ON m.id=p.mandate_id AND m.version=p.mandate_version WHERE m.user_id=? AND p.state IN ('PROPOSED','AWAITING_APPROVAL','RESERVED','SIGNED','SUBMITTED','UNKNOWN') LIMIT 1").get(a.user_id)) return 'ERROR';
   const apv = newId("apv_");
   ctx.db.prepare(INSERT_APPROVAL).run(apv, a.id, a.purpose, a.target_hash, "APPROVED", nowIso, new Date(Date.parse(nowIso) + APPROVAL_TTL_MS).toISOString(), nowIso);
   // One ACTIVE mandate per user (unique index): retire whatever is live now.
@@ -194,11 +189,6 @@ function finish(
   }).immediate();
 
   if (!done) return toPublic(a); // lost the race: someone else finished it, nothing done here
-  if (permit) {
-    let m = permits.get(ctx.db);
-    if (!m) permits.set(ctx.db, (m = new Map()));
-    m.set(permit.purchaseId, permit);
-  }
   deps.logger?.("world.attempt.finished", { attemptId, purpose: a.purpose, result, reason });
   return toPublic(a);
 }
