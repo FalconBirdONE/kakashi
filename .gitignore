@@ -6,3 +6,7 @@ dist
 *.sqlite
 *.sqlite-*
 data/
+
+# Generated and OS files
+coverage/
+.DS_Store

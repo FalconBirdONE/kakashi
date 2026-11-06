@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "setup": "tsx setup.ts",
+    "check": "tsx check.ts",
+    "e2e": "tsx e2e.ts",
+    "spike-pay": "tsx spike-pay.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
