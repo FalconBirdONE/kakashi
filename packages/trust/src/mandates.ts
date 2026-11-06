@@ -5,6 +5,7 @@ import {
   type Mandate, type MandateDraft, type UserPreferences,
 } from "@tollbooth/contracts";
 import type { Ctx } from "./db.js";
+import { appendAuditEvent } from "./outbox.js";
 import { mandateOf } from "./rows.js";
 
 const bad = (why: string): never => { throw new Error(`INVALID_MANDATE: ${why}`); };
@@ -159,9 +160,11 @@ export function getActiveMandate(ctx: Ctx, userId: string): Mandate | null {
 export function revokeMandate(ctx: Ctx, mandateId: string): Mandate {
   return ctx.db.transaction(() => {
     if (!latestRow(ctx, mandateId)) throw new Error("MANDATE_NOT_FOUND");
-    ctx.db.prepare("UPDATE mandates SET state = 'REVOKED', revoked_at = ? WHERE id = ? AND state NOT IN ('REVOKED','EXPIRED')")
+    const r = ctx.db.prepare("UPDATE mandates SET state = 'REVOKED', revoked_at = ? WHERE id = ? AND state NOT IN ('REVOKED','EXPIRED')")
       .run(ctx.now().toISOString(), mandateId);
-    return mandateOf(latestRow(ctx, mandateId)!);
+    const latest = mandateOf(latestRow(ctx, mandateId)!);
+    if (r.changes > 0) appendAuditEvent(ctx, "MANDATE_REVOKED", { mandateHash: latest.mandateHash });
+    return latest;
   }).immediate();
 }
 

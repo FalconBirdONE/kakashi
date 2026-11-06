@@ -38,12 +38,4 @@ describe("createTrust wiring", () => {
     expect(t.revokeMandate(m.id).state).toBe("REVOKED");
     expect(t.getActiveMandate(USER)).toBeNull();
   });
-
-  it("not-yet-implemented methods throw", () => {
-    const fx = makeFx();
-    const t = createTrust(fx.ctx.env, { ctx: fx.ctx }) as unknown as Record<string, (...a: unknown[]) => unknown>;
-    for (const name of ["listPendingAudit", "markAnchored", "markAuditRetry"]) {
-      expect(() => t[name]!(), name).toThrow(/not implemented yet/);
-    }
-  });
 });

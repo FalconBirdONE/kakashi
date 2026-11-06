@@ -1,7 +1,7 @@
 // World ID auth attempts: device flow start/poll, identity binding and the protected actions (SPEC §8.2, §8.4 step 3).
 // Every World call goes through the injected WorldClient, so tests drive the whole flow with a fake.
 import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@tollbooth/contracts";
-import { appendAudit } from "../audit";
+import { appendAuditEvent } from "../outbox";
 import { issuePermitAfterApproval } from "../authorize";
 import type { Ctx, Db } from "../db";
 import { refreshMandate } from "../mandates";
@@ -137,12 +137,13 @@ function activateMandate(ctx: Ctx, a: Row, nowIso: string): AuthAttemptResult {
   // One ACTIVE mandate per user (unique index): retire whatever is live now.
   const retired = ctx.db.prepare("SELECT * FROM mandates WHERE user_id = ? AND state IN ('ACTIVE','EXHAUSTED') ORDER BY version DESC").all(a.user_id) as Row[];
   ctx.db.prepare("UPDATE mandates SET state = 'REVOKED', revoked_at = ? WHERE user_id = ? AND state IN ('ACTIVE','EXHAUSTED')").run(nowIso, a.user_id);
+  for (const r of retired) appendAuditEvent(ctx, "MANDATE_REVOKED", { mandateHash: r.mandate_hash });
   // shortcut: carry the old version's budget use forward; in-flight purchases stay pinned to the old version, so
   // releases/spends after this land on the retired row, not here. Known limitation until purchases follow the version.
   const prev = retired.find((r) => r.id === m.id);
   ctx.db.prepare("UPDATE mandates SET state = 'ACTIVE', activation_approval_id = ?, spent = ?, reserved = ? WHERE id = ? AND version = ?")
     .run(apv, prev?.spent ?? m.spent, prev?.reserved ?? m.reserved, m.id, m.version);
-  appendAudit(ctx, "MANDATE_ACTIVATED", { mandateHash: m.mandate_hash });
+  appendAuditEvent(ctx, "MANDATE_ACTIVATED", { mandateHash: m.mandate_hash });
   return "VERIFIED";
 }
 

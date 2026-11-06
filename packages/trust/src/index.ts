@@ -6,12 +6,9 @@ import * as runs from "./runs";
 import * as views from "./views";
 import * as authz from "./authorize";
 import * as attempts from "./world/attempts";
+import * as outbox from "./outbox";
 import { createWorldClient } from "./world/client";
 import type { WorldClient, WorldLogger } from "./world/types";
-
-const later = (name: string) => () => {
-  throw new Error(`trust.${name}: not implemented yet`);
-};
 
 /** `world` is the test seam: inject a fake WorldClient to simulate every World result. */
 export type TrustOptions = { now?: () => Date; ctx?: Ctx; world?: WorldClient; logger?: WorldLogger };
@@ -46,16 +43,17 @@ export function createTrust(env: Record<string, string | undefined> = process.en
     startAuth: (userId, purpose, targetId) => attempts.startAuth(ctx, auth, userId, purpose, targetId),
     pollAuth: (attemptId) => attempts.pollAuth(ctx, auth, attemptId),
     getPermitForPurchase: (purchaseId) => attempts.getPermitForPurchase(ctx, purchaseId),
-    // later prompt: audit outbox
-    listPendingAudit: later("listPendingAudit"),
-    markAnchored: later("markAnchored"),
-    markAuditRetry: later("markAuditRetry"),
-  } as Trust;
+    // audit outbox (worker lives in the app; rails publishes to HCS)
+    listPendingAudit: (limit) => outbox.listPendingAudit(ctx, limit),
+    markAnchored: (eventId, r) => outbox.markAnchored(ctx, eventId, r),
+    markAuditRetry: (eventId) => outbox.markAuditRetry(ctx, eventId),
+  } satisfies Trust;
 }
 
 export { createCtx } from "./db";
 export type { Ctx } from "./db";
 // Internal to the World approval flow; exported for tests and scripts, not part of the Trust interface.
 export { issuePermitAfterApproval } from "./authorize";
+export { verifyAuditChain } from "./outbox";
 export type { WorldClient, WorldClaims, PollResult, DeviceStart, ValidateResult, WorldLogger } from "./world/types";
 export { evaluate, policyConfigFromEnv } from "./policy";

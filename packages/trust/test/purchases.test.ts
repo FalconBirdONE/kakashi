@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { IllegalTransitionError, PURCHASE_TRANSITIONS, canonicalJson, sha256Hex, type PurchaseState } from "@tollbooth/contracts";
 import { getMandate } from "../src/mandates";
+import { verifyAuditChain } from "../src/outbox";
 import {
   computeQuoteHash, getPurchase, listUnresolved, proposePurchase, recordInference, recordQuote, setDelivery, transition,
 } from "../src/purchases";
@@ -219,6 +220,39 @@ describe("setDelivery / listUnresolved", () => {
     })) as Record<PurchaseState, string>;
     const got = listUnresolved(fx.ctx).map((p) => p.id).sort();
     expect(got).toEqual([ids.SIGNED, ids.SUBMITTED, ids.UNKNOWN].sort());
+  });
+});
+
+describe("audit events", () => {
+  const events = (fx: ReturnType<typeof makeFx>) => (fx.ctx.db.prepare("SELECT type, payload FROM audit_events ORDER BY seq").all() as
+    { type: string; payload: string }[]).map((r) => ({ type: r.type, ...JSON.parse(r.payload) }));
+
+  it("PURCHASE_CONFIRMED on CONFIRMED (with tx and zg), then DELIVERY_RESULT on setDelivery", () => {
+    const fx = makeFx();
+    const { run, mandate } = setup(fx);
+    const inf = recordInference(fx.ctx, inferenceInput(run.id, { zgRequestId: "zg_42" }));
+    const { purchase } = propose(fx, run.id, "10000", decision({ inferenceCallId: inf.id }));
+    walkTo(fx, purchase.id, "SUBMITTED");
+    expect(events(fx)).toEqual([]);
+    step(fx, purchase.id, "CONFIRMED");
+    expect(events(fx)).toEqual([expect.objectContaining({
+      type: "PURCHASE_CONFIRMED", run: run.id, pur: purchase.id, mandateHash: mandate.mandateHash, quoteHash: purchase.quoteHash, tx: TX, zg: "zg_42",
+    })]);
+    setDelivery(fx.ctx, purchase.id, "RECEIVED_VALID");
+    expect(events(fx).map((e) => e.type)).toEqual(["PURCHASE_CONFIRMED", "DELIVERY_RESULT"]);
+    expect(events(fx)[1]).toMatchObject({ run: run.id, pur: purchase.id, tx: TX });
+    expect(verifyAuditChain(fx.ctx)).toEqual({ ok: true, count: 2 });
+  });
+
+  it("PURCHASE_FAILED on FAILED_FINAL, without tx when none was signed", () => {
+    const fx = makeFx();
+    const { run, mandate } = setup(fx);
+    const { purchase } = propose(fx, run.id);
+    walkTo(fx, purchase.id, "FAILED_FINAL");
+    const ev = events(fx);
+    expect(ev).toEqual([expect.objectContaining({ type: "PURCHASE_FAILED", run: run.id, pur: purchase.id, mandateHash: mandate.mandateHash, quoteHash: purchase.quoteHash })]);
+    expect("tx" in ev[0]!).toBe(false);
+    expect(verifyAuditChain(fx.ctx)).toEqual({ ok: true, count: 1 });
   });
 });
 

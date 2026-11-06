@@ -5,6 +5,7 @@ import {
 } from "@tollbooth/contracts";
 import type { Ctx } from "./db";
 import { refreshMandate } from "./mandates";
+import { FORMATS, appendAuditEvent } from "./outbox";
 import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows";
 
 type Row = Record<string, any>;
@@ -16,6 +17,13 @@ export function computeQuoteHash(q: Omit<Quote, "id" | "runId" | "quoteHash"> & 
     network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo,
     facilitatorUrl: q.facilitatorUrl, feePayer: q.feePayer, maxTimeoutSeconds: q.maxTimeoutSeconds,
   }));
+}
+
+/** zg_request_id of the inference call the decision points at, if it exists. */
+export function zgOf(ctx: Ctx, d: AgentDecision | undefined | null): string | undefined {
+  if (!d?.inferenceCallId) return undefined;
+  const r = ctx.db.prepare("SELECT zg_request_id FROM inference_calls WHERE id = ?").get(d.inferenceCallId) as Row | undefined;
+  return r?.zg_request_id ?? undefined;
 }
 
 const runRow = (ctx: Ctx, runId: string) => ctx.db.prepare("SELECT * FROM runs WHERE id = ?").get(runId) as Row | undefined;
@@ -90,6 +98,8 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
     const from = p.state as PurchaseState;
     if (!canTransition(from, to)) throw new IllegalTransitionError(from, to);
     if (to === "SIGNED" && !(data.hederaTxId ?? p.hedera_tx_id)) throw new Error("MISSING_TX_ID");
+    // Validate before it is stored, so a later CONFIRMED/FAILED_FINAL audit event can never reject it and roll back.
+    if (data.hederaTxId !== undefined && !FORMATS.tx.test(data.hederaTxId)) throw new Error("INVALID_TX_ID");
 
     // Pinned at proposal (migration 2), so a later quote edit cannot change what gets released. Fallback: pre-migration rows.
     const amount: string = p.amount ?? (ctx.db.prepare("SELECT amount FROM quotes WHERE id = ?").get(p.quote_id) as Row).amount;
@@ -119,7 +129,13 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
     }
     ctx.db.prepare(`UPDATE purchases SET state = ?, updated_at = ?${cols.map((c) => `, ${c}`).join("")} WHERE id = ?`)
       .run(to, ctx.now().toISOString(), ...vals, purchaseId);
-    return { mandateId: p.mandate_id as string, mandateVersion: p.mandate_version as number, updated: getPurchase(ctx, purchaseId)! };
+    const updated = getPurchase(ctx, purchaseId)!;
+    if (to === "CONFIRMED" || to === "FAILED_FINAL") {
+      const base = { run: updated.runId, pur: updated.id, mandateHash: m.mandate_hash as string, quoteHash: updated.quoteHash, tx: updated.hederaTxId };
+      if (to === "CONFIRMED") appendAuditEvent(ctx, "PURCHASE_CONFIRMED", { ...base, zg: zgOf(ctx, updated.decision) });
+      else appendAuditEvent(ctx, "PURCHASE_FAILED", base);
+    }
+    return { mandateId: p.mandate_id as string, mandateVersion: p.mandate_version as number, updated };
   }).immediate();
 
   refreshMandate(ctx, mandateId, mandateVersion);
@@ -127,9 +143,14 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
 }
 
 export function setDelivery(ctx: Ctx, purchaseId: string, d: DeliveryState, issues?: string[]): void {
-  const r = ctx.db.prepare("UPDATE purchases SET delivery = ?, delivery_issues = ?, updated_at = ? WHERE id = ?")
-    .run(d, toJson(issues), ctx.now().toISOString(), purchaseId);
-  if (r.changes === 0) throw new Error("PURCHASE_NOT_FOUND");
+  ctx.db.transaction(() => {
+    const r = ctx.db.prepare("UPDATE purchases SET delivery = ?, delivery_issues = ?, updated_at = ? WHERE id = ?")
+      .run(d, toJson(issues), ctx.now().toISOString(), purchaseId);
+    if (r.changes === 0) throw new Error("PURCHASE_NOT_FOUND");
+    const p = getPurchase(ctx, purchaseId)!;
+    // AuditPayload has no delivery-state field: the delivery state itself lives in the DB, not in the event.
+    appendAuditEvent(ctx, "DELIVERY_RESULT", { run: p.runId, pur: p.id, tx: p.hederaTxId });
+  }).immediate();
 }
 
 export function listUnresolved(ctx: Ctx): Purchase[] {
@@ -140,6 +161,7 @@ export function listUnresolved(ctx: Ctx): Purchase[] {
 
 export function recordInference(ctx: Ctx, c: Omit<InferenceCall, "id">): InferenceCall {
   if (!/^\d+(\.\d+)?$/.test(c.totalCost)) throw new Error("INVALID_COST");
+  if (!FORMATS.zg.test(c.zgRequestId)) throw new Error("INVALID_ZG_REQUEST_ID"); // same reason as INVALID_TX_ID
   if (!runRow(ctx, c.runId)) throw new Error("RUN_NOT_FOUND");
   const id = newId("inf_");
   ctx.db.prepare(

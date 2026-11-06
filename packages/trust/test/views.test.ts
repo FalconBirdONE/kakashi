@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { PlanOutput, SynthesisOutput } from "@tollbooth/contracts";
 import { createMandateDraft, revokeMandate } from "../src/mandates";
+import { verifyAuditChain } from "../src/outbox";
 import { createRun, getRun, updateRun } from "../src/runs";
 import { recordInference, recordQuote, proposePurchase } from "../src/purchases";
 import { getLedgerView, getRunView } from "../src/views";
@@ -52,6 +53,19 @@ describe("updateRun", () => {
     const { run } = setup(fx);
     updateRun(fx.ctx, run.id, { state: "DONE", finishedAt: "2030-01-01T00:05:00.000Z", answer, plan, failureReason: "none" });
     expect(getRun(fx.ctx, run.id)).toMatchObject({ state: "DONE", finishedAt: "2030-01-01T00:05:00.000Z", answer, plan, failureReason: "none" });
+  });
+
+  it("writes RUN_COMPLETED once, only when the run first enters a terminal state", () => {
+    const fx = makeFx();
+    const { run } = setup(fx);
+    const types = () => (fx.ctx.db.prepare("SELECT type, payload FROM audit_events").all() as { type: string; payload: string }[]);
+    updateRun(fx.ctx, run.id, { state: "SYNTHESIZING" });
+    expect(types()).toEqual([]);
+    updateRun(fx.ctx, run.id, { state: "PARTIAL" });
+    updateRun(fx.ctx, run.id, { state: "DONE", answer });
+    expect(types().map((r) => r.type)).toEqual(["RUN_COMPLETED"]);
+    expect(JSON.parse(types()[0]!.payload).run).toBe(run.id);
+    expect(verifyAuditChain(fx.ctx)).toEqual({ ok: true, count: 1 });
   });
 
   it("rejects forbidden keys without changing anything", () => {

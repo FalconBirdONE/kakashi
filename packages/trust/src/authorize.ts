@@ -3,11 +3,11 @@ import {
   canonicalJson, mintPermit, newId, sha256Hex,
   type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
 } from "@tollbooth/contracts";
-import { appendAudit } from "./audit";
 import type { Ctx } from "./db";
 import { refreshMandate } from "./mandates";
+import { appendAuditEvent } from "./outbox";
 import { evaluate, policyConfigFromEnv, type RunStats } from "./policy";
-import { computeQuoteHash, getPurchase, getQuote, transition } from "./purchases";
+import { computeQuoteHash, getPurchase, getQuote, transition, zgOf } from "./purchases";
 import { mandateOf } from "./rows";
 
 type Row = Record<string, any>;
@@ -88,9 +88,9 @@ export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
     };
 
     const out = decide();
-    appendAudit(ctx, "PURCHASE_DECIDED", {
+    appendAuditEvent(ctx, "PURCHASE_DECIDED", {
       run: p.runId, pur: p.id, mandateHash: mandate.mandateHash, quoteHash: p.quoteHash,
-      decisionHash: sha256Hex(canonicalJson(p.decision ?? null)),
+      decisionHash: sha256Hex(canonicalJson(p.decision ?? null)), zg: zgOf(ctx, p.decision),
     });
     return out;
   }).immediate();
@@ -128,7 +128,7 @@ export function issuePermitAfterApproval(
       : null;
     if (reason) {
       transition(ctx, p.id, "APPROVAL_DENIED", { approvalId });
-      appendAudit(ctx, "APPROVAL_DENIED", audit);
+      appendAuditEvent(ctx, "APPROVAL_DENIED", audit);
       return { kind: "DENIED" as const, reason };
     }
 
@@ -137,7 +137,7 @@ export function issuePermitAfterApproval(
     const permitId = newId("pmt_");
     transition(ctx, p.id, "RESERVED", { approvalId, permitId });
     const permit = mint(p, quote, permitId, now, secret);
-    appendAudit(ctx, "APPROVAL_GRANTED", audit);
+    appendAuditEvent(ctx, "APPROVAL_GRANTED", audit);
     return { kind: "PERMIT" as const, permit };
   }).immediate();
 }

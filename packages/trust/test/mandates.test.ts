@@ -4,6 +4,7 @@ import {
   computeMandateHash, createMandateDraft, createMandateVersion, getActiveMandate, getMandate, getPreferences,
   revokeMandate, setPreferences,
 } from "../src/mandates";
+import { verifyAuditChain } from "../src/outbox";
 import { MIN, USER, activeMandate, budget, cleanup, draft, iso, makeFx, propose, setup, step } from "./helpers";
 
 afterEach(cleanup);
@@ -128,6 +129,11 @@ describe("revokeMandate", () => {
     fx.advance(1000);
     revokeMandate(fx.ctx, v1.id); // idempotent: revokedAt keeps the first timestamp
     expect(fx.ctx.db.prepare("SELECT DISTINCT revoked_at FROM mandates WHERE id=?").all(v1.id)).toEqual([{ revoked_at: iso(fx.clock.t - 1000) }]);
+    // One MANDATE_REVOKED (latest version's hash); the idempotent re-revoke adds none.
+    const audit = fx.ctx.db.prepare("SELECT type, payload FROM audit_events").all() as { type: string; payload: string }[];
+    expect(audit.map((a) => a.type)).toEqual(["MANDATE_REVOKED"]);
+    expect(JSON.parse(audit[0]!.payload).mandateHash).toBe(r.mandateHash);
+    expect(verifyAuditChain(fx.ctx)).toEqual({ ok: true, count: 1 });
   });
 
   it("leaves an EXPIRED version EXPIRED", () => {

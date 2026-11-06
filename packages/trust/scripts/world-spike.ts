@@ -6,7 +6,7 @@
 import { createRemoteJWKSet, decodeProtectedHeader, jwtVerify } from "jose";
 
 const t0 = Date.now();
-const issuer = (process.env.WORLD_ISSUER ?? "https://auth.world.org").replace(/\/$/, "");
+const issuer = (process.env.WORLD_ISSUER || "https://auth.world.org").replace(/\/$/, "");
 const clientId = process.env.WORLD_CLIENT_ID, clientSecret = process.env.WORLD_CLIENT_SECRET;
 const maxWait = Number(process.argv.find((a) => a.startsWith("--max-wait="))?.split("=")[1] ?? "0");
 const log = (...a: unknown[]) => console.log(...a);

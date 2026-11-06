@@ -17,7 +17,8 @@ export function createWorldClient(
   const doFetch = deps.fetch ?? fetch;
   const log: WorldLogger = deps.logger ?? ((event, data) => console.info(JSON.stringify({ at: "world", event, ...data })));
   const now = deps.now ?? (() => new Date());
-  const issuer = (env.WORLD_ISSUER ?? "https://auth.world.org").replace(/\/+$/, "");
+  // || not ??: .env.example ships `WORLD_ISSUER=` (empty), which must still fall back to the default.
+  const issuer = (env.WORLD_ISSUER || "https://auth.world.org").replace(/\/+$/, "");
   const requiredAcr = env.WORLD_REQUIRED_ACR || undefined;
   const requiredAmr = env.WORLD_REQUIRED_AMR?.split(",").map((s) => s.trim()).filter(Boolean);
 
