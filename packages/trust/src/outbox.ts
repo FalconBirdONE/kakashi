@@ -1,5 +1,5 @@
 // Audit outbox (SPEC §8.6): hash-chained append inside the caller's transaction, plus the worker-facing queue.
-import { canonicalJson, newId, sha256Hex, type AuditEvent, type AuditEventType, type AuditPayload, type AuditState } from "@tollbooth/contracts";
+import { canonicalJson, newId, sha256Hex, type AuditEvent, type AuditEventType, type AuditPayload, type AuditState } from "@kakashi/contracts";
 import type { Ctx } from "./db.js";
 
 export type AuditFields = Pick<AuditPayload, "run" | "pur" | "mandateHash" | "quoteHash" | "decisionHash" | "tx" | "zg">;

@@ -1,9 +1,9 @@
 # Trust -> app handover: World ID flows
 
-How the server (app branch) drives World ID Agent Pass through `@tollbooth/trust`. Everything World-related happens server-side: the browser never sees the client secret, the `device_code`, any token or `sub`. Trust validates the ID token (JWKS signature, `iss`, `aud`, `exp`, fresh `auth_time`, optional `acr`/`amr`, `(iss, sub)` binding) before anything is approved. SPEC §8.2, §8.4, §11.3.
+How the server (app branch) drives World ID Agent Pass through `@kakashi/trust`. Everything World-related happens server-side: the browser never sees the client secret, the `device_code`, any token or `sub`. Trust validates the ID token (JWKS signature, `iss`, `aud`, `exp`, fresh `auth_time`, optional `acr`/`amr`, `(iss, sub)` binding) before anything is approved. SPEC §8.2, §8.4, §11.3.
 
 ```ts
-import { createTrust } from "@tollbooth/trust";
+import { createTrust } from "@kakashi/trust";
 const trust = createTrust(process.env); // tests: createTrust(env, { world: fakeWorldClient })
 ```
 
@@ -49,7 +49,7 @@ Notes:
 
 Every failure state must say that the protected action did **not** happen (that is World's required failure path, SPEC §2.2). Show the failure path in the video.
 
-**Claim wording (SPEC §8.2, §11.3).** Say: *"World authenticates the human. Tollbooth records that human's approval of one specific mandate version"* (or "of one specific purchase"). Also say: "World proofs are mocked for this event." **Never** say the user signed, or cryptographically signed, the payment: the agent's key signs; World only authenticates the approving human.
+**Claim wording (SPEC §8.2, §11.3).** Say: *"World authenticates the human. Kakashi records that human's approval of one specific mandate version"* (or "of one specific purchase"). Also say: "World proofs are mocked for this event." **Never** say the user signed, or cryptographically signed, the payment: the agent's key signs; World only authenticates the approving human.
 
 ## 4. Environment variables
 
@@ -65,7 +65,7 @@ Trust reads these from the `env` object passed to `createTrust(env)` (normally `
 | `WORLD_ISSUER` | Defaulted | No | Default `https://auth.world.org`. Unset or empty (as in `.env.example`, `WORLD_ISSUER=`) both use the default |
 | `WORLD_REQUIRED_ACR` | Optional | No | Full URI, e.g. `https://world.org/oidc/acr/orb`. Empty means no check |
 | `WORLD_REQUIRED_AMR` | Optional, **new** | No | Comma list; every listed method must be in the token's `amr`. Not yet in `.env.example`: add it there on merge |
-| `DB_PATH` | Defaulted | No | Default `./data/tollbooth.sqlite` (see Database) |
+| `DB_PATH` | Defaulted | No | Default `./data/kakashi.sqlite` (see Database) |
 | `FACILITATOR_FEEPAYER` | Defaulted | No | Default `0.0.9185802`. Policy rule: quote `feePayer` must equal it |
 | `USDC_TOKEN_ID` | Defaulted | No | Default `0.0.429274`. Mandate asset and policy asset in `usdc` mode |
 | `ASSET_MODE` | Defaulted | No | `usdc` (default) or `hbar` (asset `0.0.0`, 8 decimals) |
@@ -75,8 +75,8 @@ Except `WORLD_ISSUER`, defaulted variables use `??`, so only an unset variable g
 
 ## 5. Database
 
-- **Location:** `DB_PATH`, default `./data/tollbooth.sqlite`, **relative to the server process's working directory** (not to this package). Missing parent directories are created. Run the server from the same directory every time or set an absolute `DB_PATH`.
-- **Files:** SQLite runs in WAL mode, so next to the main file you will see `tollbooth.sqlite-wal` and `tollbooth.sqlite-shm`. All three belong together. Foreign keys are on; `busy_timeout` is 5 s.
+- **Location:** `DB_PATH`, default `./data/kakashi.sqlite`, **relative to the server process's working directory** (not to this package). Missing parent directories are created. Run the server from the same directory every time or set an absolute `DB_PATH`.
+- **Files:** SQLite runs in WAL mode, so next to the main file you will see `kakashi.sqlite-wal` and `kakashi.sqlite-shm`. All three belong together. Foreign keys are on; `busy_timeout` is 5 s.
 - **Migrations:** numbered, append-only, applied automatically when the DB is opened (`schema_migrations` records what ran). Never edit an applied migration; add a new one.
   1. Base schema: `users`, `world_identities` (one `(iss, sub)` per user), `agents`, `mandates` (one row per `(id, version)`, money as TEXT atomic strings, `spent`/`reserved` counters, unique index for one `ACTIVE` mandate per user), `user_preferences`, `auth_attempts`, `approvals`, `runs` (pinned to a mandate version), `quotes`, `purchases` (unique per `(run, quote)`), `inference_calls`, `audit_events` (the outbox).
   2. `purchases.amount`: the amount pinned at proposal, so budget releases match what was reserved.
@@ -86,7 +86,7 @@ Except `WORLD_ISSUER`, defaulted variables use `??`, so only an unset variable g
 ## 6. Reset the demo DB
 
 1. Stop the server (and anything else holding the DB open).
-2. Delete the SQLite file **and** its `-wal` and `-shm` files, e.g. from the server's working directory: `rm -f data/tollbooth.sqlite data/tollbooth.sqlite-wal data/tollbooth.sqlite-shm`.
+2. Delete the SQLite file **and** its `-wal` and `-shm` files, e.g. from the server's working directory: `rm -f data/kakashi.sqlite data/kakashi.sqlite-wal data/kakashi.sqlite-shm`.
 3. Restart. The schema is recreated by the migrations on open.
 
 Never delete the files while the server is running: the open connection keeps writing to the old (unlinked) files and the WAL, and you end up with a half-reset or corrupt DB. A reset also drops the World identity link, so the next activation links whichever World ID approves first.
@@ -111,7 +111,7 @@ Every payload also has `v: 1`, `type`, `id` (`evt_...`), `prev` (previous event'
 
 **Payload rules.** Only the fields above are accepted, each checked against a strict format (`run_`/`pur_` ids, 64-hex hashes, `tx` as `0.0.x@seconds.nanos`, `zg` as 1-128 chars of `[A-Za-z0-9._:-]`). Anything else (question, preferences, `sub`, `iss`, tokens) is refused with `AUDIT_PAYLOAD_REJECTED`, as is a canonical payload over **1 KB**. Because a rejected event would roll back the payment state change, `tx` and `zg` are validated where they are first stored: `transition` throws `INVALID_TX_ID` and `recordInference` throws `INVALID_ZG_REQUEST_ID` before writing anything.
 
-**Hash chain.** `hash = sha256Hex(canonicalJson({ prevHash, type, payload, id }))`; the first event's `prevHash` is 64 zeros. `prevHash` is stored as a column and repeated in `payload.prev`. `verifyAuditChain(ctx)` (exported from `@tollbooth/trust`, not on the `Trust` interface) recomputes every hash in `seq` order and checks both links; it returns `{ ok: true, count }` or `{ ok: false, brokenAtSeq }`.
+**Hash chain.** `hash = sha256Hex(canonicalJson({ prevHash, type, payload, id }))`; the first event's `prevHash` is 64 zeros. `prevHash` is stored as a column and repeated in `payload.prev`. `verifyAuditChain(ctx)` (exported from `@kakashi/trust`, not on the `Trust` interface) recomputes every hash in `seq` order and checks both links; it returns `{ ok: true, count }` or `{ ok: false, brokenAtSeq }`.
 
 **Worker (app runs it, rails publishes).** Every 2 s:
 1. `trust.listPendingAudit(10)`: due `PENDING`/`RETRYING` events in `seq` (chain) order. `limit` is clamped to 1..100. An event in backoff is not due.

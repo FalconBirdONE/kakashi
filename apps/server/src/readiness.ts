@@ -1,4 +1,4 @@
-import { brainEnv,railsEnv,trustEnv,decimal,cmpD } from '@tollbooth/contracts';
+import { brainEnv,railsEnv,trustEnv,decimal,cmpD } from '@kakashi/contracts';
 
 /** Local validation only: startup never spends or sends a credential to test availability. */
 export function validateComponents(names:readonly string[],env:NodeJS.ProcessEnv):void {

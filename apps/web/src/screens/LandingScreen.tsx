@@ -109,7 +109,7 @@ export default function LandingScreen() {
             Answers worth <span className="font-serif font-normal italic tracking-[-0.02em] text-gold-300">paying</span> for.
           </h1>
           <p className="animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg [animation-delay:160ms]">
-            Tollbooth is a research agent that buys only the evidence it needs, spends only inside a budget a verified human approved,
+            Kakashi is a research agent that buys only the evidence it needs, spends only inside a budget a verified human approved,
             and can prove every decision and payment.
           </p>
           <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:240ms]">

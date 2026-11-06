@@ -1,5 +1,5 @@
 import Markdown from "react-markdown";
-import type { SynthesisOutput } from "@tollbooth/contracts";
+import type { SynthesisOutput } from "@kakashi/contracts";
 import { Badge, Card, Muted } from "../ui";
 
 const go = (id: string) => document.getElementById(`purchase-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });

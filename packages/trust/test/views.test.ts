@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { PlanOutput, SynthesisOutput } from "@tollbooth/contracts";
+import type { PlanOutput, SynthesisOutput } from "@kakashi/contracts";
 import { createMandateDraft, revokeMandate } from "../src/mandates";
 import { verifyAuditChain } from "../src/outbox";
 import { createRun, getRun, updateRun } from "../src/runs";

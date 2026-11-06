@@ -1,6 +1,6 @@
 # Hedera testnet setup
 
-Two scripts in `scripts/hedera` prepare every Hedera resource Tollbooth needs (SPEC §8.1). Both are safe to re-run.
+Two scripts in `scripts/hedera` prepare every Hedera resource Kakashi needs (SPEC §8.1). Both are safe to re-run.
 
 ## 1. Operator account (once, by hand)
 
@@ -16,7 +16,7 @@ Two scripts in `scripts/hedera` prepare every Hedera resource Tollbooth needs (S
 ## 2. Run setup
 
 ```sh
-pnpm --filter @tollbooth/hedera-scripts setup
+pnpm --filter @kakashi/hedera-scripts setup
 ```
 
 It does the following, skipping anything that already exists:
@@ -50,7 +50,7 @@ Copy the values from `.env.generated` into `.env`. Never copy `AGENT_PRIVATE_KEY
 ## 5. Check
 
 ```sh
-pnpm --filter @tollbooth/hedera-scripts check
+pnpm --filter @kakashi/hedera-scripts check
 ```
 
 The check prints HBAR and USDC balances and USDC association for the operator, agent and merchants. It also prints the topic info and confirms the signer key matches the agent account. It exits 1 if anything required is missing. A zero agent USDC balance is only a warning. The mirror node lags by a few seconds, so re-run if setup just finished.

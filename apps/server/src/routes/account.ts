@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { MERCHANT_IDS, cmpA, boundedAtomic, type MandateDraft, type MerchantId } from "@tollbooth/contracts";
+import { MERCHANT_IDS, cmpA, boundedAtomic, type MandateDraft, type MerchantId } from "@kakashi/contracts";
 import { HttpError, conflict } from "../errors.js";
 import { issueCookie, requireUser, userOf } from "../session.js";
 import { owner } from "../orchestrator/context.js";

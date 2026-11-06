@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { verifyPermit, type AuthorizeResult, type SigningPermit, type Trust } from "@tollbooth/contracts";
+import { verifyPermit, type AuthorizeResult, type SigningPermit, type Trust } from "@kakashi/contracts";
 import { createTrust, verifyAuditChain, type PollResult, type WorldClient } from "../src";
 import { USER, cleanup, decision, draft, inferenceInput, iso, makeFx, propose, quoteInput, setup, step, type Fx } from "./helpers";
 

@@ -1,4 +1,4 @@
-import type { Purchase } from '@tollbooth/contracts';
+import type { Purchase } from '@kakashi/contracts';
 import type { OrchContext } from '../orchestrator/context.js';
 import { planQuery } from '../orchestrator/util.js';
 import { executePurchase } from '../orchestrator/purchase.js';

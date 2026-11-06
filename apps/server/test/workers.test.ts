@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { RunView } from "@tollbooth/contracts";
+import type { RunView } from "@kakashi/contracts";
 import { createAuditWorker } from "../src/workers/auditWorker.js";
 import { createReconciler } from "../src/workers/reconciler.js";
 import { activateMandate, makeServer, type Server } from "./helpers.js";

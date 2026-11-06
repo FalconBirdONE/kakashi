@@ -1,4 +1,4 @@
-import type { ResearchRun } from "@tollbooth/contracts";
+import type { ResearchRun } from "@kakashi/contracts";
 import { Badge } from "../ui";
 
 const REASONS: Record<string, string> = {

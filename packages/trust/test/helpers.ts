@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AgentDecision, InferenceCall, Mandate, MandateDraft, PurchaseState, Quote, ResearchRun } from "@tollbooth/contracts";
+import type { AgentDecision, InferenceCall, Mandate, MandateDraft, PurchaseState, Quote, ResearchRun } from "@kakashi/contracts";
 import { createCtx, type Ctx } from "../src/db";
 import { createMandateDraft, getMandate } from "../src/mandates";
 import { proposePurchase, recordQuote, transition } from "../src/purchases";
@@ -19,7 +19,7 @@ const open: Ctx[] = [];
 
 /** Fresh temp DB with a mutable clock. Call cleanup() in afterEach. */
 export function makeFx(env: Record<string, string | undefined> = {}): Fx {
-  const dir = mkdtempSync(join(tmpdir(), "tollbooth-trust-"));
+  const dir = mkdtempSync(join(tmpdir(), "kakashi-trust-"));
   dirs.push(dir);
   const clock = { t: START };
   const path = join(dir, "t.sqlite");

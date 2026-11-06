@@ -3,7 +3,7 @@ import request from 'supertest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createTrust, createCtx } from '@tollbooth/trust';
+import { createTrust, createCtx } from '@kakashi/trust';
 import { createApp } from '../src/app.js';
 import { createDeps } from '../src/wiring.js';
 import { AuthStore } from '../src/auth/store.js';

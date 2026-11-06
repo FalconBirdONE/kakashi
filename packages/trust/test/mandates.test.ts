@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { MandateDraft } from "@tollbooth/contracts";
+import type { MandateDraft } from "@kakashi/contracts";
 import {
   computeMandateHash, createMandateDraft, createMandateVersion, getActiveMandate, getMandate, getPreferences,
   revokeMandate, setPreferences,

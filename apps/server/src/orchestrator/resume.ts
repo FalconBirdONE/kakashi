@@ -1,4 +1,4 @@
-import { canonicalJson,sha256Hex } from '@tollbooth/contracts';
+import { canonicalJson,sha256Hex } from '@kakashi/contracts';
 import type { OrchContext } from './context.js';
 const active=new WeakMap<OrchContext,Set<string>>();
 /** Revision key prevents repeated synthesis after restart. Evidence and progress are durable. */

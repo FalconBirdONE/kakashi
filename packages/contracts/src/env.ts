@@ -55,7 +55,7 @@ export const trustEnv = z.object({
   WORLD_CLIENT_ID: z.string().min(1),
   WORLD_CLIENT_SECRET: z.string().min(1),
   WORLD_REQUIRED_ACR: z.string().optional(),
-  DB_PATH: z.string().default("./data/tollbooth.sqlite"),
+  DB_PATH: z.string().default("./data/kakashi.sqlite"),
 });
 
 export const serverEnv = z.object({

@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { encodePaymentRequiredHeader, encodePaymentResponseHeader } from "@x402/core/http";
-import { canonicalJson, requestHash, sha256Hex, type Quote } from "@tollbooth/contracts";
+import { canonicalJson, requestHash, sha256Hex, type Quote } from "@kakashi/contracts";
 import { createRails, toMirrorTxId, validateDelivery } from "../src/index.js";
 
 const NOW = new Date("2026-11-06T10:00:00.000Z");

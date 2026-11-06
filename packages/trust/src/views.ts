@@ -1,4 +1,4 @@
-import { addA, subA, type LedgerView, type Mandate, type RunView } from "@tollbooth/contracts";
+import { addA, subA, type LedgerView, type Mandate, type RunView } from "@kakashi/contracts";
 import type { Ctx } from "./db.js";
 import { refreshMandate } from "./mandates.js";
 import { inferenceOf, mandateOf, purchaseOf, quoteOf } from "./rows.js";

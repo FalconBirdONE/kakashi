@@ -1,5 +1,5 @@
 import { afterEach,describe,expect,it,vi } from 'vitest';
-import { createTrust,createCtx } from '@tollbooth/trust';
+import { createTrust,createCtx } from '@kakashi/trust';
 import { createContext } from '../src/orchestrator/context.js';
 import { createReconciler } from '../src/workers/reconciler.js';
 import { createDeps } from '../src/wiring.js';

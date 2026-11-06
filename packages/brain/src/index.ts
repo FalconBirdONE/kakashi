@@ -1,4 +1,4 @@
-import type { Brain } from "@tollbooth/contracts";
+import type { Brain } from "@kakashi/contracts";
 import { createFunctions } from "./functions.js";
 
 export function createBrain(env: Record<string, string | undefined> = process.env): Brain {

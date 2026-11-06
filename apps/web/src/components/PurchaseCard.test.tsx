@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { Purchase, PurchaseState } from "@tollbooth/contracts";
+import type { Purchase, PurchaseState } from "@kakashi/contracts";
 import type { RunViewWithAudit } from "../api";
 import PurchaseCard from "./PurchaseCard";
 

@@ -15,10 +15,10 @@
     ],
     "noEmit": true,
     "paths": {
-      "@tollbooth/contracts/money": [
+      "@kakashi/contracts/money": [
         "../../packages/contracts/src/money.ts"
       ],
-      "@tollbooth/contracts/registry": [
+      "@kakashi/contracts/registry": [
         "../../packages/contracts/src/registry.ts"
       ]
     }

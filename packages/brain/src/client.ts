@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import { randomUUID } from 'node:crypto';
 import type { z } from 'zod';
-import { addD, cmpD, decimal, canonicalJson, sha256Hex } from '@tollbooth/contracts';
-import type { BrainError, InferenceKind, InferenceTrace, InferenceAttempt, InferenceAccounting, Traced } from '@tollbooth/contracts';
+import { addD, cmpD, decimal, canonicalJson, sha256Hex } from '@kakashi/contracts';
+import type { BrainError, InferenceKind, InferenceTrace, InferenceAttempt, InferenceAccounting, Traced } from '@kakashi/contracts';
 
 export type CallOpts<T>={kind:InferenceKind;system:string;user:string;schema:z.ZodType<T>;maxTokens?:number};
 export type ClientDeps={env?:Record<string,string|undefined>;fetch?:typeof fetch;sleep?:(ms:number)=>Promise<void>;timeoutMs?:number;accounting?:InferenceAccounting};

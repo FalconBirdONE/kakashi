@@ -1,5 +1,5 @@
-import type { Mandate } from "@tollbooth/contracts";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { Mandate } from "@kakashi/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { Badge, Card, fmtTime, shortCode, usdc, type Tone } from "./ui";
 
 const TONES: Record<string, Tone> = { ACTIVE: "green", DRAFT: "gray", PENDING_APPROVAL: "yellow", EXPIRED: "red", REVOKED: "red", EXHAUSTED: "red" };

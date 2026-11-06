@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response } from "express";
 import { z } from "zod";
-import type { SigningPermit } from "@tollbooth/contracts";
+import type { SigningPermit } from "@kakashi/contracts";
 import type { SignResult } from "./sign.js";
 
 const atomic = z.string().regex(/^\d+$/);
@@ -12,7 +12,7 @@ const permitSchema = z.object({
 }).strict();
 const bodySchema = z.object({ permit: permitSchema, requirementsB64: z.string().min(1) }).strict();
 
-export function createApp(sign: (p: SigningPermit, r: string) => Promise<SignResult>, log: (m: string) => void, status?: (p:SigningPermit)=>import("@tollbooth/contracts").SignerStatus): Express {
+export function createApp(sign: (p: SigningPermit, r: string) => Promise<SignResult>, log: (m: string) => void, status?: (p:SigningPermit)=>import("@kakashi/contracts").SignerStatus): Express {
   const app = express();
   app.disable("x-powered-by");
   app.use(express.json({ limit: "32kb" }));

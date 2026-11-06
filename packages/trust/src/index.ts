@@ -1,5 +1,5 @@
 import { createPersistence } from "./persistence.js";
-import type { Trust } from "@tollbooth/contracts";
+import type { Trust } from "@kakashi/contracts";
 import { createCtx, type Ctx } from "./db.js";
 import * as mandates from "./mandates.js";
 import * as purchases from "./purchases.js";

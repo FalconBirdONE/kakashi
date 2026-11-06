@@ -1,4 +1,4 @@
-import { addA, subA, type Mandate, type PurchaseState, type RunView } from "@tollbooth/contracts";
+import { addA, subA, type Mandate, type PurchaseState, type RunView } from "@kakashi/contracts";
 
 /** Purchases that hold budget or already spent it; they count toward maxPurchasesPerRun. */
 export const ACTIVE_PURCHASE: readonly PurchaseState[] = ["AWAITING_APPROVAL", "RESERVED", "SIGNED", "SUBMITTED", "UNKNOWN", "CONFIRMED"];

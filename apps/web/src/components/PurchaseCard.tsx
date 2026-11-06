@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import type { DeliveryState, Purchase, PurchaseState } from "@tollbooth/contracts";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { DeliveryState, Purchase, PurchaseState } from "@kakashi/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import type { RunViewWithAudit } from "../api";
 import ApprovalCard from "./ApprovalCard";
 import { Badge, Card, hashscanTx, usdc, type Tone } from "./ui";

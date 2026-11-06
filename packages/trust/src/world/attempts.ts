@@ -1,6 +1,6 @@
 // World ID auth attempts: device flow start/poll, identity binding and the protected actions (SPEC §8.2, §8.4 step 3).
 // Every World call goes through the injected WorldClient, so tests drive the whole flow with a fake.
-import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@tollbooth/contracts";
+import { newId, type AuthAttemptPublic, type AuthAttemptResult, type AuthPurpose, type SigningPermit } from "@kakashi/contracts";
 import { collectPermit } from "../permit-store.js";
 import { appendAuditEvent } from "../outbox.js";
 import { issuePermitAfterApproval } from "../authorize.js";

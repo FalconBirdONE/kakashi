@@ -1,5 +1,5 @@
-import type { PolicyReason, RunView } from "@tollbooth/contracts";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { PolicyReason, RunView } from "@kakashi/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { Badge, listCls, Muted, usdc } from "../ui";
 
 export const REASON_TEXT: Record<PolicyReason, string> = {

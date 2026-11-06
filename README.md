@@ -1,8 +1,8 @@
-# Tollbooth
+# Kakashi
 
 **A research agent that decides what information is worth paying for, spends only inside a mandate a verified human approved, and can prove every decision and payment.**
 
-You ask Tollbooth a question. It works out what evidence it is missing, gets price quotes from paid data APIs, buys only the sources worth their cost, and answers with a receipt for every purchase. A verified human approves the budget, and any larger purchase needs that human's approval again.
+You ask Kakashi a question. It works out what evidence it is missing, gets price quotes from paid data APIs, buys only the sources worth their cost, and answers with a receipt for every purchase. A verified human approves the budget, and any larger purchase needs that human's approval again.
 
 | | |
 |---|---|
@@ -15,7 +15,7 @@ You ask Tollbooth a question. It works out what evidence it is missing, gets pri
 
 ## How it works
 
-1. **Approve a mandate.** You set a total budget, a cap per payment, an auto-approve threshold, the allowed merchants and an expiry. You activate it with World ID. Tollbooth records your approval of that exact mandate version.
+1. **Approve a mandate.** You set a total budget, a cap per payment, an auto-approve threshold, the allowed merchants and an expiry. You activate it with World ID. Kakashi records your approval of that exact mandate version.
 2. **Ask a question.** For example: *"Will it rain in Mumbai tomorrow afternoon?"*
 3. **The agent plans.** It turns the question into specific evidence needs, such as an hourly forecast for one neighbourhood and one time window.
 4. **Merchants quote.** Each allowed data API answers with an x402 `402 Payment Required` quote: price, recipient, asset and expiry.
@@ -97,16 +97,16 @@ More detail is in [`docs/rails/PROOF.md`](docs/rails/PROOF.md).
 
 ## Why 0G
 
-Without 0G, Tollbooth can't decide which evidence is worth paying for. The user's private question, preferences and spending limits would also go to an ordinary model provider in plaintext. With 0G they go to sealed TEE inference that returns a trace ID for every purchase decision.
+Without 0G, Kakashi can't decide which evidence is worth paying for. The user's private question, preferences and spending limits would also go to an ordinary model provider in plaintext. With 0G they go to sealed TEE inference that returns a trace ID for every purchase decision.
 
 ---
 
 ## Honest limits
 
-- Spending limits are enforced by our backend and the isolated signer, not on-chain. In this demo the operator holds the agent key, so Tollbooth is custodial.
+- Spending limits are enforced by our backend and the isolated signer, not on-chain. In this demo the operator holds the agent key, so Kakashi is custodial.
 - World authenticates the human, and we record their approval of a specific mandate or purchase. The user does not sign the payment: the agent's key does. World proofs are mocked for this event.
 - The 0G Router reports TEE verification for each decision. We record that report and the trace ID; we don't verify the TEE attestation independently.
-- Untrusted model output can't bypass the spending rules. Prompt injection in merchant data can still distort the written answer, so Tollbooth flags suspicious content.
+- Untrusted model output can't bypass the spending rules. Prompt injection in merchant data can still distort the written answer, so Kakashi flags suspicious content.
 - HCS makes our recorded history tamper-evident. It doesn't make it a complete, trustless audit.
 - The data merchants are demo APIs on Hedera testnet, and one of them is deliberately adversarial.
 

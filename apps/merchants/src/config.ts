@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { z } from "zod";
-import { MERCHANT_REGISTRY, type MerchantId } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY, type MerchantId } from "@kakashi/contracts";
 
 export const PACKAGE_DIR = resolve(import.meta.dirname, "..");
 const ROOT = resolve(PACKAGE_DIR, "../..");

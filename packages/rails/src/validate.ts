@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getMerchant } from "@tollbooth/contracts";
+import { getMerchant } from "@kakashi/contracts";
 
 const base = z.object({
   merchant: z.string(),

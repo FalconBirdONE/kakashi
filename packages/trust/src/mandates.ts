@@ -3,7 +3,7 @@
 import {
   MERCHANT_REGISTRY, boundedAtomic, addA, canonicalJson, cmpA, isAtomic, newId, sha256Hex, subA,
   type Mandate, type MandateDraft, type UserPreferences,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import type { Ctx } from "./db.js";
 import { appendAuditEvent } from "./outbox.js";
 import { mandateOf } from "./rows.js";

@@ -1,5 +1,5 @@
-import { addD, cmpD } from '@tollbooth/contracts';
-import type { Persistence, ResourceKind } from '@tollbooth/contracts';
+import { addD, cmpD } from '@kakashi/contracts';
+import type { Persistence, ResourceKind } from '@kakashi/contracts';
 import type { Ctx } from './db.js';
 import { peekPermit } from "./permit-store.js";
 import { purchaseOf, runOf } from './rows.js';

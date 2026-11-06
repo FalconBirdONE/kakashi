@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { seal, unseal, type SignerStatus } from "@tollbooth/contracts";
+import { seal, unseal, type SignerStatus } from "@kakashi/contracts";
 import Database from "better-sqlite3";
 
 export type PermitStore = {

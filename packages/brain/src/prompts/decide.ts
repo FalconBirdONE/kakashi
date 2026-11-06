@@ -1,4 +1,4 @@
-import type { DecideInput } from "@tollbooth/contracts";
+import type { DecideInput } from "@kakashi/contracts";
 import { SHARED_RULES, neutralise, wrapPreferences } from "./shared.js";
 
 export const PROMPT_VERSION = "decide.v1";

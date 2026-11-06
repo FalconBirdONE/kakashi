@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts";
 
 export type Db = Database.Database;
 
@@ -170,7 +170,7 @@ export function createCtx(
   const prices = MERCHANT_REGISTRY.map((m) => BigInt(m.priceAtomic));
   const min = prices.reduce((a, b) => (a < b ? a : b));
   return {
-    db: opts.db ?? openDb(env.DB_PATH ?? "./data/tollbooth.sqlite"),
+    db: opts.db ?? openDb(env.DB_PATH ?? "./data/kakashi.sqlite"),
     env, now: opts.now ?? (() => new Date()), minPriceAtomic: min.toString(),
   };
 }

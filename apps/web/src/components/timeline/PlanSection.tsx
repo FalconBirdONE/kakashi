@@ -1,4 +1,4 @@
-import type { PlanOutput } from "@tollbooth/contracts";
+import type { PlanOutput } from "@kakashi/contracts";
 import { Badge, listCls, Muted } from "../ui";
 
 export default function PlanSection({ plan }: { plan?: PlanOutput }) {

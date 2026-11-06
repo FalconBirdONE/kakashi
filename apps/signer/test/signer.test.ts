@@ -4,7 +4,7 @@ import { describe, expect, test } from "vitest";
 import { decodePaymentRequiredHeader, decodePaymentSignatureHeader, encodePaymentRequiredHeader } from "@x402/core/http";
 import type { PaymentRequirements } from "@x402/core/types";
 import { PrivateKey, inspectHederaTransaction } from "@x402/hedera";
-import { mintPermit, type PermitFields } from "@tollbooth/contracts";
+import { mintPermit, type PermitFields } from "@kakashi/contracts";
 import { createApp } from "../src/app.js";
 import { loadSignerConfig } from "../src/config.js";
 import { createSigner, hederaPaymentBuilder, type PaymentBuilder } from "../src/sign.js";

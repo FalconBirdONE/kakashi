@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { z } from "zod";
-import type { MerchantFault, MerchantId } from "@tollbooth/contracts";
+import type { MerchantFault, MerchantId } from "@kakashi/contracts";
 import { PACKAGE_DIR } from "./config.js";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "expected YYYY-MM-DD");

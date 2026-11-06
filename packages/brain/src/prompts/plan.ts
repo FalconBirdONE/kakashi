@@ -1,4 +1,4 @@
-import type { PlanInput } from "@tollbooth/contracts";
+import type { PlanInput } from "@kakashi/contracts";
 import { SHARED_RULES, neutralise, wrapPreferences } from "./shared.js";
 
 export const PROMPT_VERSION = "plan.v2";

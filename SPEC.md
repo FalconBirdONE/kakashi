@@ -1,4 +1,4 @@
-# Tollbooth: Technical Specification
+# Kakashi: Technical Specification
 
 > Working name. Version 1.0, 2026-11-06. Built for ETHGlobal Mumbai.
 > This document is the single source of truth for all four build branches. If code and spec disagree, the spec wins until the lead changes it.
@@ -21,7 +21,7 @@ Marker conventions:
 
 ## 1. Product in one paragraph
 
-Tollbooth is a research agent that **buys evidence**. You verify you're a real person with World ID and approve a spending mandate (a budget, a per-payment cap, which merchants are allowed, and an expiry). Then you ask a question. The agent works out what evidence is missing, gets price quotes from paid data APIs over **x402**, and decides which purchases are worth their cost using **sealed inference on 0G**. It pays in **USDC on Hedera** and answers you with a receipt for every purchase. The AI only proposes. A policy engine and an isolated signer enforce the mandate, so a manipulated model or a malicious merchant cannot overspend. Payments above a threshold require a fresh World ID check bound to that exact purchase.
+Kakashi is a research agent that **buys evidence**. You verify you're a real person with World ID and approve a spending mandate (a budget, a per-payment cap, which merchants are allowed, and an expiry). Then you ask a question. The agent works out what evidence is missing, gets price quotes from paid data APIs over **x402**, and decides which purchases are worth their cost using **sealed inference on 0G**. It pays in **USDC on Hedera** and answers you with a receipt for every purchase. The AI only proposes. A policy engine and an isolated signer enforce the mandate, so a manipulated model or a malicious merchant cannot overspend. Payments above a threshold require a fresh World ID check bound to that exact purchase.
 
 **Pitch line:** *"An agent that decides what information is worth paying for, spends only inside a mandate a verified human approved, and can prove every decision and payment."*
 
@@ -78,7 +78,7 @@ The event page says World proofs are **mocked** for this event. We say so in the
 
 ### 2.4 The "what breaks without 0G" sentence (final)
 
-> *"Without 0G, Tollbooth can't decide which evidence is worth paying for, and the user's private question, preferences and spending limits would go to an ordinary model provider in plaintext instead of sealed TEE inference that returns a trace ID for every purchase decision."*
+> *"Without 0G, Kakashi can't decide which evidence is worth paying for, and the user's private question, preferences and spending limits would go to an ordinary model provider in plaintext instead of sealed TEE inference that returns a trace ID for every purchase decision."*
 
 Review 1 proposed a sentence about front-running merchant pricing. I rejected it because it overclaims: we can't show that threat exists.
 
@@ -524,7 +524,7 @@ type BrainError = "ZG_UNAVAILABLE" | "NO_PROVIDER_FOR_TRUST_MODE" | "TEE_NOT_VER
 | `PERMIT_SECRET` | trust, signer | 32 random bytes, hex |
 | `ZG_BASE_URL=https://router-api.0g.ai/v1`, `ZG_API_KEY`, `ZG_MODEL`, `ZG_TRUST_MODE=private`, `ZG_VERIFY_TEE=true` | brain | |
 | `WORLD_ISSUER`, `WORLD_CLIENT_ID`, `WORLD_CLIENT_SECRET`, `WORLD_REQUIRED_ACR` (optional) | trust | secret server-side only |
-| `DB_PATH=./data/tollbooth.sqlite` | trust | |
+| `DB_PATH=./data/kakashi.sqlite` | trust | |
 | `DEMO_MODE=true` | app, rails | enables fault toggles |
 | `USE_REAL=` | app | comma list of `rails,brain,trust` |
 
@@ -552,7 +552,7 @@ type BrainError = "ZG_UNAVAILABLE" | "NO_PROVIDER_FOR_TRUST_MODE" | "TEE_NOT_VER
 7. Failure (`DENIED`, `EXPIRED`, `CANCELLED`, `ERROR`, `IDENTITY_MISMATCH`): the mandate stays non-active and **no run can spend**. This is World's required failure path.
 8. Any edit to a mandate creates a **new version** that needs a fresh activation. Top-ups don't raise the budget. Revocation is immediate for anything not yet signed.
 
-**Honest claim:** *"World authenticates the human. Tollbooth records that human's approval of one specific mandate version."* Don't say the user cryptographically signed the payment.
+**Honest claim:** *"World authenticates the human. Kakashi records that human's approval of one specific mandate version."* Don't say the user cryptographically signed the payment.
 
 ### 8.3 A research run (app orchestrates, brain thinks, rails pays, trust decides)
 
@@ -884,7 +884,7 @@ Prefix = owning branch. All run in CI on fakes. Those marked 🌐 also run once 
 
 | Time | Scene | Shows | Track |
 |---|---|---|---|
-| 0:00–0:12 | Hook: "Agents can't pay for data safely. Tollbooth fixes that." | Product | all |
+| 0:00–0:12 | Hook: "Agents can't pay for data safely. Kakashi fixes that." | Product | all |
 | 0:12–0:35 | Create mandate → Activate with World ID → **cancel** → mandate stays inactive and a run is blocked → retry → verified → ACTIVE | Failure path plus success | World |
 | 0:35–1:10 | Ask "Will it rain in Mumbai this week?" → plan → quotes (Gouger rejected by policy) → 0G buys QuickCast **autonomously** → HashScan link, 0G request ID | No-human paid request | Hedera, 0G |
 | 1:10–1:35 | Ask "Is 6–8 am tomorrow good for a run in Bandra?" → 0G picks HourlyPro (above auto-approve) → **Approve with World ID** → paid | Different choice, step-up approval | 0G, World |

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Mandate, PolicyReason } from "@tollbooth/contracts";
+import type { Mandate, PolicyReason } from "@kakashi/contracts";
 import { evaluate, policyConfigFromEnv, type PolicyConfig, type RunStats } from "../src/policy";
 
 // SPEC §13 T8: every §11.1 rule, positive and negative.

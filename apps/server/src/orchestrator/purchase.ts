@@ -1,4 +1,4 @@
-import type { SigningPermit as Permit } from '@tollbooth/contracts';
+import type { SigningPermit as Permit } from '@kakashi/contracts';
 import type { OrchContext } from './context.js';
 import { planQuery } from './util.js';
 

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { PrivateKey } from "@x402/hedera";
-import { signerEnv } from "@tollbooth/contracts";
+import { signerEnv } from "@kakashi/contracts";
 
 export const PACKAGE_DIR = resolve(import.meta.dirname, "..");
 

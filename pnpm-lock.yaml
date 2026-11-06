@@ -190,7 +190,7 @@ importers:
       '@hiero-ledger/sdk':
         specifier: 2.90.1
         version: 2.90.1
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@x402/core':
@@ -233,16 +233,16 @@ importers:
 
   apps/server:
     dependencies:
-      '@tollbooth/brain':
+      '@kakashi/brain':
         specifier: workspace:*
         version: link:../../packages/brain
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
-      '@tollbooth/rails':
+      '@kakashi/rails':
         specifier: workspace:*
         version: link:../../packages/rails
-      '@tollbooth/trust':
+      '@kakashi/trust':
         specifier: workspace:*
         version: link:../../packages/trust
       better-sqlite3:
@@ -291,7 +291,7 @@ importers:
       '@hiero-ledger/sdk':
         specifier: 2.90.1
         version: 2.90.1
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@x402/core':
@@ -334,7 +334,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       react:
@@ -386,7 +386,7 @@ importers:
 
   evals:
     dependencies:
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../packages/contracts
       openai:
@@ -408,7 +408,7 @@ importers:
 
   packages/brain:
     dependencies:
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../contracts
       openai:
@@ -439,7 +439,7 @@ importers:
       '@hiero-ledger/sdk':
         specifier: 2.90.1
         version: 2.90.1
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@x402/core':
@@ -464,7 +464,7 @@ importers:
 
   packages/trust:
     dependencies:
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../contracts
       better-sqlite3:
@@ -489,7 +489,7 @@ importers:
       '@hiero-ledger/sdk':
         specifier: 2.90.1
         version: 2.90.1
-      '@tollbooth/contracts':
+      '@kakashi/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
       '@x402/core':

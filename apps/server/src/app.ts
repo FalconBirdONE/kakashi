@@ -2,7 +2,7 @@ import { AuthStore } from "./auth/store.js";
 import { authRoutes, security, type LoginConfig } from "./auth/routes.js";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { newId } from "@tollbooth/contracts";
+import { newId } from "@kakashi/contracts";
 import type { Config } from "./config.js";
 import type { Deps } from "./wiring.js";
 import { createContext, type OrchContext } from "./orchestrator/context.js";

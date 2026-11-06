@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Brain, RunView } from "@tollbooth/contracts";
+import type { Brain, RunView } from "@kakashi/contracts";
 import { activateMandate, makeServer, type Server } from "./helpers.js";
 
 const run = async (s: Server, question = "Will it rain in Mumbai this week?") => {
@@ -11,7 +11,7 @@ const merchantOf = (v: RunView, qid: string) => v.quotes.find((q) => q.id === qi
 const fault = (s: Server, merchantId: string, f: string) => s.agent.post("/api/demo/fault").send({ merchantId, fault: f }).expect(200);
 
 /** Brain whose decide says BUY for the named merchants (or all offered quotes), then stops. */
-const buying = (only?: string[]) => (b: ReturnType<typeof import("@tollbooth/contracts").createFakeBrain>): Brain => ({
+const buying = (only?: string[]) => (b: ReturnType<typeof import("@kakashi/contracts").createFakeBrain>): Brain => ({
   ...b,
   plan: (i) => b.plan(i),
   synthesize: (i) => b.synthesize(i),

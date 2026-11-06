@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addA } from "@tollbooth/contracts";
+import { addA } from "@kakashi/contracts";
 import { requireUser, userOf } from "../session.js";
 import { auditStatuses } from "../orchestrator/audit.js";
 import type { OrchContext } from "../orchestrator/context.js";

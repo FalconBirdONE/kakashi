@@ -2,7 +2,7 @@ import request from "supertest";
 import { describe, expect, test, vi } from "vitest";
 import type { FacilitatorClient } from "@x402/core/server";
 import { decodePaymentRequiredHeader, decodePaymentResponseHeader, encodePaymentSignatureHeader } from "@x402/core/http";
-import { MERCHANT_REGISTRY, requestHash } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY, requestHash } from "@kakashi/contracts";
 import { createApp, toMirrorTxId } from "../src/app.js";
 import type { MerchantsConfig } from "../src/config.js";
 import { INJECTED_NOTE } from "../src/data.js";

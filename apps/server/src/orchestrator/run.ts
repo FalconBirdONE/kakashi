@@ -1,6 +1,6 @@
 import type {
   BrainError, InferenceKind, Need, PlanOutput, PolicyResult, Quote, RunState, RunView, SynthesisOutput, Traced,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import { HttpError } from "../errors.js";
 import type { OrchContext } from "./context.js";
 import { executePurchase } from "./purchase.js";
@@ -46,13 +46,13 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
   const checkTime = () => { if (ac.signal.aborted) throw new RunAbort(); };
 
   let inferenceCalls = 0;
-  const brainCall = async <T,>(kind: InferenceKind, fn: (accounting?: import("@tollbooth/contracts").InferenceAccounting) => Promise<Traced<T>>):
+  const brainCall = async <T,>(kind: InferenceKind, fn: (accounting?: import("@kakashi/contracts").InferenceAccounting) => Promise<Traced<T>>):
     Promise<{ ok: true; value: T; callId: string } | { ok: false; error: BrainError }> => {
     if (inferenceCalls >= MAX_INFERENCE_CALLS) return { ok: false, error: "BUDGET_EXCEEDED" };
     inferenceCalls++;
     let r: Traced<T>;
     const recorded:string[]=[];
-    const accounting: import("@tollbooth/contracts").InferenceAccounting | undefined = trust.persistence ? {
+    const accounting: import("@kakashi/contracts").InferenceAccounting | undefined = trust.persistence ? {
       reserve: key => trust.persistence!.reserveInference(runId,key,process.env.INFERENCE_MAX_REQUEST_COST??'0.01',process.env.INFERENCE_LIMIT??'0.1'),
       record: t => {recorded.push(trust.recordInference({...t,runId,kind}).id);emit('inference',recorded.at(-1)!);},
     } : undefined;

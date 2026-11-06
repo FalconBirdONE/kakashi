@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import { createHash, randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { newId } from '@tollbooth/contracts';
+import { newId } from '@kakashi/contracts';
 
 const digest = (token: string) => createHash('sha256').update(token).digest('hex');
 export type Session = { userId: string; csrf: string; expiresAt: number };

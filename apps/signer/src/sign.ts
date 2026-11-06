@@ -3,7 +3,7 @@ import { decodePaymentRequiredHeader } from "@x402/core/http";
 import type { PaymentRequired, PaymentRequirements } from "@x402/core/types";
 import { PrivateKey, createClientHederaSigner, inspectHederaTransaction } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
-import { verifyPermit, type SigningPermit } from "@tollbooth/contracts";
+import { verifyPermit, type SigningPermit } from "@kakashi/contracts";
 import type { PermitStore } from "./store.js";
 
 export type RefusalReason =
@@ -117,7 +117,7 @@ export function createSigner(d: SignerDeps) {
       return refuse("SIGNING_FAILED");
     }
   };
-  return Object.assign(sign,{status:(permit:SigningPermit): import('@tollbooth/contracts').SignerStatus => {
+  return Object.assign(sign,{status:(permit:SigningPermit): import('@kakashi/contracts').SignerStatus => {
     // A valid MAC authorizes status recovery even after signing authority expires.
     if(!verifyPermit(permit,d.permitSecret,new Date(permit.issuedAt)).ok)return {state:'UNAVAILABLE'};
     try{return d.store.status(permit.permitId);}catch{return {state:'UNAVAILABLE'};}

@@ -1,5 +1,5 @@
-import { MERCHANT_REGISTRY, addA, cmpA, getMerchant } from "@tollbooth/contracts";
-import type { Mandate, PolicyReason, PolicyResult, Quote } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY, addA, cmpA, getMerchant } from "@kakashi/contracts";
+import type { Mandate, PolicyReason, PolicyResult, Quote } from "@kakashi/contracts";
 
 // SPEC §11.1. Pure: no DB, no clock, no env. Money only via addA/cmpA.
 

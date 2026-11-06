@@ -1,4 +1,4 @@
-import type { AgentDecision, RunView } from "@tollbooth/contracts";
+import type { AgentDecision, RunView } from "@kakashi/contracts";
 import { Badge, listCls, Muted } from "../ui";
 import { merchantName } from "./QuotesSection";
 
