@@ -25,36 +25,37 @@ export default function DemoDrawer() {
     await api.revokeMandate(mandate.id);
     setMsg("Mandate revoked.");
   });
+  const active = Object.values(faults).filter((f) => f !== "NONE").length;
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 border-t border-slate-700 bg-slate-900 text-sm" aria-label="Demo controls">
-      <div className="mx-auto max-w-3xl px-4">
-        <button className="w-full py-2 text-left text-slate-300" aria-expanded={open} onClick={() => setOpen(!open)}>
-          Demo controls {open ? "▾" : "▴"}
-        </button>
-        {open && (
-          <div className="max-h-[60vh] space-y-3 overflow-y-auto pb-4">
-            <p className="text-xs text-slate-400">Merchant faults (write-only; reload shows None even if one is active).</p>
-            <ul className="space-y-2">
-              {MERCHANT_REGISTRY.map((m) => (
-                <li key={m.id} className="flex flex-wrap items-center justify-between gap-2">
-                  <label htmlFor={`fault-${m.id}`}>{m.name}</label>
-                  <select id={`fault-${m.id}`} value={faults[m.id] ?? "NONE"} onChange={(e) => void setFault(m.id, e.target.value as MerchantFault)}
-                    className="rounded border border-slate-600 bg-slate-950 px-2 py-1">
-                    {FAULTS.map((f) => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" onClick={() => void Promise.all(MERCHANT_REGISTRY.map((m) => setFault(m.id, "NONE")))}>Clear all faults</Button>
-              <Button variant="danger" onClick={() => void revokeNow()}>Revoke mandate now</Button>
-            </div>
-            {msg && <p className="text-emerald-300">{msg}</p>}
-            {err && <ErrorText>{err}</ErrorText>}
+    <aside className="fixed bottom-4 right-4 z-30 flex flex-col items-end gap-3 text-sm" aria-label="Demo controls">
+      {open && (
+        <div id="demo-panel" className="animate-menu-in max-h-[70vh] w-[min(360px,calc(100vw-2rem))] space-y-4 overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/95 p-4 shadow-2xl shadow-black/60 backdrop-blur-xl">
+          <p className="text-xs text-zinc-500">Merchant faults (write-only; reload shows None even if one is active).</p>
+          <ul className="space-y-2.5">
+            {MERCHANT_REGISTRY.map((m) => (
+              <li key={m.id} className="flex items-center justify-between gap-3">
+                <label htmlFor={`fault-${m.id}`} className="text-zinc-200">{m.name}</label>
+                <select id={`fault-${m.id}`} value={faults[m.id] ?? "NONE"} onChange={(e) => void setFault(m.id, e.target.value as MerchantFault)}
+                  className="rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 font-mono text-xs text-zinc-200 focus:border-gold-400/50 focus:outline-none">
+                  {FAULTS.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-2 border-t border-white/[0.06] pt-4">
+            <Button variant="ghost" size="sm" onClick={() => void Promise.all(MERCHANT_REGISTRY.map((m) => setFault(m.id, "NONE")))}>Clear all faults</Button>
+            <Button variant="danger" size="sm" onClick={() => void revokeNow()}>Revoke mandate now</Button>
           </div>
-        )}
-      </div>
+          {msg && <p className="text-emerald-300">{msg}</p>}
+          {err && <ErrorText>{err}</ErrorText>}
+        </div>
+      )}
+      <button aria-expanded={open} aria-controls="demo-panel" onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full border border-white/10 bg-zinc-900/90 px-4 py-2 text-xs font-medium text-zinc-300 shadow-lg shadow-black/40 backdrop-blur-xl transition-colors hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70">
+        <span aria-hidden="true" className={`size-1.5 rounded-full ${active ? "bg-amber-400" : "bg-zinc-500"}`} />
+        Demo controls {open ? "▾" : "▴"}
+      </button>
     </aside>
   );
 }

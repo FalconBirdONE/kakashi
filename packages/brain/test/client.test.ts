@@ -80,6 +80,27 @@ describe("callStructured", () => {
     expect(typeof r.trace.latencyMs).toBe("number");
   });
 
+  it("reasoning before </think> is ignored, JSON after it is parsed in one call", async () => {
+    const m = mockFetch(reply(`I should answer {"a": 2} maybe.\n</think>\n\n${good}`));
+    const r = await run(m.fn).p;
+    expect(r.ok && r.value).toEqual({ a: 1 });
+    expect(m.calls).toHaveLength(1);
+  });
+
+  it("reasoning without </think> followed by the JSON answer is parsed in one call", async () => {
+    const m = mockFetch(reply(`Let me think. Maybe {"a": "x"} fits? No.\nFinal:\n${good}\n`));
+    const r = await run(m.fn).p;
+    expect(r.ok && r.value).toEqual({ a: 1 });
+    expect(m.calls).toHaveLength(1);
+  });
+
+  it("live Router billing: total_cost_usd_micro is converted to USD and wins over total_cost", async () => {
+    const m = mockFetch(reply(good, { billing: { currency: "usd", total_cost: "751", total_cost_usd_micro: "751" } }));
+    const r = await run(m.fn).p;
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.trace.totalCost).toBe("0.000751");
+  });
+
   it("verified trust mode is sent and traced", async () => {
     const m = mockFetch(reply(good));
     const r = await run(m.fn, { ZG_TRUST_MODE: "verified" }).p;

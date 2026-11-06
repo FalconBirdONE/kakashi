@@ -1,13 +1,13 @@
 import type { PlanInput } from "@tollbooth/contracts";
 import { SHARED_RULES, neutralise, wrapPreferences } from "./shared.js";
 
-export const PROMPT_VERSION = "plan.v1";
+export const PROMPT_VERSION = "plan.v2";
 
 export const SYSTEM = `${SHARED_RULES}
 
 TASK: planning. From the question, the user preferences, the merchant catalog and the budget, decide what evidence is needed and normalise the query.
 - needs: 1 to 3 evidence needs, most important first. Each: {"needId":"n1","description":"...","priority":1|2|3} (needIds n1, n2, n3 in order; priority 1 = essential).
-- query: {"lat":number,"lon":number,"startDate":"yyyy-mm-dd","endDate":"yyyy-mm-dd"} (ISO dates, startDate <= endDate).
+- query: {"lat":number,"lon":number,"startDate":"yyyy-mm-dd","endDate":"yyyy-mm-dd"} (ISO dates, startDate <= endDate). Resolve relative dates such as "tomorrow" or "this week" from the given today date.
 - Use the city or neighbourhood named in the question. If none is named, default to Mumbai (lat 19.076, lon 72.8777) and say so in a need's description.
 - Needs describe information to obtain, not merchants to buy from. Keep them minimal; the catalog and budget show what is feasible.
 
@@ -22,6 +22,7 @@ export function buildPlanUser(i: PlanInput): string {
   }));
   return [
     `Question: ${neutralise(i.question)}`,
+    `Today (Asia/Kolkata): ${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })}`,
     wrapPreferences(i.preferences),
     `Catalog (prices are atomic integer strings, assetDecimals=${i.assetDecimals}):`,
     neutralise(JSON.stringify(catalog)),

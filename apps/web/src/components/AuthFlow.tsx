@@ -39,25 +39,23 @@ export function AuthFlow({ attempt, onResult }: { attempt: AuthAttemptPublic; on
 
   const words = RESULT_WORDS[current.result];
   return (
-    <div className="space-y-3" aria-live="polite">
-      <div className="flex items-center gap-2">
-        <Badge tone={words.tone}>{words.text}</Badge>
-      </div>
+    <div className="space-y-4" aria-live="polite">
+      <Badge tone={words.tone}>{words.text}</Badge>
       {pending && (
-        <div className="space-y-1">
-          <p className="text-sm text-slate-300">
-            Open <a href={current.verificationUri} target="_blank" rel="noreferrer" className="underline">{current.verificationUri}</a> and enter this code:
+        <div className="animate-page-in rounded-xl border border-white/[0.08] bg-black/30 p-4 sm:p-5">
+          <p className="text-sm text-zinc-400">
+            Open <a href={current.verificationUri} target="_blank" rel="noreferrer" className="text-link break-all">{current.verificationUri}</a> and enter this code:
           </p>
-          <p className="font-mono text-3xl font-bold tracking-widest text-slate-50" data-testid="user-code">{current.userCode}</p>
+          <p className="mt-3 font-mono text-3xl font-semibold tracking-[0.3em] text-zinc-50 sm:text-4xl" data-testid="user-code">{current.userCode}</p>
         </div>
       )}
       {err && <ErrorText>{err}</ErrorText>}
       {pending && config.devAuth && (
-        <div className="rounded border border-dashed border-slate-600 p-2">
-          <p className="mb-2 text-xs text-slate-400">Demo only: finish this attempt as World would.</p>
+        <div className="rounded-xl border border-dashed border-white/15 p-3">
+          <p className="mb-2 text-xs text-zinc-500">Demo only: finish this attempt as World would.</p>
           <div className="flex flex-wrap gap-2">
             {DEV_RESULTS.map((r) => (
-              <Button key={r} variant="ghost" onClick={() => api.devCompleteAuth(attempt.id, r).catch((e) => setErr(String(e.message)))}>
+              <Button key={r} variant="ghost" size="sm" onClick={() => api.devCompleteAuth(attempt.id, r).catch((e) => setErr(String(e.message)))}>
                 {RESULT_WORDS[r].text}
               </Button>
             ))}

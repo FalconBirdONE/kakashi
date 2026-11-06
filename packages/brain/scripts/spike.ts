@@ -37,7 +37,7 @@ for (const m of candidates.slice(0, 3)) {
     const trace = (data as unknown as { x_0g_trace?: Record<string, any> }).x_0g_trace ?? {};
     const text = data.choices[0]?.message?.content ?? "";
     let json = false;
-    try { JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, "")); json = true; } catch {}
+    try { JSON.parse(text.split("</think>").pop()!.trim().replace(/^```(?:json)?\s*|\s*```$/g, "")); json = true; } catch {}
     const row = {
       model: m.id, latencyMs, request_id: trace.request_id ?? null, provider: trace.provider ?? null,
       billing: trace.billing ?? null, tee_verified: trace.tee_verified ?? null,
