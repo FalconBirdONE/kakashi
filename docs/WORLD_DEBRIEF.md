@@ -1,25 +1,37 @@
-# World ID Agent Pass: integration debrief (in progress)
+# World ID Agent Pass: integration debrief
 
 ## Time to first success
-**Not reached yet.** Clock started 21:37 (2026-11-06) with the first discovery fetch. Discovery and the device-flow script took about 3 minutes; the login itself is blocked on a registered client and a human approval (see below). This section gets the real number once one validated login completes.
+- **Code to first validated login: 13 seconds** once a client existed (device-flow start 18:20:59 UTC, approval recorded 18:21:12 UTC on 2026-11-06).
+- **Wall clock:** the clock started at 21:37 on 2026-11-06 with the first discovery fetch. The first validated login was at 23:51 IST, about **2 h 14 min** later if 21:37 was IST. Nearly all of that was getting a portal client. Discovery and the device-flow code took about 3 minutes.
+- The integration code (device flow, ID token validation, mandate activation, purchase step-up) worked on the first live login with no changes.
 
-## Friction so far
-- **Good:** the discovery document is public, complete and correct (device flow, PKCE S256, acr values, jwks), so the script needed no guesswork about endpoints.
-- **Registration blocker:** the Agent Pass portal prompts for an enterprise Google account. The local `.env` has neither World client credential. [World's troubleshooting guide](https://auth.world.org/docs/guides/oidc#troubleshooting) directs participants with portal eligibility or registration errors to the organizer or operator. Ask the World event team to enable registration for the participant's Google account or provide an event test client with `client_secret_post`, its issuer, and the approval instructions.
-- **Event test setup:** the [Mumbai prize page](https://ethglobal.com/events/mumbai/prizes) links to `auth.world.org/portal` and says the event uses mocked proofs without the sandbox app. The portal registration and device-flow approval and denial are still pending.
-- **Docs gap:** the public docs page is a conceptual overview ("human continuity", private identifiers per sector, fresh authentication). I found no concrete device-flow walkthrough, no description of how the event's mocked proofs are produced, and nothing on how to trigger deny, cancel or expiry on purpose. The OAuth Playground link is the closest thing to a hands-on guide.
-- **Ambiguity:** `sub` being sector-scoped (not client-scoped) is easy to miss and affects how identity binding should be described.
-- **Ambiguity:** `acr` values are full URIs and it is not clear whether they can be requested at login or only read afterwards.
-- **Ambiguity:** whether deny and cancel are separate error codes or both `access_denied`.
+## Friction
+- **Good:** the discovery document is public, complete and correct (device flow, PKCE S256, acr values, jwks), so the code needed no guesswork about endpoints.
+- **Biggest blocker: portal sign-in.** The portal only accepts Google sign-in. Our first attempt with a personal Google account returned "invalid login". A university Google Workspace account got in straight away. The portal shows no message saying which accounts are eligible, so a participant can't tell whether to retry, switch accounts or go to the booth. The docs cover this only as `account_not_eligible` in a troubleshooting table.
+- **Two different "World" sites look alike.** Signing in at `auth.world.org` lands on the end-user IdP dashboard (Proof of human, Passkeys, Connect agents), not the developer portal. The developer portal is `auth.world.org/portal` ("Platform Portal", with Apps and Agents tabs). It took a round trip to realise we were on the wrong page.
+- **Create app form, good:** "Client secret (POST body)" is clearly labelled, and the form warns that the method can't be changed later. "Default accepted accounts" (Orb, Selfie Check, Any account) answers part of our earlier question about requesting an `acr` level: it is set per client, not per device request.
+- **Create app form, unclear:**
+  - A redirect URI is required even for a device-only client.
+  - "Ask for Face Auth" says "An existing session can still be reused", which made us worry that step-ups would come back with an old `auth_time`. We turned it off because the event uses mocked proofs. In practice `auth_time` was fresh on every login (see below).
+- **Docs gap:** no device-flow walkthrough and no description of how the event's mocked proofs are produced. Nothing explains how to trigger deny, cancel or expiry on purpose.
+- **Ambiguity:** `sub` is sector-scoped, not client-scoped. The portal gives a new app its own sector by default, which settles it for us, but the docs should say this next to the ID token claims.
 
-## Missing capabilities / docs (so far)
-What building the full integration (device flow, server-side validation, mandate activation and purchase step-up) showed. All of it comes from the public docs and the discovery document. **None of it has been checked against a live login yet**: we still have no client credentials.
+## What we observed live (2026-11-06)
+- **Claims:** `acr = https://world.org/oidc/acr/orb`, `amr = ["pop","user","mfa"]` on every verified login, with the client's accepted accounts set to Selfie Check.
+- **Fresh authentication:** `auth_time` was 6-23 s after each attempt start, for mandate activation and for the purchase step-up. World did not reuse an older session. Our `auth_time >= attempt start - 5 s` rule never rejected a real login.
+- **Deny:** the token endpoint returns HTTP 400 `access_denied`. Trust maps it to `DENIED`, the purchase becomes `APPROVAL_DENIED`, the reserved amount is released and nothing is signed.
+- **Pending:** `authorization_pending` (HTTP 400) while waiting. No `slow_down` seen.
+- **Cancel:** not tried, so whether cancel is a separate code from deny is still unknown.
+- **Expire:** _pending_.
 
-- **Device-flow terminal errors are not documented.** We map the RFC 8628 codes (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`) and treat anything else as an error. We found no World-specific list, no statement on whether deny and cancel are distinct codes, and no documented way to trigger deny, cancel or expiry in the sandbox or with the event's mocked proofs. Our `CANCELLED` result may never occur in practice. Not verified live.
-- **No way found to request an `acr` level in the device flow.** `acr_values_supported` lists two URIs, but the device authorization request has no documented `acr_values` (or `claims`) parameter. We can only check `acr`/`amr` after the token arrives and reject the login (`WORLD_REQUIRED_ACR`, `WORLD_REQUIRED_AMR`). That costs the user a wasted approval. The actual `acr`/`amr` values issued at this event are unknown.
-- **`sub` is sector-scoped, not client-scoped.** Apps in the same sector see the same `sub`. This changes what an `(iss, sub)` binding means and should be stated prominently next to the ID token claims, not only in the conceptual overview.
-- **No stated ID token lifetime or `auth_time` semantics for re-authentication.** The docs say important actions need "fresh authentication", but there is no documented `max_age`, `prompt=login` or equivalent for the device flow. We cannot ask World for a fresh authentication. Instead we require `auth_time >= attempt start - 5 s` and reject anything older. If World reuses a session and returns an older `auth_time`, every step-up would fail. We do not yet know whether it does. Not verified live.
-- A sandbox walkthrough with the expected `acr`/`amr` values is still missing.
+## Missing capabilities / docs
+- **Device-flow terminal errors are not documented.** We map the RFC 8628 codes (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`) and treat anything else as an error. Live, `authorization_pending` and `access_denied` behaved as RFC 8628 describes. There is still no World-specific list, and no statement on whether deny and cancel are distinct.
+- **No per-request `acr`.** The accepted-accounts level is a client default. The device authorization request has no documented `acr_values` (or `claims`) parameter, so a protected action can't ask for a stronger level than the client default. We still check `acr`/`amr` after the token arrives (`WORLD_REQUIRED_ACR`, `WORLD_REQUIRED_AMR`); both are empty in our setup.
+- **No stated `auth_time` guarantee.** The docs ask for "fresh authentication" on important actions but document no `max_age` or `prompt=login` for the device flow. We saw fresh `auth_time` values, but nothing promises it, and the Face Auth wording suggests session reuse can happen.
+- **No guidance on which Google accounts are eligible** for the portal, and no clear error when one is not.
 
-## Single most impactful improvement (provisional)
-One device-flow reference page with three parts. First, a 10-line example using a sandbox or event client. Second, the exact terminal error codes and how to trigger each one (deny, cancel, expire) with mocked proofs. Third, how to force a fresh authentication for a protected action (`max_age` / `prompt=login` semantics, or a guarantee about `auth_time`), stated next to the fact that `sub` is sector-scoped.
+## Single most impactful improvement
+One device-flow reference page with three parts:
+1. Which Google accounts can register a client at an event, and what the portal shows when an account can't.
+2. A 10-line device-flow example with the exact terminal error codes and how to trigger each one (deny, cancel, expire) with mocked proofs.
+3. A guarantee about fresh authentication for protected actions (`max_age` / `prompt=login`, or a promise about `auth_time`), stated next to the fact that `sub` is sector-scoped.
