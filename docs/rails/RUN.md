@@ -31,7 +31,7 @@ SIGNER_MAX_TOTAL_ATOMIC=1000000
 
 `SIGNER_MAX_TOTAL_ATOMIC` is a lifetime total recorded in `apps/signer/data/signer.sqlite`. To reset it, delete that file while the signer is stopped.
 
-**Asset mode:** AGENT holds no USDC yet, so run both processes with `ASSET_MODE=hbar` until the faucet step is done. Merchants, rails and trust must all use the same mode.
+**Asset mode:** `usdc` is the default and is proven end to end. `ASSET_MODE=hbar` is the fallback if AGENT runs out of USDC. Merchants, rails and trust must all use the same mode.
 
 ## Start
 
@@ -40,7 +40,7 @@ SIGNER_MAX_TOTAL_ATOMIC=1000000
 pnpm --filter @tollbooth/signer dev
 
 # terminal 2: merchants (demo faults on)
-DEMO_MODE=true ASSET_MODE=hbar pnpm --filter @tollbooth/merchants dev
+DEMO_MODE=true pnpm --filter @tollbooth/merchants dev
 ```
 
 Without pnpm on PATH, run `npm run dev` inside each package folder instead.
@@ -49,7 +49,7 @@ Expected first lines:
 
 ```
 signer for 0.0.11341848 on http://127.0.0.1:4100
-merchants on http://127.0.0.1:4200 asset 0.0.0 DEMO_MODE
+merchants on http://127.0.0.1:4200 asset 0.0.429274 DEMO_MODE
 ```
 
 ## Check it works
@@ -59,11 +59,11 @@ curl -s http://127.0.0.1:4200/catalog | head -c 200
 curl -si "http://127.0.0.1:4200/m/quickcast/forecast?lat=19.076&lon=72.878" | head -5   # expect 402 + PAYMENT-REQUIRED
 ```
 
-Real end-to-end payment, recovery and audit (spends about 20000 tinybars and one HCS message):
+Real end-to-end payment, recovery and audit (spends 0.02 USDC, or 20000 tinybars with `ASSET_MODE=hbar`, plus one HCS message):
 
 ```sh
 cd scripts/hedera
-PERMIT_SECRET=<signer's secret> ASSET_MODE=hbar ./node_modules/.bin/tsx e2e.ts
+PERMIT_SECRET=<signer's secret> ./node_modules/.bin/tsx e2e.ts
 ```
 
 ## Stop

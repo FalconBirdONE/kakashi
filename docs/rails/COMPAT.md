@@ -1,12 +1,12 @@
 # Compatibility contract (SPEC §4.2)
 
-Observed in spike S1 on 2026-11-06 against Hedera testnet. Evidence: the settled payment in [PROOF.md](PROOF.md).
+Observed in spike S1 on 2026-11-06 against Hedera testnet (HBAR), then confirmed with USDC in the rails e2e run the same day after AGENT was funded from the Circle faucet. Evidence: the settled payments in [PROOF.md](PROOF.md).
 
 | Item | Planned value | Observed | Confirmed |
 |---|---|---|---|
 | x402 version | 2 | `x402Version: 2` in `PAYMENT-REQUIRED` and in the facilitator's `/supported` | ☑ |
 | Network | `hedera:testnet` | `hedera:testnet` | ☑ |
-| Asset | USDC `0.0.429274`, 6 decimals (fallback HBAR `0.0.0`, 8 decimals) | **HBAR `0.0.0` settled.** USDC `0.0.429274` passed facilitator signature verification and failed only at preflight with `insufficient_balance: payer holds 0 of 0.0.429274, needs 10000`, because AGENT has not been funded from the Circle faucet yet. Current mode: `ASSET_MODE=hbar` until AGENT holds USDC. | ☑ HBAR / ☐ USDC (pending faucet) |
+| Asset | USDC `0.0.429274`, 6 decimals (fallback HBAR `0.0.0`, 8 decimals) | **Both settled.** HBAR `0.0.0` in spike S1. USDC `0.0.429274` in the e2e run (`0.0.9185802@1793984794.908601245`): the mirror node shows a token transfer of 10000 (0.01 USDC) from AGENT to quickcast and no HBAR moved between them. Before the faucet step, USDC had failed only at preflight with `insufficient_balance: payer holds 0 of 0.0.429274, needs 10000`. Default mode: `ASSET_MODE=usdc`. | ☑ HBAR / ☑ USDC |
 | Facilitator | `https://x402.org/facilitator` | Same. It verified and settled the payment. | ☑ |
 | Fee payer | `0.0.9185802`, cross-checked with `/supported` | `/supported` lists `extra.feePayer: 0.0.9185802` for `hedera:testnet`. The settled transaction's ID account is `0.0.9185802`, and it paid the 290413 tinybar network fee. | ☑ |
 | Key type | ECDSA secp256k1 | All project accounts use ECDSA secp256k1 keys (`scripts/hedera/setup.ts`). The facilitator verified the payer signature against the onchain key. | ☑ |
