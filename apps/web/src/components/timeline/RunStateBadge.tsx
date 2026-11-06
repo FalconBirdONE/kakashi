@@ -17,13 +17,14 @@ const LIVE: Record<string, string> = {
   SYNTHESIZING: "Synthesizing: writing the answer",
 };
 
+const row = "flex flex-wrap items-center gap-x-2.5 gap-y-1.5";
 export default function RunStateBadge({ run }: { run: ResearchRun }) {
   const why = failureText(run.failureReason);
-  if (LIVE[run.state]) return <p role="status"><Badge tone="blue">In progress</Badge> <span className="text-sm text-slate-300">{LIVE[run.state]}</span></p>;
-  if (run.state === "DONE") return <p role="status"><Badge tone="green">Done</Badge></p>;
+  if (LIVE[run.state]) return <p role="status" className={row}><Badge tone="blue">In progress</Badge> <span className="text-sm text-zinc-400">{LIVE[run.state]}</span></p>;
+  if (run.state === "DONE") return <p role="status" className={row}><Badge tone="green">Done</Badge></p>;
   if (run.state === "PARTIAL") return (
-    <p role="status"><Badge tone="yellow">Partial</Badge>{" "}
-      <span className="text-sm text-slate-300">Partial: some evidence is missing, still unresolved, or the AI service failed. Receipts so far are shown below.{why && ` ${why}.`}</span></p>);
-  return <p role="status"><Badge tone="red">Failed</Badge>{" "}
-    <span className="text-sm text-slate-300">Failed: nothing was bought.{why && ` ${why}.`}</span></p>;
+    <p role="status" className={row}><Badge tone="yellow">Partial</Badge>{" "}
+      <span className="text-sm text-zinc-400">Partial: some evidence is missing, still unresolved, or the AI service failed. Receipts so far are shown below.{why && ` ${why}.`}</span></p>);
+  return <p role="status" className={row}><Badge tone="red">Failed</Badge>{" "}
+    <span className="text-sm text-zinc-400">Failed: nothing was bought.{why && ` ${why}.`}</span></p>;
 }

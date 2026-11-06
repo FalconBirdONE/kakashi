@@ -1,5 +1,104 @@
 @import "tailwindcss";
 
-:root { color-scheme: dark; }
-body { background: #0b1020; color: #e6e9f2; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-a { color: #7dd3fc; }
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+
+  --color-ink: #07080a;
+  --color-gold-200: #fbe3b0;
+  --color-gold-300: #f7d28a;
+  --color-gold-400: #f0b955;
+  --color-gold-500: #df9f2f;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-page-in: page-in 0.6s var(--ease-out-expo) both;
+  --animate-rise: rise 0.9s var(--ease-out-expo) both;
+  --animate-pop: pop 0.5s var(--ease-out-expo) both;
+  --animate-menu-in: menu-in 0.25s var(--ease-out-expo) both;
+  --animate-grow-x: grow-x 1.2s var(--ease-out-expo) both;
+
+  @keyframes page-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes pop {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes menu-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes grow-x {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+}
+
+@layer base {
+  :root { color-scheme: dark; -webkit-tap-highlight-color: transparent; }
+  body {
+    @apply bg-ink font-sans text-zinc-200 antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: color-mix(in oklab, var(--color-gold-400) 35%, transparent); color: #fff; }
+}
+
+/* Inline text links. */
+@utility text-link {
+  color: var(--color-gold-300);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--color-gold-300) 35%, transparent);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s;
+  &:hover { text-decoration-color: currentColor; }
+}
+
+/* Headline fill: white fading to soft grey. */
+@utility text-sheen {
+  background: linear-gradient(180deg, #fff 35%, rgba(255, 255, 255, 0.6));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Faint grid behind the hero, faded out at the edges. */
+@utility hero-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+/* Slowly rotating gold edge around the hero product shot. Static where @property is unsupported. */
+@property --angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin-angle { to { --angle: 360deg; } }
+@utility glow-border {
+  border-radius: 1.25rem;
+  padding: 1px;
+  background: conic-gradient(from var(--angle), rgba(255, 255, 255, 0.07) 0deg, rgba(240, 185, 85, 0.6) 70deg,
+    rgba(255, 255, 255, 0.07) 150deg, rgba(255, 255, 255, 0.07) 360deg);
+  animation: spin-angle 9s linear infinite;
+}
+
+/* Scroll reveal, toggled by <Reveal>. */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo); }
+.reveal.is-shown { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+}

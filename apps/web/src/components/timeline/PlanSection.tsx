@@ -1,18 +1,15 @@
 import type { PlanOutput } from "@tollbooth/contracts";
-import { Badge, Card } from "../ui";
+import { Badge, listCls, Muted } from "../ui";
 
 export default function PlanSection({ plan }: { plan?: PlanOutput }) {
+  if (!plan) return <Muted>Waiting for the plan.</Muted>;
   return (
-    <Card title="Plan">
-      {!plan ? <p className="text-sm text-slate-400">Waiting for the plan.</p> : (
-        <ul className="space-y-2">
-          {plan.needs.map((n) => (
-            <li key={n.needId} className="flex items-start gap-2 text-sm text-slate-200">
-              <Badge tone={n.priority === 1 ? "yellow" : "gray"}>Priority {n.priority}</Badge><span>{n.description}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    <ul className={listCls}>
+      {plan.needs.map((n) => (
+        <li key={n.needId} className="flex items-start gap-3 px-4 py-3 text-sm text-zinc-200">
+          <Badge tone={n.priority === 1 ? "yellow" : "gray"}>Priority {n.priority}</Badge><span>{n.description}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

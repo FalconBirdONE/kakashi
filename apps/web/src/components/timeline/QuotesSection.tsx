@@ -1,6 +1,6 @@
 import type { PolicyReason, RunView } from "@tollbooth/contracts";
 import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
-import { Badge, Card, usdc } from "../ui";
+import { Badge, listCls, Muted, usdc } from "../ui";
 
 export const REASON_TEXT: Record<PolicyReason, string> = {
   MANDATE_INACTIVE: "Your mandate is not active", MANDATE_EXPIRED: "Your mandate has expired",
@@ -15,27 +15,27 @@ export const REASON_TEXT: Record<PolicyReason, string> = {
 export const merchantName = (id: string): string => MERCHANT_REGISTRY.find((m) => m.id === id)?.name ?? id;
 
 export default function QuotesSection({ quotes }: { quotes: RunView["quotes"] }) {
+  if (quotes.length === 0) return <Muted>No quotes yet.</Muted>;
   return (
-    <Card title="Quotes">
-      {quotes.length === 0 ? <p className="text-sm text-slate-400">No quotes yet.</p> : (
-        <ul className="space-y-3">
-          {quotes.map((q) => {
-            const p = q.policyResult;
-            return (
-              <li key={q.id} className="text-sm text-slate-200">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{merchantName(q.merchantId)}</span><span>{usdc(q.amountAtomic)}</span>
-                  {p && <Badge tone={p.allowed ? "green" : "red"}>{p.allowed ? "Allowed" : "Rejected"}</Badge>}
-                  {p?.needsApproval && <Badge tone="yellow">Needs your approval</Badge>}
-                </div>
-                {p && p.reasons.length > 0 && (
-                  <ul className="mt-1 list-disc pl-5 text-slate-400">{p.reasons.map((r) => <li key={r}>{REASON_TEXT[r] ?? r}</li>)}</ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </Card>
+    <ul className={listCls}>
+      {quotes.map((q) => {
+        const p = q.policyResult;
+        return (
+          <li key={q.id} className="px-4 py-3 text-sm text-zinc-200">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="font-medium text-zinc-100">{merchantName(q.merchantId)}</span>
+              <span className="font-mono text-zinc-400">{usdc(q.amountAtomic)}</span>
+              <span className="flex flex-wrap gap-2 sm:ml-auto">
+                {p && <Badge tone={p.allowed ? "green" : "red"}>{p.allowed ? "Allowed" : "Rejected"}</Badge>}
+                {p?.needsApproval && <Badge tone="yellow">Needs your approval</Badge>}
+              </span>
+            </div>
+            {p && p.reasons.length > 0 && (
+              <ul className="mt-1.5 list-disc pl-5 text-zinc-500">{p.reasons.map((r) => <li key={r}>{REASON_TEXT[r] ?? r}</li>)}</ul>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

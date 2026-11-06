@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api, type HistoryItem } from "../api";
-import { Badge, Button, Card, ErrorText, fmtTime, usdc, type Tone } from "../components/ui";
+import { Arrow, Badge, btn, Button, Card, ErrorText, fmtTime, PageHeader, usdc, type Tone } from "../components/ui";
 import { usePoll } from "../hooks";
 
 const TONE: Record<string, Tone> = { DONE: "green", PARTIAL: "yellow", FAILED: "red" };
@@ -27,24 +27,37 @@ export default function HistoryScreen() {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">History</h2>
-      {err && <ErrorText>{err}</ErrorText>}
-      {runs?.length === 0 && <Card><p className="text-sm text-slate-300">No questions yet. Ask one on the <a href="#/research">Research</a> page.</p></Card>}
+    <div>
+      <PageHeader eyebrow="Your runs" title="History">
+        Every question you have asked and what it cost. Open a run to see its receipts, or run it again for fresh data.
+      </PageHeader>
+      {err && <div className="mb-4"><ErrorText>{err}</ErrorText></div>}
+      {!runs && !err && <div className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-24 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />)}</div>}
+      {runs?.length === 0 && (
+        <Card className="text-center">
+          <div className="py-6">
+            <p className="text-zinc-300">No questions yet.</p>
+            <a href="#/research" className={`${btn("primary")} mt-5`}>Ask your first question <Arrow /></a>
+          </div>
+        </Card>
+      )}
       <ul className="space-y-3">
-        {runs?.map((r) => (
-          <li key={r.id}>
-            <Card>
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <p className="min-w-0 break-words font-medium">{r.question}</p>
-                <Badge tone={TONE[r.state] ?? "blue"}>{r.state}</Badge>
+        {runs?.map((r, i) => (
+          <li key={r.id} className="animate-page-in" style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}>
+            <div className="flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors duration-300 hover:border-white/[0.14] hover:bg-white/[0.03] sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <Badge tone={TONE[r.state] ?? "blue"}>{r.state}</Badge>
+                  <span className="text-xs text-zinc-500">{fmtTime(r.startedAt)}</span>
+                </div>
+                <p className="mt-2 break-words font-medium text-zinc-100">{r.question}</p>
+                <p className="mt-1 text-xs text-zinc-500">Data spend: <span className="font-mono text-zinc-300">{usdc(r.dataSpendAtomic)}</span></p>
               </div>
-              <p className="mt-1 text-xs text-slate-400">{fmtTime(r.startedAt)} · Data spend: {usdc(r.dataSpendAtomic)}</p>
-              <div className="mt-3 flex gap-2">
-                <a href={`#/research/${r.id}`} className="rounded border border-slate-600 px-3 py-2 text-sm no-underline hover:bg-slate-800">Open</a>
+              <div className="flex shrink-0 gap-2">
+                <a href={`#/research/${r.id}`} className={btn("ghost")}>Open</a>
                 <Button onClick={() => void again(r.id)} disabled={busy === r.id}>Run again</Button>
               </div>
-            </Card>
+            </div>
           </li>
         ))}
       </ul>

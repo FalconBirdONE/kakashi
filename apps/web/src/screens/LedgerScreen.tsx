@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { LedgerView } from "@tollbooth/contracts";
 import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
 import { api, type PurchaseRow } from "../api";
-import { Badge, Card, ErrorText, fmtTime, hashscanTx, usdc } from "../components/ui";
+import { Badge, Card, ErrorText, fmtTime, hashscanTx, Muted, PageHeader, usdc } from "../components/ui";
 import { usePoll } from "../hooks";
 
 const PAY_WORDS: Record<string, string> = {
@@ -25,6 +25,12 @@ function auditText(p?: PurchaseRow) {
   return a.state === "ANCHORED" ? `Anchored #${a.sequenceNumber}` : "Audit anchoring pending";
 }
 
+const HEADER = (
+  <PageHeader eyebrow="Step 3 of 3 · Verify" title="Ledger">
+    Every purchase with its Hedera transaction and its 0G decision. Data spend comes out of your mandate; AI inference is billed separately in 0G credits.
+  </PageHeader>
+);
+
 export default function LedgerScreen() {
   const [ledger, setLedger] = useState<LedgerView | null>(null);
   const [purchases, setPurchases] = useState<PurchaseRow[]>([]);
@@ -37,60 +43,76 @@ export default function LedgerScreen() {
     } catch (e) { setError(e instanceof Error ? e.message : "Could not load the ledger"); }
   }, 3000);
 
-  if (!ledger) return <div>{error ? <ErrorText>{error}</ErrorText> : <p className="text-slate-400">Loading ledger...</p>}</div>;
+  if (!ledger) return (
+    <div>{HEADER}{error ? <ErrorText>{error}</ErrorText> : <div className="h-48 animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.02]" />}</div>
+  );
   const byId = new Map(purchases.map((p) => [p.purchaseId, p]));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-100">Ledger</h1>
+    <div className="space-y-6">
+      {HEADER}
       {error && <ErrorText>{error}</ErrorText>}
       {!ledger.mandate ? (
-        <Card><p className="text-slate-300">No mandate yet. <a className="underline" href="#/mandate">Create one on the Mandate screen.</a></p></Card>
+        <Card><p className="text-zinc-300">No mandate yet. <a className="text-link" href="#/mandate">Create one on the Mandate screen.</a></p></Card>
       ) : (
-        <Card title="Mandate budget">
-          <div className="flex h-3 overflow-hidden rounded bg-slate-700" role="img" aria-label="Budget: spent, reserved and available">
-            <div className="bg-emerald-500" style={{ width: `${pct(ledger.spentAtomic, ledger.limitAtomic)}%` }} />
-            <div className="bg-amber-500" style={{ width: `${pct(ledger.reservedAtomic, ledger.limitAtomic)}%` }} />
+        <Card>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="text-[15px] font-semibold text-zinc-100">Mandate budget</h2>
+              <p className="mt-1 text-xs text-zinc-500">Available</p>
+              <p className="font-mono text-3xl tracking-tight text-zinc-50 sm:text-4xl">{usdc(ledger.availableAtomic)}</p>
+            </div>
+            <ul aria-hidden="true" className="flex gap-4 text-xs text-zinc-400">
+              <li className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-400" />Spent</li>
+              <li className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-amber-400" />Reserved</li>
+              <li className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-white/15" />Available</li>
+            </ul>
           </div>
-          <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-            {([["Limit", ledger.limitAtomic], ["Spent", ledger.spentAtomic], ["Reserved", ledger.reservedAtomic], ["Available", ledger.availableAtomic]] as const).map(([k, v]) => (
-              <div key={k}><dt className="text-slate-400">{k}</dt><dd className="font-semibold text-slate-100">{usdc(v)}</dd></div>
+          <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/[0.08]" role="img" aria-label="Budget: spent, reserved and available">
+            <div className="flex h-full origin-left animate-grow-x">
+              <div className="bg-emerald-400 transition-[width] duration-700 ease-out-expo" style={{ width: `${pct(ledger.spentAtomic, ledger.limitAtomic)}%` }} />
+              <div className="bg-amber-400 transition-[width] duration-700 ease-out-expo" style={{ width: `${pct(ledger.reservedAtomic, ledger.limitAtomic)}%` }} />
+            </div>
+          </div>
+          <dl className="mt-5 grid grid-cols-3 gap-4 text-sm">
+            {([["Limit", ledger.limitAtomic], ["Spent", ledger.spentAtomic], ["Reserved", ledger.reservedAtomic]] as const).map(([k, v]) => (
+              <div key={k}><dt className="text-zinc-500">{k}</dt><dd className="mt-0.5 font-mono text-zinc-100">{usdc(v)}</dd></div>
             ))}
           </dl>
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card title="Data spend (USDC, from mandate)"><p className="text-lg font-semibold text-slate-100">{usdc(ledger.dataSpendAtomic)}</p></Card>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Card title="Data spend (USDC, from mandate)"><p className="font-mono text-2xl text-zinc-50">{usdc(ledger.dataSpendAtomic)}</p></Card>
         <Card title="AI inference (0G credits, sponsored)">
-          <p className="text-lg font-semibold text-slate-100">{ledger.inferenceSpend} 0G credits</p>
-          {ledger.inferenceBillingPending && <p role="status">Some inference charges are unknown; budget remains reserved pending reconciliation.</p>}
-          <p className="text-xs text-slate-400">Inference is not counted against the mandate budget.</p>
+          <p className="font-mono text-2xl text-zinc-50">{ledger.inferenceSpend} 0G credits</p>
+          {ledger.inferenceBillingPending && <p role="status" className="mt-2 text-sm text-amber-200">Some inference charges are unknown; budget remains reserved pending reconciliation.</p>}
+          <p className="mt-2 text-xs text-zinc-500">Inference is not counted against the mandate budget.</p>
         </Card>
       </div>
 
       <Card title="Receipts">
-        {ledger.receipts.length === 0 ? <p className="text-sm text-slate-400">No receipts yet. Run a research question to make a purchase.</p> : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead className="text-slate-400"><tr>
-                {["Time", "Merchant", "Amount", "Payment", "Delivery", "Audit", "Transaction", "0G request"].map((h) => <th key={h} className="px-2 py-1 font-medium">{h}</th>)}
+        {ledger.receipts.length === 0 ? <Muted>No receipts yet. Run a research question to make a purchase.</Muted> : (
+          <div className="-mx-5 overflow-x-auto sm:-mx-6">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead><tr className="border-b border-white/[0.06] text-xs uppercase tracking-wider text-zinc-500">
+                {["Time", "Merchant", "Amount", "Payment", "Delivery", "Audit", "Transaction", "0G request"].map((h) => <th key={h} className="px-3 py-2.5 font-medium first:pl-5 sm:first:pl-6">{h}</th>)}
               </tr></thead>
               <tbody>
                 {ledger.receipts.map((r) => {
                   const p = byId.get(r.purchaseId);
                   return (
-                    <tr key={r.purchaseId} className="border-t border-slate-800 text-slate-100">
-                      <td className="px-2 py-1">{fmtTime(r.at)}</td>
-                      <td className="px-2 py-1">{name(r.merchantId)}</td>
-                      <td className="px-2 py-1">{usdc(r.amountAtomic)}</td>
-                      <td className="px-2 py-1">{p ? <Badge tone={p.state === "CONFIRMED" ? "green" : "yellow"}>{PAY_WORDS[p.state] ?? "Unknown state"}</Badge> : "-"}</td>
-                      <td className="px-2 py-1">{p ? DELIVERY_WORDS[p.delivery] ?? p.delivery : "-"}</td>
-                      <td className="px-2 py-1">{auditText(p)}</td>
-                      <td className="px-2 py-1">
-                        <a className="font-mono underline" target="_blank" rel="noreferrer" href={hashscanTx(r.hederaTxId)}>{r.hederaTxId.length > 14 ? `${r.hederaTxId.slice(0, 14)}...` : r.hederaTxId}</a>
+                    <tr key={r.purchaseId} className="border-b border-white/[0.04] text-zinc-200 transition-colors last:border-0 hover:bg-white/[0.02]">
+                      <td className="whitespace-nowrap px-3 py-3 pl-5 text-zinc-400 sm:pl-6">{fmtTime(r.at)}</td>
+                      <td className="px-3 py-3 font-medium">{name(r.merchantId)}</td>
+                      <td className="whitespace-nowrap px-3 py-3 font-mono">{usdc(r.amountAtomic)}</td>
+                      <td className="px-3 py-3">{p ? <Badge tone={p.state === "CONFIRMED" ? "green" : "yellow"}>{PAY_WORDS[p.state] ?? "Unknown state"}</Badge> : "-"}</td>
+                      <td className="px-3 py-3 text-zinc-400">{p ? DELIVERY_WORDS[p.delivery] ?? p.delivery : "-"}</td>
+                      <td className="whitespace-nowrap px-3 py-3 text-zinc-400">{auditText(p)}</td>
+                      <td className="px-3 py-3">
+                        <a className="text-link font-mono text-xs" target="_blank" rel="noreferrer" href={hashscanTx(r.hederaTxId)}>{r.hederaTxId.length > 14 ? `${r.hederaTxId.slice(0, 14)}...` : r.hederaTxId}</a>
                       </td>
-                      <td className="px-2 py-1 font-mono">{r.zgRequestId ?? "-"}</td>
+                      <td className="px-3 py-3 pr-5 font-mono text-xs text-zinc-400 sm:pr-6">{r.zgRequestId ?? "-"}</td>
                     </tr>
                   );
                 })}
