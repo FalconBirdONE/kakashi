@@ -5,6 +5,8 @@ import { requireUser, userOf } from "../session.js";
 import type { OrchContext } from "../orchestrator/context.js";
 import { runResearch } from "../orchestrator/run.js";
 import { approvePurchase } from "../orchestrator/approval.js";
+import { auditStatuses } from "../orchestrator/audit.js";
+import { sumConfirmed } from "./meta.js";
 
 const body = z.object({ question: z.string().trim().min(1).max(500) }).strict();
 
@@ -31,7 +33,7 @@ export function runRoutes(ctx: OrchContext, opts: { heartbeatMs?: number } = {})
       .filter(([, e]) => e.userId === userOf(res))
       .map(([id, e]) => {
         const run = trust.getRunView(id).run;
-        return { id, question: e.question, state: run.state, startedAt: run.startedAt, finishedAt: run.finishedAt };
+        return { id, question: e.question, state: run.state, startedAt: run.startedAt, finishedAt: run.finishedAt, dataSpendAtomic: sumConfirmed(ctx, id) };
       })
       .sort((a, b) => (a.id < b.id ? 1 : -1)); // run ids are time-sortable
     res.json({ runs: out });
@@ -40,7 +42,8 @@ export function runRoutes(ctx: OrchContext, opts: { heartbeatMs?: number } = {})
   r.get("/runs/:id", (req, res) => {
     const id = String(req.params.id);
     own(id, res);
-    res.json(trust.getRunView(id));
+    const view = trust.getRunView(id);
+    res.json({ ...view, audit: auditStatuses(ctx, view.purchases.map((p) => p.id)) });
   });
 
   r.post("/runs/:id/rerun", (req, res) => {

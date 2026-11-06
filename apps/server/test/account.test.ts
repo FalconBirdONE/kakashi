@@ -95,3 +95,23 @@ describe("demo gating and basics", () => {
     expect((await request(s.app).get("/nope").expect(404)).body.error).toBe("NOT_FOUND");
   });
 });
+
+describe("ui support routes", () => {
+  it("serves config without a session and per-purchase audit/delivery data with one", async () => {
+    const s = await makeServer();
+    const c = (await request(s.app).get("/api/config").expect(200)).body;
+    expect(c).toMatchObject({ demoMode: true, devAuth: true });
+    await request(s.app).get("/api/purchases").expect(401);
+    await activateMandate(s);
+    const { runId } = (await s.agent.post("/api/runs").send({ question: "q" }).expect(202)).body;
+    await s.ctx.whenIdle();
+    const view = (await s.agent.get(`/api/runs/${runId}`)).body;
+    const bought = view.purchases.find((p: { state: string }) => p.state === "CONFIRMED");
+    expect(view.audit[bought.id].state).toBe("PENDING");
+    const rows = (await s.agent.get("/api/purchases")).body.purchases;
+    const row = rows.find((x: { purchaseId: string }) => x.purchaseId === bought.id);
+    expect(row).toMatchObject({ merchantId: "quickcast", delivery: "RECEIVED_VALID", amountAtomic: "10000" });
+    expect(row.zgRequestId).toMatch(/^fake-/);
+    expect((await s.agent.get("/api/runs")).body.runs[0].dataSpendAtomic).toBe("10000");
+  });
+});

@@ -9,6 +9,7 @@ import { loadSession } from "./session.js";
 import { accountRoutes } from "./routes/account.js";
 import { demoRoutes } from "./routes/demo.js";
 import { runRoutes } from "./routes/runs.js";
+import { configRoute, purchaseListRoute } from "./routes/meta.js";
 
 export function createApp(
   deps: Deps,
@@ -26,8 +27,10 @@ export function createApp(
   app.use(loadSession);
 
   const api = express.Router();
+  api.use(configRoute(ctx, config));
   api.use(accountRoutes(ctx, { demoUserId, secureCookie: config.secureCookie }));
   if (config.demoMode) api.use(demoRoutes(ctx, { merchantsUrl: config.merchantsUrl }));
+  api.use(purchaseListRoute(ctx));
   api.use(runRoutes(ctx, { heartbeatMs: opts.heartbeatMs }));
   app.use("/api", api);
 

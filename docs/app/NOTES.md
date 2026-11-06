@@ -26,3 +26,11 @@ Started from `src/index.ts`, stopped on shutdown. Reconciler: every 3 s plus onc
 - If `recoverDelivery` fails after a purchase is CONFIRMED, delivery is set to NOT_RECEIVED with an issue and is not retried (CONFIRMED leaves `listUnresolved`).
 - The run record is not updated when the reconciler resolves a purchase after the run ended; the UI should read purchase state from the run view.
 - Audit publishes strictly in order: a failure stops the batch and backs off 1 s, 2 s, 4 s ... capped at 60 s, so anchored order equals chain order.
+
+## Web UI (`apps/web`)
+- Hash routes: `#/mandate`, `#/research[/<runId>]`, `#/ledger`, `#/history`. Dev proxy `/api` -> `http://localhost:4000`.
+- The contracts index imports `node:crypto`, so the browser only imports pure modules through aliases (`@tollbooth/contracts/money`, `/registry`, see `vite.config.ts` and `tsconfig.json`). Everything else from contracts is `import type`.
+- Server routes added for the UI: `GET /api/config` (public flags), `GET /api/purchases` (delivery, audit and 0G fields per purchase), `audit` map on `GET /api/runs/:id`, `dataSpendAtomic` on run history.
+- Audit status per purchase comes from the audit worker's in-memory anchors; after a server restart it shows "Audit status unknown" until re-anchored.
+- Demo drawer fault selectors are write-only (the server has no fault getter).
+- Not checked: a real browser session (console errors, layout at 375 px). Tests use jsdom; the walkthrough ran through the Vite proxy with curl.

@@ -4,9 +4,27 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "@testing-library/jest-dom"],
-    "noEmit": true
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "vite/client",
+      "@testing-library/jest-dom"
+    ],
+    "noEmit": true,
+    "paths": {
+      "@tollbooth/contracts/money": [
+        "../../packages/contracts/src/money.ts"
+      ],
+      "@tollbooth/contracts/registry": [
+        "../../packages/contracts/src/registry.ts"
+      ]
+    }
   },
-  "include": ["src", "vite.config.ts"]
+  "include": [
+    "src",
+    "vite.config.ts"
+  ]
 }

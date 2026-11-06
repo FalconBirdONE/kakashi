@@ -27,6 +27,7 @@ export function createAuditWorker(
         try {
           const r = await rails.publishAudit({ id: e.id, json: JSON.stringify(e.payload) });
           trust.markAnchored(e.id, r);
+          if (e.payload.pur) ctx.audit.set(e.payload.pur, { sequenceNumber: r.sequenceNumber, topicId: r.topicId });
           nextAt.delete(e.id);
         } catch {
           trust.markAuditRetry(e.id);

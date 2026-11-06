@@ -14,6 +14,8 @@ export type OrchContext = {
   attemptOwner: Map<string, string>;
   runs: Map<string, { userId: string; question: string }>;
   purchases: Map<string, { runId: string; userId: string }>;
+  /** purchaseId -> latest HCS anchor, filled by the audit worker. */
+  audit: Map<string, { sequenceNumber: number; topicId: string }>;
   /** purchaseId -> delivered body (input to synthesis). */
   evidence: Map<string, unknown>;
   /** purchases currently being executed; prevents signing twice. */
@@ -30,7 +32,7 @@ export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}
   const ctx: OrchContext = {
     deps, bus: new EventBus(), approvalPollMs: opts.approvalPollMs ?? 2000,
     mandateOwner: new Map(), attemptOwner: new Map(), runs: new Map(), purchases: new Map(),
-    evidence: new Map(), inflight: new Set(), stopped: false,
+    evidence: new Map(), audit: new Map(), inflight: new Set(), stopped: false,
     track(p) {
       pending.add(p);
       const done = () => void pending.delete(p);
