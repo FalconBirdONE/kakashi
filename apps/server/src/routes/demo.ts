@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { MERCHANT_IDS, type MerchantFault, type MerchantId } from "@tollbooth/contracts";
+import { MERCHANT_IDS, type MerchantFault, type MerchantId } from "@kakashi/contracts";
 import { HttpError } from "../errors.js";
 import { requireUser, userOf } from "../session.js";
 import type { OrchContext } from "../orchestrator/context.js";

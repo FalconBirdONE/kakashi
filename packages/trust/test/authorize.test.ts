@@ -1,6 +1,6 @@
 import { Worker } from "node:worker_threads";
 import { afterEach, describe, expect, it } from "vitest";
-import { verifyPermit, type Purchase, type SigningPermit } from "@tollbooth/contracts";
+import { verifyPermit, type Purchase, type SigningPermit } from "@kakashi/contracts";
 import { authorize, issuePermitAfterApproval, precheck } from "../src/authorize";
 import { revokeMandate } from "../src/mandates";
 import { getPurchase, getQuote, proposePurchase, recordQuote } from "../src/purchases";

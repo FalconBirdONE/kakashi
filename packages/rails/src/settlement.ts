@@ -1,4 +1,4 @@
-import type { Atomic } from "@tollbooth/contracts";
+import type { Atomic } from "@kakashi/contracts";
 
 /** 0.0.x@seconds.nanos to the mirror node form 0.0.x-seconds-nanos. */
 export function toMirrorTxId(tx: string): string {

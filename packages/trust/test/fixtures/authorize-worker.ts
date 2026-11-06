@@ -1,6 +1,6 @@
 // T5 worker: its own SQLite connection to the shared file DB, released by a barrier so all workers race authorize().
 import { parentPort, workerData } from "node:worker_threads";
-import type { AuthorizeResult } from "@tollbooth/contracts";
+import type { AuthorizeResult } from "@kakashi/contracts";
 import { authorize } from "../../src/authorize";
 import { createCtx } from "../../src/db";
 

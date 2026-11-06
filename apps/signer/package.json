@@ -1,5 +1,5 @@
 {
-  "name": "@tollbooth/signer",
+  "name": "@kakashi/signer",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,7 +16,7 @@
     "@hiero-ledger/sdk": "2.90.1",
     "better-sqlite3": "13.0.3",
     "zod": "4.6.7",
-    "@tollbooth/contracts": "workspace:*"
+    "@kakashi/contracts": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",

@@ -2,7 +2,7 @@ import { AuthStore } from "./auth/store.js";
 import { authRoutes, security, type LoginConfig } from "./auth/routes.js";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { newId } from "@tollbooth/contracts";
+import { newId } from "@kakashi/contracts";
 import type { Config } from "./config.js";
 import type { Deps } from "./wiring.js";
 import { createContext, type OrchContext } from "./orchestrator/context.js";
@@ -15,11 +15,12 @@ import { configRoute, purchaseListRoute } from "./routes/meta.js";
 
 export function createApp(
   deps: Deps,
-  config: Pick<Config, "demoMode" | "merchantsUrl" | "sessionSecret" | "secureCookie">,
+  config: Pick<Config, "demoMode" | "liveDemo" | "merchantsUrl" | "sessionSecret" | "secureCookie">,
   opts: { approvalPollMs?: number; heartbeatMs?: number; demoUserId?: string; authStore?: AuthStore; login?: LoginConfig; paymentsEnabled?: boolean; staticDir?:string } = {},
 ): { app: express.Express; ctx: OrchContext; demoUserId: string } {
   const ctx: OrchContext = createContext(deps, opts);
-  if (config.demoMode && (deps.modes.trust === "real" || deps.modes.rails === "real")) throw new Error("demo authority requires fake trust and rails");
+  // LIVE_DEMO: one shared demo user on real trust/rails. World ID still gates activation and over-cap purchases. Never in production (readiness).
+  if (config.demoMode && !config.liveDemo && (deps.modes.trust === "real" || deps.modes.rails === "real")) throw new Error("demo authority requires fake trust and rails (LIVE_DEMO=true allows a shared live demo)");
   const auth = opts.authStore ?? new AuthStore(":memory:");
   const demoUserId = opts.demoUserId ?? newId("usr_"); // the one demo user, created at start
 

@@ -1,7 +1,7 @@
 import { describe,expect,it } from 'vitest';
 import { z } from 'zod';
 import { callStructured } from '../src/client.js';
-import { addD,decimal } from '@tollbooth/contracts';
+import { addD,decimal } from '@kakashi/contracts';
 
 const env={ZG_API_KEY:'test',ZG_MODEL:'test',ZG_BASE_URL:'https://controlled.invalid/v1'};
 const response=(cost:unknown,content='{"a":1}')=>new Response(JSON.stringify({choices:[{message:{content}}],x_0g_trace:{request_id:'req',tee_verified:true,billing:{total_cost:cost}}}),{status:200,headers:{'content-type':'application/json'}});

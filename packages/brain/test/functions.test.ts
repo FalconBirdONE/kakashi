@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { DecisionItem, DecideInput, SynthesisInput, PlanInput } from "@tollbooth/contracts";
+import type { DecisionItem, DecideInput, SynthesisInput, PlanInput } from "@kakashi/contracts";
 import { createFunctions, postCheckDecisions } from "../src/functions";
 import { createBrain } from "../src";
 import * as plan from "../src/prompts/plan";

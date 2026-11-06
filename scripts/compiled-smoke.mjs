@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 // Plain Node, compiled entry point, no tsx/loader, no external API calls.
-const dir = await mkdtemp(join(tmpdir(), 'tollbooth-smoke-'));
+const dir = await mkdtemp(join(tmpdir(), 'kakashi-smoke-'));
 try {
   for (const factory of ['brain', 'trust', 'rails', 'rails,brain,trust']) {
     const child = fork(new URL('../apps/server/dist/index.js', import.meta.url), [], {

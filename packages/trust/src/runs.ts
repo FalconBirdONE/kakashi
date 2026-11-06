@@ -1,4 +1,4 @@
-import { newId, type ResearchRun } from "@tollbooth/contracts";
+import { newId, type ResearchRun } from "@kakashi/contracts";
 import type { Ctx } from "./db.js";
 import { getActiveMandate } from "./mandates.js";
 import { appendAuditEvent } from "./outbox.js";

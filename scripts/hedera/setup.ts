@@ -1,4 +1,4 @@
-// Idempotent testnet setup (SPEC §8.1). Run: pnpm --filter @tollbooth/hedera-scripts setup
+// Idempotent testnet setup (SPEC §8.1). Run: pnpm --filter @kakashi/hedera-scripts setup
 import {
   AccountCreateTransaction,
   Client,
@@ -93,7 +93,7 @@ async function ensureTopic(): Promise<void> {
   }
   const receipt = await (
     await new TopicCreateTransaction()
-      .setTopicMemo("tollbooth audit log")
+      .setTopicMemo("kakashi audit log")
       .setSubmitKey(operatorKey.publicKey) // only the operator can append audit events
       .execute(client)
   ).getReceipt(client);
@@ -140,7 +140,7 @@ Manual steps:
   2. Fund AGENT (${env.AGENT_ACCOUNT_ID}) with testnet USDC at https://faucet.circle.com
      Network: Hedera Testnet. Paste the 0.0.x account ID, NOT the EVM address.
   3. Keep the operator (${operatorId}) funded with HBAR at https://portal.hedera.com
-  4. Run: pnpm --filter @tollbooth/hedera-scripts check`);
+  4. Run: pnpm --filter @kakashi/hedera-scripts check`);
 } finally {
   client.close();
 }

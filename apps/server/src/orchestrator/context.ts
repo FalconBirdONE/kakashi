@@ -1,5 +1,5 @@
 import { EventBus } from "./bus.js";
-import type { PolicyResult } from "@tollbooth/contracts";
+import type { PolicyResult } from "@kakashi/contracts";
 import type { Deps } from "../wiring.js";
 
 /**
@@ -60,7 +60,7 @@ export function createContext(deps: Deps, opts: { approvalPollMs?: number } = {}
   return ctx;
 }
 
-export function owner(ctx: OrchContext, kind: import("@tollbooth/contracts").ResourceKind, id: string): string | null {
+export function owner(ctx: OrchContext, kind: import("@kakashi/contracts").ResourceKind, id: string): string | null {
   if (ctx.deps.trust.persistence) return ctx.deps.trust.persistence.owner(kind,id);
   return (kind === "mandate" ? ctx.mandateOwner.get(id) : kind === "attempt" ? ctx.attemptOwner.get(id) : kind === "run" ? ctx.runs.get(id)?.userId : ctx.purchases.get(id)?.userId) ?? null;
 }

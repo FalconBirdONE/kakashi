@@ -1,7 +1,7 @@
 import {
   planOutputSchema, synthesisOutputSchema, decideOutputSchema,
-} from "@tollbooth/contracts";
-import type { Brain, DecideInput, DecideOutput, DecisionItem } from "@tollbooth/contracts";
+} from "@kakashi/contracts";
+import type { Brain, DecideInput, DecideOutput, DecisionItem } from "@kakashi/contracts";
 import { callStructured } from "./client.js";
 import type { ClientDeps } from "./client.js";
 import * as planPrompt from "./prompts/plan.js";

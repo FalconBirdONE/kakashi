@@ -11,8 +11,8 @@ export default defineConfig({
     // The contracts index pulls in node:crypto (hashing, permits), which must not reach the browser.
     // Runtime helpers are imported from these pure modules only; everything else is `import type`.
     alias: {
-      "@tollbooth/contracts/money": contracts("money"),
-      "@tollbooth/contracts/registry": contracts("registry"),
+      "@kakashi/contracts/money": contracts("money"),
+      "@kakashi/contracts/registry": contracts("registry"),
     },
   },
   server: { port: 5173, proxy: { "/api": "http://localhost:4000" } },

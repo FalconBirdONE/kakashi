@@ -1,7 +1,7 @@
 import {
   createFakeBrain, createFakeRails, createFakeTrust,
   type Brain, type FakeBrain, type FakeRails, type FakeTrust, type Rails, type Trust,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 
 type Name = "rails" | "brain" | "trust";
 
@@ -23,13 +23,13 @@ export async function createDeps(
   const real = new Set(useReal);
   const deps = { fakes: {}, modes: { rails: "fake", brain: "fake", trust: "fake" } } as Deps;
 
-  if (real.has("rails")) { deps.rails = (await import("@tollbooth/rails")).createRails(env); deps.modes.rails = "real"; }
+  if (real.has("rails")) { deps.rails = (await import("@kakashi/rails")).createRails(env); deps.modes.rails = "real"; }
   else { deps.rails = deps.fakes.rails = createFakeRails(); }
 
-  if (real.has("brain")) { deps.brain = (await import("@tollbooth/brain")).createBrain(env); deps.modes.brain = "real"; }
+  if (real.has("brain")) { deps.brain = (await import("@kakashi/brain")).createBrain(env); deps.modes.brain = "real"; }
   else { deps.brain = deps.fakes.brain = createFakeBrain(); }
 
-  if (real.has("trust")) { deps.trust = (await import("@tollbooth/trust")).createTrust(env); deps.modes.trust = "real"; }
+  if (real.has("trust")) { deps.trust = (await import("@kakashi/trust")).createTrust(env); deps.modes.trust = "real"; }
   else { deps.trust = deps.fakes.trust = createFakeTrust(); }
 
   log(`[wiring] rails=${deps.modes.rails} brain=${deps.modes.brain} trust=${deps.modes.trust}`);

@@ -5,7 +5,7 @@ import { z } from "zod";
 import {
   canonicalJson, getMerchant, railsEnv, requestHash, sha256Hex,
   type CatalogEntry, type Quote, type Rails, type RailsError, type SettlementInfo,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import { checkSettlement } from "./settlement.js";
 import { validateDelivery } from "./validate.js";
 

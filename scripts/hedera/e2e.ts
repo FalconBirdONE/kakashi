@@ -1,7 +1,7 @@
 // Real testnet end-to-end checks R1 (paid request), R4 (dropped response, recovered, paid once) and R7 (audit).
 // Needs the merchants service (DEMO_MODE=true) and the signer running with the same ASSET_MODE and PERMIT_SECRET.
 // Usage (from scripts/hedera): PERMIT_SECRET=<signer's secret> ./node_modules/.bin/tsx e2e.ts
-import { mintPermit, newId, type Quote } from "@tollbooth/contracts";
+import { mintPermit, newId, type Quote } from "@kakashi/contracts";
 import { createRails } from "../../packages/rails/src/index.js";
 import { loadEnv, mirrorGet, need } from "./env.js";
 

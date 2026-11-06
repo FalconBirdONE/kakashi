@@ -65,9 +65,12 @@ export function SiteHeader({ page, onSignOut }: { page: string; onSignOut?: () =
   return (
     <header className={`sticky top-0 z-40 border-b transition-[background-color,border-color] duration-300 ${solid ? "border-white/[0.06] bg-ink/75 backdrop-blur-xl" : "border-transparent"}`}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="#/" aria-label="Tollbooth home" className={`group flex items-center gap-2.5 rounded-lg ${focusRing}`}>
+        <a href="#/" aria-label="Kakashi home" className={`group flex items-center gap-2.5 rounded-lg ${focusRing}`}>
           <LogoMark />
-          <span className="text-[17px] font-semibold tracking-tight text-zinc-50">Tollbooth</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-[17px] font-semibold tracking-tight text-zinc-50">Kakashi</span>
+            <span lang="ja" className="mt-0.5 text-[10px] tracking-[0.2em] text-zinc-400">カカシ</span>
+          </span>
         </a>
 
         <nav aria-label="Main" className="hidden md:block">
@@ -118,7 +121,7 @@ export function SiteFooter() {
       <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 py-10 sm:flex-row sm:items-start sm:justify-between sm:px-6">
         <div className="flex items-center gap-2.5">
           <LogoMark className="size-6" />
-          <span className="font-semibold tracking-tight text-zinc-300">Tollbooth</span>
+          <span className="font-semibold tracking-tight text-zinc-300">Kakashi</span>
         </div>
         <div className="max-w-xl space-y-1.5 text-xs leading-relaxed text-zinc-500 sm:text-right">
           <p>Spending limits are enforced by our backend and an isolated signer. In this demo the operator holds the agent key.</p>

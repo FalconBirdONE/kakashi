@@ -6,7 +6,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
-import { MERCHANT_REGISTRY, requestHash, type AuthAttemptPublic, type AuthPurpose, type Trust } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY, requestHash, type AuthAttemptPublic, type AuthPurpose, type Trust } from "@kakashi/contracts";
 
 const t0 = Date.now();
 const log = (...a: unknown[]) => console.log(...a);
@@ -19,7 +19,7 @@ if (!process.env.WORLD_CLIENT_ID || !process.env.WORLD_CLIENT_SECRET) {
 }
 
 // Scratch DB always: never touch ./data, even if .env sets DB_PATH.
-const env: Record<string, string | undefined> = { ...process.env, DB_PATH: join(mkdtempSync(join(tmpdir(), "tollbooth-world-manual-")), "manual.sqlite") };
+const env: Record<string, string | undefined> = { ...process.env, DB_PATH: join(mkdtempSync(join(tmpdir(), "kakashi-world-manual-")), "manual.sqlite") };
 log("scratch DB:", env.DB_PATH);
 const fill = (k: string, v: string) => { if (!env[k]) { env[k] = v; log(`placeholder: ${k} not set, using a scratch value`); } };
 fill("PERMIT_SECRET", randomBytes(32).toString("hex"));

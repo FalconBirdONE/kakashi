@@ -1,4 +1,4 @@
-import { brainEnv,railsEnv,trustEnv,decimal,cmpD } from '@tollbooth/contracts';
+import { brainEnv,railsEnv,trustEnv,decimal,cmpD } from '@kakashi/contracts';
 
 /** Local validation only: startup never spends or sends a credential to test availability. */
 export function validateComponents(names:readonly string[],env:NodeJS.ProcessEnv):void {
@@ -14,6 +14,7 @@ export function validateComponents(names:readonly string[],env:NodeJS.ProcessEnv
   }
   if(env.NODE_ENV==='production'){
     if(env.DEMO_MODE!=='false')throw new Error('Production requires DEMO_MODE=false');
+    if(env.LIVE_DEMO==='true')throw new Error('Production forbids LIVE_DEMO');
     if(!env.DB_PATH||env.DB_PATH===':memory:'||!env.AUTH_DB_PATH||env.AUTH_DB_PATH===':memory:')throw new Error('Persistent database paths are required');
     if(env.PAYMENTS_ENABLED==='true'){
       if(!['rails','brain','trust'].every(n=>names.includes(n)))throw new Error('Payments require all real components');

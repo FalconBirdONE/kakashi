@@ -17,7 +17,15 @@ describe('production gates',()=>{
   expect(()=>validateComponents(['brain'],{})).toThrow('ZG_API_KEY');
   expect(()=>validateComponents(['trust'],{})).toThrow('PERMIT_SECRET');
   expect(()=>validateComponents([],{NODE_ENV:'production',DEMO_MODE:'true'})).toThrow('DEMO_MODE');
+  expect(()=>validateComponents([],{NODE_ENV:'production',DEMO_MODE:'false',LIVE_DEMO:'true'})).toThrow('LIVE_DEMO');
   expect(()=>validateComponents([],{NODE_ENV:'production',DEMO_MODE:'false',DB_PATH:'/data/trust.sqlite',AUTH_DB_PATH:'/data/auth.sqlite',PAYMENTS_ENABLED:'true'})).toThrow('all real');
+ });
+ it('demo mode refuses real trust/rails unless LIVE_DEMO',async()=>{
+  const deps=await createDeps([],{},()=>{});deps.modes.trust='real';
+  const cfg={demoMode:true,merchantsUrl:'http://127.0.0.1:4200',sessionSecret:'secret',secureCookie:false};
+  expect(()=>createApp(deps,cfg)).toThrow('demo authority');
+  const {app,ctx}=createApp(deps,{...cfg,liveDemo:true});cleanup.push(()=>ctx.stop());
+  await request(app).post('/api/session').expect(200);
  });
  it('defaults public payment actions to disabled',async()=>{
   const deps=await createDeps([],{},()=>{}),{app}=createApp(deps,{demoMode:false,merchantsUrl:'http://127.0.0.1:4200',sessionSecret:'secret',secureCookie:false});

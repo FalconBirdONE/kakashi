@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import request from "supertest";
-import { createFakeBrain, newId, type Brain } from "@tollbooth/contracts";
+import { createFakeBrain, newId, type Brain } from "@kakashi/contracts";
 import { createApp } from "../src/app.js";
 import { createDeps, type Deps } from "../src/wiring.js";
 

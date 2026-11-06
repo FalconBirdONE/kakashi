@@ -2,7 +2,7 @@
 import {
   IllegalTransitionError, boundedAtomic, decimal, addA, canTransition, canonicalJson, cmpA, newId, sha256Hex, subA,
   type AgentDecision, type DeliveryState, type InferenceCall, type Purchase, type PurchaseState, type Quote,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import type { Ctx } from "./db.js";
 import { refreshMandate } from "./mandates.js";
 import { FORMATS, appendAuditEvent } from "./outbox.js";

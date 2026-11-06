@@ -1,4 +1,4 @@
-import { seal,unseal,type SigningPermit } from '@tollbooth/contracts';
+import { seal,unseal,type SigningPermit } from '@kakashi/contracts';
 import type { Ctx } from './db.js';
 export function savePermit(ctx:Ctx,permit:SigningPermit):void {
   ctx.db.prepare('INSERT INTO signing_permits(purchase_id,permit_id,payload) VALUES (?,?,?)').run(permit.purchaseId,permit.permitId,seal(permit,ctx.env.PERMIT_SECRET!,'permit:'+permit.purchaseId));

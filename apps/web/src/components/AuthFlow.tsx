@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AuthAttemptPublic, AuthAttemptResult } from "@tollbooth/contracts";
+import type { AuthAttemptPublic, AuthAttemptResult } from "@kakashi/contracts";
 import { api, type DevAuthResult } from "../api";
 import { useConfig, usePoll } from "../hooks";
 import { Badge, Button, ErrorText, type Tone } from "./ui";

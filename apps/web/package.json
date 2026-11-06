@@ -1,5 +1,5 @@
 {
-  "name": "@tollbooth/web",
+  "name": "@kakashi/web",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-markdown": "10.1.0",
-    "@tollbooth/contracts": "workspace:*"
+    "@kakashi/contracts": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",

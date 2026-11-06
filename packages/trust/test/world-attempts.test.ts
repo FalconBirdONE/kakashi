@@ -1,6 +1,6 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type CryptoKey, type JWK, type JWTVerifyGetKey } from "jose";
-import type { AuthAttemptPublic, AuthAttemptResult, Purchase } from "@tollbooth/contracts";
+import type { AuthAttemptPublic, AuthAttemptResult, Purchase } from "@kakashi/contracts";
 import { createTrust, issuePermitAfterApproval, type PollResult, type ValidateResult, type WorldClient } from "../src";
 import { createMandateVersion, getMandate, revokeMandate } from "../src/mandates";
 import { getPurchase, getQuote, proposePurchase, recordQuote } from "../src/purchases";

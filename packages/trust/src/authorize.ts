@@ -2,7 +2,7 @@
 import {
   canonicalJson, subA, mintPermit, newId, sha256Hex,
   type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import { savePermit } from "./permit-store.js";
 import type { Ctx } from "./db.js";
 import { refreshMandate } from "./mandates.js";

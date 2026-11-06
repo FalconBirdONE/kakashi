@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { canonicalJson, newId, sha256Hex, type AuditEventType } from "@tollbooth/contracts";
+import { canonicalJson, newId, sha256Hex, type AuditEventType } from "@kakashi/contracts";
 import {
   appendAuditEvent, listPendingAudit, markAnchored, markAuditRetry, verifyAuditChain, type AuditFields,
 } from "../src/outbox";

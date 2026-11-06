@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { MerchantFault } from "@tollbooth/contracts";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { MerchantFault } from "@kakashi/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api } from "../api";
 import { Button, ErrorText } from "./ui";
 

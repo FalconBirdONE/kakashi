@@ -1,5 +1,5 @@
 {
-  "name": "@tollbooth/server",
+  "name": "@kakashi/server",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -14,10 +14,10 @@
     "express": "5.3.0",
     "cookie-parser": "1.4.7",
     "zod": "4.6.7",
-    "@tollbooth/contracts": "workspace:*",
-    "@tollbooth/rails": "workspace:*",
-    "@tollbooth/brain": "workspace:*",
-    "@tollbooth/trust": "workspace:*",
+    "@kakashi/contracts": "workspace:*",
+    "@kakashi/rails": "workspace:*",
+    "@kakashi/brain": "workspace:*",
+    "@kakashi/trust": "workspace:*",
     "better-sqlite3": "13.0.3",
     "jose": "6.2.15"
   },

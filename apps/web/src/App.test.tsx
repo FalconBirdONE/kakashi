@@ -8,7 +8,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); window.location.hash = ""; }
 it("opens on the landing page with the main navigation", () => {
   render(<App />);
   expect(screen.getByRole("heading", { level: 1, name: /Answers worth paying for/ })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Tollbooth home" })).toHaveAttribute("href", "#/");
+  expect(screen.getByRole("link", { name: "Kakashi home" })).toHaveAttribute("href", "#/");
   expect(screen.getByRole("link", { name: /Set up a mandate/ })).toHaveAttribute("href", "#/mandate");
   for (const n of ["Mandate", "Research", "Ledger", "History"]) expect(screen.getByRole("link", { name: n })).not.toHaveAttribute("aria-current");
 });

@@ -7,7 +7,7 @@ import { ExactHederaScheme } from "@x402/hedera/exact/server";
 import {
   MERCHANT_IDS, MERCHANT_REGISTRY, getMerchant, requestHash,
   type CatalogEntry, type MerchantFault, type MerchantId, type MerchantInfo,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 import type { MerchantsConfig } from "./config.js";
 import { buildBody, querySchema, type DataQuery } from "./data.js";
 import type { Store } from "./store.js";

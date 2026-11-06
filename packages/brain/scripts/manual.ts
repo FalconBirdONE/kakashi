@@ -1,7 +1,7 @@
 // Manual end-to-end: plan -> decide -> synthesize against the real 0G Router, with sample quotes from the registry.
 // Run: cd packages/brain && npx tsx --env-file-if-exists=../../.env scripts/manual.ts
 // Needs ZG_API_KEY and ZG_MODEL (model chosen by scripts/spike.ts). Prints request ids only, never the key.
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts";
 import { createBrain } from "../src";
 
 if (!process.env.ZG_API_KEY || !process.env.ZG_MODEL) { console.error("Set ZG_API_KEY and ZG_MODEL first."); process.exit(2); }

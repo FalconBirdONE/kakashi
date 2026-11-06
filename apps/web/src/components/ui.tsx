@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
-import { fromAtomic } from "@tollbooth/contracts/money";
+import { fromAtomic } from "@kakashi/contracts/money";
 
 export const USDC_DECIMALS = 6;
 export const usdc = (a: string): string => `${fromAtomic(a, USDC_DECIMALS)} USDC`;

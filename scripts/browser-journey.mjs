@@ -10,6 +10,7 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await context.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
  await page.goto(stack.url+'/controlled/session');
+ await page.getByRole('link',{name:'Mandate',exact:true}).click(); // session lands on the landing page
  await page.getByRole('button',{name:'Create mandate',exact:true}).click();
  await page.getByRole('button',{name:'Activate with World ID',exact:true}).click();
  await page.getByText('Active',{exact:true}).waitFor();

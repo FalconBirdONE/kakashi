@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { LedgerView } from "@tollbooth/contracts";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { LedgerView } from "@kakashi/contracts";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api, type PurchaseRow } from "../api";
 import { Badge, Card, ErrorText, fmtTime, hashscanTx, Muted, PageHeader, usdc } from "../components/ui";
 import { usePoll } from "../hooks";

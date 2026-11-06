@@ -2,7 +2,7 @@
 // Runtime imports from contracts are limited to pure modules (see vite.config.ts); the rest is type-only.
 import type {
   AuthAttemptPublic, AuthAttemptResult, LedgerView, Mandate, MandateDraft, MerchantFault, RunView,
-} from "@tollbooth/contracts";
+} from "@kakashi/contracts";
 
 export type AuditStatus = { state: "PENDING" | "ANCHORED" | "UNKNOWN"; sequenceNumber?: number; topicId?: string };
 export type RunViewWithAudit = RunView & { audit: Record<string, AuditStatus> };

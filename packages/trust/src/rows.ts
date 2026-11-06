@@ -1,5 +1,5 @@
 // Row <-> entity mappers shared by every trust module. JSON columns hold structured fields; money stays a TEXT atomic string.
-import type { InferenceCall, Mandate, Purchase, Quote, ResearchRun } from "@tollbooth/contracts";
+import type { InferenceCall, Mandate, Purchase, Quote, ResearchRun } from "@kakashi/contracts";
 
 type Row = Record<string, any>;
 const json = <T>(s: string | null | undefined): T | undefined => (s == null ? undefined : (JSON.parse(s) as T));
@@ -24,7 +24,7 @@ export const runOf = (r: Row): ResearchRun => ({
   ...(r.plan != null && { plan: json(r.plan) }),
 });
 
-export const quoteOf = (r: Row): Quote & { policyResult?: import("@tollbooth/contracts").PolicyResult } => ({
+export const quoteOf = (r: Row): Quote & { policyResult?: import("@kakashi/contracts").PolicyResult } => ({
   id: r.id, runId: r.run_id, merchantId: r.merchant_id, method: r.method, origin: r.origin, path: r.path,
   requestHash: r.request_hash, network: r.network, assetId: r.asset_id, amountAtomic: r.amount, payTo: r.pay_to,
   facilitatorUrl: r.facilitator_url, feePayer: r.fee_payer, maxTimeoutSeconds: r.max_timeout_seconds,

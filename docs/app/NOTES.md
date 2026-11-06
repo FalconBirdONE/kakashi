@@ -1,7 +1,7 @@
 # App branch notes (apps/server)
 
 ## Running
-`pnpm --filter @tollbooth/server dev` starts on fakes at :4000. Set `DEMO_MODE=true` to enable `/api/demo/*` and `/api/dev/*`.
+`pnpm --filter @kakashi/server dev` starts on fakes at :4000. Set `DEMO_MODE=true` to enable `/api/demo/*` and `/api/dev/*`.
 `USE_REAL=rails,brain,trust` switches each named part to its real factory (still stubs that throw until those branches merge).
 `SESSION_SECRET` signs the session cookie. It is not in `.env.example`; without it an ephemeral secret is used and sessions reset on restart.
 Browser flow: `POST /api/session` first (issues the signed cookie for the single demo user).
@@ -29,7 +29,7 @@ Started from `src/index.ts`, stopped on shutdown. Reconciler: every 3 s plus onc
 
 ## Web UI (`apps/web`)
 - Hash routes: `#/mandate`, `#/research[/<runId>]`, `#/ledger`, `#/history`. Dev proxy `/api` -> `http://localhost:4000`.
-- The contracts index imports `node:crypto`, so the browser only imports pure modules through aliases (`@tollbooth/contracts/money`, `/registry`, see `vite.config.ts` and `tsconfig.json`). Everything else from contracts is `import type`.
+- The contracts index imports `node:crypto`, so the browser only imports pure modules through aliases (`@kakashi/contracts/money`, `/registry`, see `vite.config.ts` and `tsconfig.json`). Everything else from contracts is `import type`.
 - Server routes added for the UI: `GET /api/config` (public flags), `GET /api/purchases` (delivery, audit and 0G fields per purchase), `audit` map on `GET /api/runs/:id`, `dataSpendAtomic` on run history.
 - Audit status per purchase comes from the audit worker's in-memory anchors; after a server restart it shows "Audit status unknown" until re-anchored.
 - Demo drawer fault selectors are write-only (the server has no fault getter).
@@ -39,5 +39,5 @@ Started from `src/index.ts`, stopped on shutdown. Reconciler: every 3 s plus onc
 - `POST /api/demo/fault` on real rails forwards `{merchantId, fault}` to `${MERCHANTS_URL}/admin/fault` (URL from env only). Unreachable merchants -> 502 `MERCHANTS_UNREACHABLE`; refused fault -> 400 `FAULT_REJECTED`.
 - The real trust read model does not return `policyResult` on quotes, so the server keeps the precheck result per quote in memory and merges it into `GET /api/runs/:id`. Lost on restart.
 - With the real brain, new mandates default to `maxRunDurationSeconds=300` (measured 16-28 s per 0G call; the spec default of 120 s would cut runs short). Fakes keep 120.
-- `pnpm --filter @tollbooth/server start` runs `node --import tsx dist/index.js` because the workspace packages are TypeScript source.
+- `pnpm --filter @kakashi/server start` runs `node --import tsx dist/index.js` because the workspace packages are TypeScript source.
 - 0G model: `glm-5.3` with `ZG_VERIFY_TEE=false`. The Router returned `tee_verified: null` for it and for `0gm-1.0-35b-a3b`; only `0gm-1.0-35b-a3b-sia` returned `true`, but it writes its reasoning into the answer so the brain's JSON parse fails (`SCHEMA_INVALID`). Measured cost: about $0.0056 per plan call on `glm-5.3`. UI wording must not claim "TEE verified" in this configuration.

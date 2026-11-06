@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { canonicalJson, sha256Hex } from "@tollbooth/contracts";
+import { canonicalJson, sha256Hex } from "@kakashi/contracts";
 import { callStructured } from "../src/client";
 
 const KEY = "sk-secret-key-123";

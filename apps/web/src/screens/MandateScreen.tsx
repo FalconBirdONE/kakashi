@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { AuthAttemptPublic, AuthAttemptResult, Mandate } from "@tollbooth/contracts";
-import { toAtomic, cmpA } from "@tollbooth/contracts/money";
-import { MERCHANT_REGISTRY } from "@tollbooth/contracts/registry";
+import type { AuthAttemptPublic, AuthAttemptResult, Mandate } from "@kakashi/contracts";
+import { toAtomic, cmpA } from "@kakashi/contracts/money";
+import { MERCHANT_REGISTRY } from "@kakashi/contracts/registry";
 import { api, ApiError } from "../api";
 import { AuthFlow } from "../components/AuthFlow";
 import MandateSummary from "../components/MandateSummary";
@@ -84,7 +84,7 @@ export default function MandateScreen() {
   return (
     <div>
       <PageHeader eyebrow="Step 1 of 3 · Authorize" title="Mandate">
-        <p>Set the limits the agent must spend within. World authenticates the human. Tollbooth records their approval of this specific mandate.</p>
+        <p>Set the limits the agent must spend within. World authenticates the human. Kakashi records their approval of this specific mandate.</p>
         <p className="mt-1 text-xs text-zinc-500">World proofs are mocked for this event.</p>
       </PageHeader>
       {error && <div className="mb-6"><ErrorText>{error}</ErrorText></div>}

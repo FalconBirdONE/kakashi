@@ -37,10 +37,10 @@ SIGNER_MAX_TOTAL_ATOMIC=1000000
 
 ```sh
 # terminal 1: signer
-pnpm --filter @tollbooth/signer dev
+pnpm --filter @kakashi/signer dev
 
 # terminal 2: merchants (demo faults on)
-DEMO_MODE=true pnpm --filter @tollbooth/merchants dev
+DEMO_MODE=true pnpm --filter @kakashi/merchants dev
 ```
 
 Without pnpm on PATH, run `npm run dev` inside each package folder instead.

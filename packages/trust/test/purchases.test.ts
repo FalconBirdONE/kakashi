@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { IllegalTransitionError, PURCHASE_TRANSITIONS, canonicalJson, sha256Hex, type PurchaseState } from "@tollbooth/contracts";
+import { IllegalTransitionError, PURCHASE_TRANSITIONS, canonicalJson, sha256Hex, type PurchaseState } from "@kakashi/contracts";
 import { getMandate } from "../src/mandates";
 import { verifyAuditChain } from "../src/outbox";
 import {
