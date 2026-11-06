@@ -19,7 +19,7 @@ All three run on one host. On the demo VM, keep 4100 and 4200 closed to the outs
 - From `.env.generated` (copy into the root `.env`): `AGENT_ACCOUNT_ID`, `MERCHANT_QUICKCAST_PAYTO`, `MERCHANT_HOURLYPRO_PAYTO`, `MERCHANT_GROUNDTRUTH_PAYTO`, `MERCHANT_GOUGER_PAYTO`, `HCS_TOPIC_ID`, `FACILITATOR_FEEPAYER`.
 - Already in `.env`: `HEDERA_OPERATOR_ID`, `HEDERA_OPERATOR_KEY` (they pay HCS fees).
 - Defaults that usually stay as they are: `MERCHANTS_URL`, `SIGNER_URL`, `MIRROR_NODE_URL`, `FACILITATOR_URL`, `HEDERA_NETWORK`.
-- `ASSET_MODE`: **`hbar` for now**, because AGENT has no USDC yet. It must be the same in the server, merchants and trust.
+- `ASSET_MODE`: `usdc` (the default; AGENT is funded and the USDC e2e passed). `hbar` still works as a fallback. It must be the same in the server, merchants and trust.
 - `PERMIT_SECRET`: the same value in the root `.env` (trust mints permits) and in `apps/signer/.env.local`.
 - **Never** `AGENT_PRIVATE_KEY`. It lives only in `apps/signer/.env.local`.
 
@@ -27,7 +27,7 @@ All three run on one host. On the demo VM, keep 4100 and 4200 closed to the outs
 
 - Registry prices (`priceAtomic`) are used as-is in both modes: USDC units with `usdc`, tinybars with `hbar`. Policy and mandate numbers stay identical. Only the display decimals change: USDC 6, HBAR 8.
 - In HBAR mode the mandate should use `assetId: "0.0.0"` and `assetDecimals: 8`. The demo mandate's "0.20" (200000 atomic) then means 200000 tinybars, or 0.002 HBAR.
-- Once AGENT is funded with USDC, switch every process to `ASSET_MODE=usdc` and re-run `scripts/hedera` e2e.
+- AGENT holds 19.98 testnet USDC after the e2e run. Each quickcast payment costs 0.01 USDC. The faucet allows one request every 2 hours.
 
 ## Calling rails
 
@@ -66,4 +66,4 @@ All three run on one host. On the demo VM, keep 4100 and 4200 closed to the outs
 - The facilitator's verify step looks up the payer key on the mirror node, and a mirror 503 makes it answer `invalid_exact_hedera_payload_signature_invalid`. That surfaces as `REJECTED`. It's transient, and a fresh attempt works.
 - `SIGNER_MAX_TOTAL_ATOMIC` is a lifetime total stored in `apps/signer/data/signer.sqlite`. Delete the file (signer stopped) to reset it between demo rehearsals.
 - The operator holds the agent key (custodial demo). Spending limits are enforced by trust and the signer, not onchain.
-- USDC is untested end to end (no faucet funds yet). HBAR is proven.
+- Both USDC and HBAR are proven end to end on testnet (see [PROOF.md](PROOF.md)).

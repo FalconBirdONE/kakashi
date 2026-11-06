@@ -38,6 +38,14 @@ Every workspace package passed `build` then `test` (the `pnpm -r build && pnpm -
 | `packages/brain`, `packages/trust`, `apps/server`, `evals` | ok | no tests on this branch |
 | `apps/web` | ok | 1 passed |
 
-## Not yet covered
+## USDC e2e (after the Circle faucet)
 
-- The USDC path. The facilitator verified a USDC payment's signature and failed it only at preflight on balance (see [COMPAT.md](COMPAT.md)). Re-run the e2e with `ASSET_MODE=usdc` after funding AGENT from the Circle faucet.
+AGENT `0.0.11341848` received 20 USDC from the Circle faucet (Hedera Testnet), and `check` confirmed the balance and the `0.0.429274` association. Then `e2e.ts` ran with `ASSET_MODE=usdc` against fresh signer and merchants databases:
+
+| ID | Result |
+|---|---|
+| R1 🌐 | **PASS** [`0.0.9185802@1793984794.908601245`](https://hashscan.io/testnet/transaction/0.0.9185802@1793984794.908601245) |
+| R4 🌐 | **PASS** [`0.0.9185802@1793984803.504843327`](https://hashscan.io/testnet/transaction/0.0.9185802@1793984803.504843327), 1 credit on the mirror node |
+| R7 🌐 | **PASS** topic [`0.0.11341856`](https://hashscan.io/testnet/topic/0.0.11341856), sequence 5 |
+
+The mirror node shows both payments as USDC token transfers of 10000 from AGENT to quickcast. AGENT went from 20.00 to 19.98 USDC, and quickcast went from 0 to 0.02 USDC: two payments, nothing paid twice.
