@@ -258,9 +258,8 @@ describe("T4: approval flow (issuePermitAfterApproval)", () => {
     expect(audit.map((r) => r.type)).toEqual(["PURCHASE_DECIDED", "APPROVAL_DENIED"]);
   });
 
-  // KNOWN SRC BUG: transition() releases the *current* quotes.amount, not the amount that was reserved. After the
-  // amount is changed the release over-subtracts (subA throws "negative result", whole call rolls back) or leaks.
-  it.fails("T4: quote amount changed after approval -> DENIED QUOTE_CHANGED, released to 0", () => {
+  // Regression: transition() used to release the *current* quotes.amount; the amount is now pinned on the purchase.
+  it("T4: quote amount changed after approval -> DENIED QUOTE_CHANGED, released to 0", () => {
     const fx = fresh();
     const { mandate, purchase, quote } = awaiting(fx);
     const a = approval(fx, purchase.purchaseHash);

@@ -40,7 +40,7 @@ export function getLedgerView(ctx: Ctx, userId: string): LedgerView {
 
   const confirmed = ctx.db
     .prepare(
-      `SELECT p.id AS purchase_id, p.hedera_tx_id, p.updated_at, p.decision, q.merchant_id, q.amount
+      `SELECT p.id AS purchase_id, p.hedera_tx_id, p.updated_at, p.decision, q.merchant_id, COALESCE(p.amount, q.amount) AS amount
        FROM purchases p JOIN quotes q ON q.id = p.quote_id
        WHERE p.mandate_id = ? AND p.state = 'CONFIRMED' ORDER BY p.updated_at, p.id`,
     )

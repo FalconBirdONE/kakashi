@@ -55,8 +55,8 @@ export function proposePurchase(ctx: Ctx, quoteId: string, decision: AgentDecisi
   try {
     ctx.db.prepare(
       `INSERT INTO purchases (id, run_id, quote_id, quote_hash, mandate_id, mandate_version, state, delivery, decision,
-         purchase_hash, created_at, updated_at) VALUES (?,?,?,?,?,?,'PROPOSED','NOT_RECEIVED',?,?,?,?)`,
-    ).run(id, q.run_id, quoteId, q.quote_hash, run.mandate_id, run.mandate_version, toJson(decision), purchaseHash, now, now);
+         purchase_hash, amount, created_at, updated_at) VALUES (?,?,?,?,?,?,'PROPOSED','NOT_RECEIVED',?,?,?,?,?)`,
+    ).run(id, q.run_id, quoteId, q.quote_hash, run.mandate_id, run.mandate_version, toJson(decision), purchaseHash, q.amount, now, now);
   } catch (e: any) {
     if (typeof e?.code === "string" && e.code.startsWith("SQLITE_CONSTRAINT_UNIQUE")) {
       throw new Error(`DUPLICATE_PURCHASE: quote ${quoteId} already has a purchase in run ${q.run_id}`);
@@ -91,7 +91,8 @@ export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data
     if (!canTransition(from, to)) throw new IllegalTransitionError(from, to);
     if (to === "SIGNED" && !(data.hederaTxId ?? p.hedera_tx_id)) throw new Error("MISSING_TX_ID");
 
-    const amount: string = (ctx.db.prepare("SELECT amount FROM quotes WHERE id = ?").get(p.quote_id) as Row).amount;
+    // Pinned at proposal (migration 2), so a later quote edit cannot change what gets released. Fallback: pre-migration rows.
+    const amount: string = p.amount ?? (ctx.db.prepare("SELECT amount FROM quotes WHERE id = ?").get(p.quote_id) as Row).amount;
     const m = ctx.db.prepare("SELECT * FROM mandates WHERE id = ? AND version = ?").get(p.mandate_id, p.mandate_version) as Row;
     let spent: string = m.spent;
     let reserved: string = m.reserved;

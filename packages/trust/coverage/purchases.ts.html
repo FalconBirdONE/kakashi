@@ -1,0 +1,552 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for purchases.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="prettify.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="index.html">All files</a> purchases.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">97.56% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>80/82</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">93.75% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>60/64</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>12/12</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">98.5% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>66/67</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">237x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">425x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">207x</span>
+<span class="cline-any cline-yes">206x</span>
+<span class="cline-any cline-yes">206x</span>
+<span class="cline-any cline-yes">206x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">206x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">242x</span>
+<span class="cline-any cline-yes">242x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">730x</span>
+<span class="cline-any cline-yes">730x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">203x</span>
+<span class="cline-any cline-yes">203x</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-yes">202x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">201x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">449x</span>
+<span class="cline-any cline-yes">445x</span>
+<span class="cline-any cline-yes">445x</span>
+<span class="cline-any cline-yes">445x</span>
+<span class="cline-any cline-yes">108x</span>
+<span class="cline-any cline-yes">108x</span>
+<span class="cline-any cline-yes">108x</span>
+<span class="cline-any cline-yes">107x</span>
+<span class="cline-any cline-yes">107x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">443x</span>
+<span class="cline-any cline-yes">443x</span>
+<span class="cline-any cline-yes">337x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">336x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">127x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">127x</span>
+<span class="cline-any cline-yes">209x</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-yes">188x</span>
+<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">334x</span>
+<span class="cline-any cline-yes">58x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">334x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">334x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-yes">444x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Quotes, purchases (SPEC §7.3 state machine + §8.4 budget effects) and 0G inference records.
+import {
+  IllegalTransitionError, addA, canTransition, canonicalJson, cmpA, newId, sha256Hex, subA,
+  type AgentDecision, type DeliveryState, type InferenceCall, type Purchase, type PurchaseState, type Quote,
+} from "@tollbooth/contracts";
+import type { Ctx } from "./db";
+import { refreshMandate } from "./mandates";
+import { inferenceOf, purchaseOf, quoteOf, toJson } from "./rows";
+&nbsp;
+type Row = Record&lt;string, any&gt;;
+&nbsp;
+/** Trust is authoritative for quoteHash: excludes id, runId, rawRequirements and timestamps. */
+export function computeQuoteHash(q: Omit&lt;Quote, "id" | "runId" | "quoteHash"&gt; &amp; { quoteHash?: string }): string {
+  return sha256Hex(canonicalJson({
+    merchantId: q.merchantId, method: q.method, origin: q.origin, path: q.path, requestHash: q.requestHash,
+    network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo,
+    facilitatorUrl: q.facilitatorUrl, feePayer: q.feePayer, maxTimeoutSeconds: q.maxTimeoutSeconds,
+  }));
+}
+&nbsp;
+const runRow = (ctx: Ctx, runId: string) =&gt; ctx.db.prepare("SELECT * FROM runs WHERE id = ?").get(runId) as Row | undefined;
+&nbsp;
+export function recordQuote(ctx: Ctx, runId: string, q: Omit&lt;Quote, "id" | "runId"&gt;): Quote {
+  if (!runRow(ctx, runId)) throw new Error("RUN_NOT_FOUND");
+  const id = newId("qte_");
+  const quoteHash = computeQuoteHash(q);
+  ctx.db.prepare(
+    `INSERT INTO quotes (id, run_id, merchant_id, method, origin, path, request_hash, network, asset_id, amount, pay_to,
+       facilitator_url, fee_payer, max_timeout_seconds, raw_requirements, received_at, local_expires_at, quote_hash)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  ).run(id, runId, q.merchantId, q.method, q.origin, q.path, q.requestHash, q.network, q.assetId, q.amountAtomic, q.payTo,
+    q.facilitatorUrl, q.feePayer, q.maxTimeoutSeconds, q.rawRequirements, q.receivedAt, q.localExpiresAt, quoteHash);
+  return getQuote(ctx, id)!;
+}
+&nbsp;
+export function getQuote(ctx: Ctx, id: string): Quote | null {
+  const r = ctx.db.prepare("SELECT * FROM quotes WHERE id = ?").get(id) as Row | undefined;
+  return r ? quoteOf(r) : null;
+}
+&nbsp;
+export function getPurchase(ctx: Ctx, id: string): Purchase | null {
+  const r = ctx.db.prepare("SELECT * FROM purchases WHERE id = ?").get(id) as Row | undefined;
+  return r ? purchaseOf(r) : <span class="branch-1 cbranch-no" title="branch not covered" >null;</span>
+}
+&nbsp;
+export function proposePurchase(ctx: Ctx, quoteId: string, decision: AgentDecision): Purchase {
+  const q = ctx.db.prepare("SELECT * FROM quotes WHERE id = ?").get(quoteId) as Row | undefined;
+  if (!q) throw new Error("QUOTE_NOT_FOUND");
+  const run = runRow(ctx, q.run_id)!;
+  const id = newId("pur_");
+  const purchaseHash = sha256Hex(canonicalJson({
+    purchaseId: id, quoteHash: q.quote_hash, amountAtomic: q.amount, payTo: q.pay_to, mandateVersion: run.mandate_version,
+  }));
+  const now = ctx.now().toISOString();
+  try {
+    ctx.db.prepare(
+      `INSERT INTO purchases (id, run_id, quote_id, quote_hash, mandate_id, mandate_version, state, delivery, decision,
+         purchase_hash, amount, created_at, updated_at) VALUES (?,?,?,?,?,?,'PROPOSED','NOT_RECEIVED',?,?,?,?,?)`,
+    ).run(id, q.run_id, quoteId, q.quote_hash, run.mandate_id, run.mandate_version, toJson(decision), purchaseHash, q.amount, now, now);
+  } catch (e: any) {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (typeof e?.code === "string" &amp;&amp; e.code.startsWith("SQLITE_CONSTRAINT_UNIQUE")) {
+      throw new Error(`DUPLICATE_PURCHASE: quote ${quoteId} already has a purchase in run ${q.run_id}`);
+    }
+<span class="cstat-no" title="statement not covered" >    throw e;</span>
+  }
+  return getPurchase(ctx, id)!;
+}
+&nbsp;
+const FORBIDDEN = ["id", "runId", "quoteId", "quoteHash", "mandateId", "mandateVersion", "state", "purchaseHash", "createdAt", "updatedAt"];
+const PATCH_COLUMNS: Record&lt;string, string&gt; = {
+  delivery: "delivery", policyResult: "policy_result", decision: "decision", approvalId: "approval_id",
+  permitId: "permit_id", hederaTxId: "hedera_tx_id", settlement: "settlement", deliveryIssues: "delivery_issues",
+};
+&nbsp;
+export function transition(ctx: Ctx, purchaseId: string, to: PurchaseState, data: Partial&lt;Purchase&gt; = {}): Purchase {
+  for (const k of Object.keys(data)) if (FORBIDDEN.includes(k)) throw new Error(`FORBIDDEN_FIELD: ${k}`);
+  const cols: string[] = [];
+  const vals: unknown[] = [];
+  for (const [k, v] of Object.entries(data)) {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (v === undefined) <span class="cstat-no" title="statement not covered" >continue;</span>
+    const col = PATCH_COLUMNS[k];
+    if (!col) throw new Error(`FORBIDDEN_FIELD: ${k}`);
+    cols.push(`${col} = ?`);
+    vals.push(typeof v === "object" ? toJson(v) : v);
+  }
+&nbsp;
+  const { mandateId, mandateVersion, updated } = ctx.db.transaction(() =&gt; {
+    const p = ctx.db.prepare("SELECT * FROM purchases WHERE id = ?").get(purchaseId) as Row | undefined;
+    if (!p) throw new Error("PURCHASE_NOT_FOUND");
+    const from = p.state as PurchaseState;
+    if (!canTransition(from, to)) throw new IllegalTransitionError(from, to);
+    if (to === "SIGNED" &amp;&amp; !(data.hederaTxId ?? p.hedera_tx_id)) throw new Error("MISSING_TX_ID");
+&nbsp;
+    // Pinned at proposal (migration 2), so a later quote edit cannot change what gets released. Fallback: pre-migration rows.
+    const amount: string = p.amount ?? (<span class="branch-1 cbranch-no" title="branch not covered" >ctx.db.prepare("SELECT amount FROM quotes WHERE id = ?").get(p.quote_id) as Row).amount;</span>
+    const m = ctx.db.prepare("SELECT * FROM mandates WHERE id = ? AND version = ?").get(p.mandate_id, p.mandate_version) as Row;
+    let spent: string = m.spent;
+    let reserved: string = m.reserved;
+    if (from === "PROPOSED" &amp;&amp; (to === "RESERVED" || to === "AWAITING_APPROVAL")) {
+      // Conditional reserve: check and write are one SQL statement, so the budget can never be exceeded (SPEC §8.4).
+      // CAST to INTEGER instead of a parallel column: atomic amounts stay far below SQLite's 64-bit limit.
+      const r = ctx.db.prepare(
+        `UPDATE mandates SET reserved = CAST(CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) AS TEXT)
+         WHERE id = @id AND version = @version AND state = 'ACTIVE' AND expires_at &gt; @now
+           AND CAST(spent AS INTEGER) + CAST(reserved AS INTEGER) + CAST(@amt AS INTEGER) &lt;= CAST(total_budget AS INTEGER)`,
+      ).run({ amt: amount, id: p.mandate_id, version: p.mandate_version, now: ctx.now().toISOString() });
+      if (r.changes === 0) throw new Error("OVER_BUDGET");
+    } else if (to === "CONFIRMED") {
+      reserved = subA(reserved, amount);
+      spent = addA(spent, amount);
+    } else if (to === "APPROVAL_DENIED" || to === "FAILED_FINAL") {
+      reserved = subA(reserved, amount);
+    }
+    // Not guarded by from-state: FAILED_FINAL from RESERVED/SIGNED/SUBMITTED/UNKNOWN always holds a reservation;
+    // APPROVAL_DENIED only comes from AWAITING_APPROVAL, which holds one too.
+    if (reserved !== m.reserved || spent !== m.spent) {
+      ctx.db.prepare("UPDATE mandates SET spent = ?, reserved = ? WHERE id = ? AND version = ?")
+        .run(spent, reserved, p.mandate_id, p.mandate_version);
+    }
+    ctx.db.prepare(`UPDATE purchases SET state = ?, updated_at = ?${cols.map((c) =&gt; `, ${c}`).join("")} WHERE id = ?`)
+      .run(to, ctx.now().toISOString(), ...vals, purchaseId);
+    return { mandateId: p.mandate_id as string, mandateVersion: p.mandate_version as number, updated: getPurchase(ctx, purchaseId)! };
+  }).immediate();
+&nbsp;
+  refreshMandate(ctx, mandateId, mandateVersion);
+  return updated;
+}
+&nbsp;
+export function setDelivery(ctx: Ctx, purchaseId: string, d: DeliveryState, issues?: string[]): void {
+  const r = ctx.db.prepare("UPDATE purchases SET delivery = ?, delivery_issues = ?, updated_at = ? WHERE id = ?")
+    .run(d, toJson(issues), ctx.now().toISOString(), purchaseId);
+  if (r.changes === 0) throw new Error("PURCHASE_NOT_FOUND");
+}
+&nbsp;
+export function listUnresolved(ctx: Ctx): Purchase[] {
+  return (ctx.db.prepare(
+    "SELECT * FROM purchases WHERE state IN ('SIGNED','SUBMITTED','UNKNOWN') ORDER BY created_at ASC, id ASC",
+  ).all() as Row[]).map(purchaseOf);
+}
+&nbsp;
+export function recordInference(ctx: Ctx, c: Omit&lt;InferenceCall, "id"&gt;): InferenceCall {
+  if (!/^\d+(\.\d+)?$/.test(c.totalCost)) throw new Error("INVALID_COST");
+  if (!runRow(ctx, c.runId)) throw new Error("RUN_NOT_FOUND");
+  const id = newId("inf_");
+  ctx.db.prepare(
+    `INSERT INTO inference_calls (id, run_id, kind, model, trust_tier, zg_request_id, provider, tee_verified, total_cost,
+       latency_ms, input_hash, output_hash, ok, error, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+  ).run(id, c.runId, c.kind, c.model, c.trustTier, c.zgRequestId, c.provider, c.teeVerified == null ? null : c.teeVerified ? 1 : 0,
+    c.totalCost, c.latencyMs, c.inputHash, c.outputHash, c.ok ? 1 : 0, c.error ?? null, ctx.now().toISOString());
+  const r = ctx.db.prepare("SELECT * FROM inference_calls WHERE id = ?").get(id) as Row;
+  return inferenceOf(r);
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-06T16:50:28.586Z
+            </div>
+        <script src="prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="sorter.js"></script>
+        <script src="block-navigation.js"></script>
+    </body>
+</html>
+    

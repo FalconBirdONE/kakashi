@@ -1,0 +1,525 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for authorize.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="prettify.css" />
+    <link rel="stylesheet" href="base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="theme.js"></script>
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        
+        <label class="theme-select quiet">
+            Theme
+            <select id="themeSelect" autocomplete="off">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+                <option value="legacy">Legacy</option>
+            </select>
+        </label>
+
+        <h1><a href="index.html">All files</a> authorize.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">91.46% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>75/82</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">81.66% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>49/60</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>10/10</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">95.71% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>67/70</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">32x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">25x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">14x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-yes">22x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">23x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// Policy precheck, authorization and post-approval permits (SPEC §8.4 steps 1-3, §11.1, §7.7).
+import {
+  canonicalJson, mintPermit, newId, sha256Hex,
+  type AuthorizeResult, type Mandate, type PolicyReason, type PolicyResult, type Purchase, type Quote, type SigningPermit,
+} from "@tollbooth/contracts";
+import { appendAudit } from "./audit";
+import type { Ctx } from "./db";
+import { refreshMandate } from "./mandates";
+import { evaluate, policyConfigFromEnv, type RunStats } from "./policy";
+import { computeQuoteHash, getPurchase, getQuote, transition } from "./purchases";
+import { mandateOf } from "./rows";
+&nbsp;
+type Row = Record&lt;string, any&gt;;
+&nbsp;
+const COUNTED = "'AWAITING_APPROVAL','RESERVED','SIGNED','SUBMITTED','UNKNOWN','CONFIRMED'";
+const DEAD = "'POLICY_REJECTED','AGENT_SKIPPED','APPROVAL_DENIED','FAILED_FINAL'";
+const PERMIT_TTL_MS = 60_000;
+&nbsp;
+export function runStatsFor(ctx: Ctx, runId: string, requestHash: string, excludePurchaseId?: string): RunStats {
+  const run = ctx.db.prepare("SELECT mandate_version, started_at FROM runs WHERE id = ?").get(runId) as Row | undefined;
+  <span class="missing-if-branch" title="if path not taken" >I</span>if (!run) <span class="cstat-no" title="statement not covered" >throw new Error("RUN_NOT_FOUND");</span>
+  const s = ctx.db.prepare(
+    `SELECT (SELECT COUNT(*) FROM purchases WHERE run_id = @run AND id != @ex AND state IN (${COUNTED})) AS counted,
+            EXISTS (SELECT 1 FROM purchases p JOIN quotes q ON q.id = p.quote_id
+                    WHERE p.run_id = @run AND p.id != @ex AND q.request_hash = @rh AND p.state NOT IN (${DEAD})) AS dup`,
+  ).get({ run: runId, ex: excludePurchaseId ?? "", rh: requestHash }) as { counted: number; dup: number };
+  return { runMandateVersion: run.mandate_version, runStartedAt: run.started_at, purchasesCounted: s.counted, duplicateRequest: s.dup === 1 };
+}
+&nbsp;
+/** Read-only: no writes, so it reads the mandate row directly instead of refreshMandate (which persists lazy state). */
+export function precheck(ctx: Ctx, quoteId: string): PolicyResult {
+  const quote = getQuote(ctx, quoteId);
+  if (!quote) throw new Error("QUOTE_NOT_FOUND");
+  const run = ctx.db.prepare("SELECT mandate_id, mandate_version FROM runs WHERE id = ?").get(quote.runId) as Row;
+  const mandate = mandateOf(ctx.db.prepare("SELECT * FROM mandates WHERE id = ? AND version = ?").get(run.mandate_id, run.mandate_version) as Row);
+  return evaluate(quote, mandate, runStatsFor(ctx, quote.runId, quote.requestHash), ctx.now(), policyConfigFromEnv(ctx.env));
+}
+&nbsp;
+function permitSecret(ctx: Ctx): string {
+  const s = ctx.env.PERMIT_SECRET;
+  if (!s || !/^[0-9a-fA-F]{64}$/.test(s)) throw new Error("PERMIT_SECRET not set");
+  return s;
+}
+&nbsp;
+function mint(p: Purchase, q: Quote, permitId: string, now: Date, secret: string): SigningPermit {
+  return mintPermit({
+    permitId, purchaseId: p.id, mandateId: p.mandateId, mandateVersion: p.mandateVersion,
+    network: q.network, assetId: q.assetId, amountAtomic: q.amountAtomic, payTo: q.payTo, feePayer: q.feePayer,
+    quoteHash: p.quoteHash, issuedAt: now.toISOString(), expiresAt: new Date(now.getTime() + PERMIT_TTL_MS).toISOString(),
+  }, secret);
+}
+&nbsp;
+export function authorize(ctx: Ctx, purchaseId: string): AuthorizeResult {
+  const secret = permitSecret(ctx);
+  return ctx.db.transaction((): AuthorizeResult =&gt; {
+    const p = getPurchase(ctx, purchaseId);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!p) <span class="cstat-no" title="statement not covered" >throw new Error("PURCHASE_NOT_FOUND");</span>
+    if (p.state !== "PROPOSED") throw new Error("PURCHASE_NOT_PROPOSED");
+    const quote = getQuote(ctx, p.quoteId)!;
+    const mandate: Mandate = refreshMandate(ctx, p.mandateId, p.mandateVersion);
+    const now = ctx.now();
+    const evaluated = evaluate(quote, mandate, runStatsFor(ctx, p.runId, quote.requestHash, p.id), now, policyConfigFromEnv(ctx.env));
+    const reasons: PolicyReason[] = [...evaluated.reasons];
+    // Contracts has no code for a quote whose hash changed since proposal; QUOTE_EXPIRED is the closest ("no longer valid").
+    const quoteChanged = computeQuoteHash(quote) !== p.quoteHash || quote.quoteHash !== p.quoteHash;
+    if (quoteChanged &amp;&amp; !reasons.includes("QUOTE_EXPIRED")) reasons.push("QUOTE_EXPIRED");
+    const policyResult: PolicyResult = { ...evaluated, allowed: reasons.length === 0, reasons };
+&nbsp;
+    const decide = (): AuthorizeResult =&gt; {
+      const reject = (pr: PolicyResult): AuthorizeResult =&gt; {
+        transition(ctx, p.id, "POLICY_REJECTED", { policyResult: pr });
+        return { kind: "REJECTED", reasons: pr.reasons };
+      };
+      if (reasons.length &gt; 0) return reject(policyResult);
+      const permitId = policyResult.needsApproval ? undefined : newId("pmt_");
+      try {
+        if (permitId) transition(ctx, p.id, "RESERVED", { policyResult, permitId });
+        else transition(ctx, p.id, "AWAITING_APPROVAL", { policyResult });
+      } catch (e) {
+        // The conditional reserve inside transition failed; its savepoint is already rolled back.
+<span class="cstat-no" title="statement not covered" >        if (e instanceof Error &amp;&amp; e.message === "OVER_BUDGET") {</span>
+<span class="cstat-no" title="statement not covered" >          return reject({ allowed: false, reasons: ["OVER_BUDGET"], needsApproval: policyResult.needsApproval });</span>
+        }
+<span class="cstat-no" title="statement not covered" >        throw e;</span>
+      }
+      if (!permitId) return { kind: "NEEDS_APPROVAL", purchase: getPurchase(ctx, p.id)! };
+      return { kind: "PERMIT", permit: mint(p, quote, permitId, now, secret) };
+    };
+&nbsp;
+    const out = decide();
+    appendAudit(ctx, "PURCHASE_DECIDED", {
+      run: p.runId, pur: p.id, mandateHash: mandate.mandateHash, quoteHash: p.quoteHash,
+      decisionHash: sha256Hex(canonicalJson(p.decision ?? <span class="branch-1 cbranch-no" title="branch not covered" >null)</span>),
+    });
+    return out;
+  }).immediate();
+}
+&nbsp;
+export type ApprovalDenial =
+  | "APPROVAL_NOT_APPROVED" | "APPROVAL_EXPIRED" | "APPROVAL_CONSUMED" | "TARGET_MISMATCH" | "QUOTE_CHANGED" | "MANDATE_INACTIVE";
+&nbsp;
+export function issuePermitAfterApproval(
+  ctx: Ctx, purchaseId: string, approvalId: string,
+): { kind: "PERMIT"; permit: SigningPermit } | { kind: "DENIED"; reason: ApprovalDenial } {
+  const secret = permitSecret(ctx);
+  return ctx.db.transaction(() =&gt; {
+    const p = getPurchase(ctx, purchaseId);
+    if (!p || p.state !== "AWAITING_APPROVAL") throw new Error("PURCHASE_NOT_AWAITING_APPROVAL");
+    const a = ctx.db.prepare("SELECT * FROM approvals WHERE id = ?").get(approvalId) as Row | undefined;
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!a) <span class="cstat-no" title="statement not covered" >throw new Error("APPROVAL_NOT_FOUND");</span>
+    const quote = getQuote(ctx, p.quoteId)!;
+    const mandate = refreshMandate(ctx, p.mandateId, p.mandateVersion);
+    const now = ctx.now();
+    const quoteHash = computeQuoteHash(quote);
+    const purchaseHash = sha256Hex(canonicalJson({
+      purchaseId: p.id, quoteHash, amountAtomic: quote.amountAtomic, payTo: quote.payTo, mandateVersion: p.mandateVersion,
+    }));
+    const audit = { run: p.runId, pur: p.id, mandateHash: mandate.mandateHash, quoteHash: p.quoteHash };
+&nbsp;
+    // EXHAUSTED is allowed: this purchase's own reservation can push available below the cheapest price.
+    const reason: ApprovalDenial | null =
+      a.decision !== "APPROVED" ? "APPROVAL_NOT_APPROVED"
+      : Date.parse(a.expires_at) &lt;= now.getTime() ? "APPROVAL_EXPIRED"
+      : a.consumed_at != null ? "APPROVAL_CONSUMED"
+      : quoteHash !== p.quoteHash ? "QUOTE_CHANGED"
+      : a.target_hash !== purchaseHash || a.target_hash !== p.purchaseHash ? "TARGET_MISMATCH"
+      : mandate.state !== "ACTIVE" &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >mandate.state !== "EXHAUSTED" ? <span class="branch-0 cbranch-no" title="branch not covered" >"</span>MANDATE_INACTIVE"</span>
+      : null;
+    if (reason) {
+      transition(ctx, p.id, "APPROVAL_DENIED", { approvalId });
+      appendAudit(ctx, "APPROVAL_DENIED", audit);
+      return { kind: "DENIED" as const, reason };
+    }
+&nbsp;
+    const consumed = ctx.db.prepare("UPDATE approvals SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL").run(now.toISOString(), approvalId);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (consumed.changes !== 1) <span class="cstat-no" title="statement not covered" >throw new Error("APPROVAL_CONSUMED");</span>
+    const permitId = newId("pmt_");
+    transition(ctx, p.id, "RESERVED", { approvalId, permitId });
+    const permit = mint(p, quote, permitId, now, secret);
+    appendAudit(ctx, "APPROVAL_GRANTED", audit);
+    return { kind: "PERMIT" as const, permit };
+  }).immediate();
+}
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-11-06T16:50:28.586Z
+            </div>
+        <script src="prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="sorter.js"></script>
+        <script src="block-navigation.js"></script>
+    </body>
+</html>
+    

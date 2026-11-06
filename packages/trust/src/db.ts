@@ -112,6 +112,11 @@ CREATE TABLE audit_events (
 CREATE INDEX audit_pending ON audit_events(state, seq);
 `,
   },
+  {
+    // Pin the amount at proposal: budget effects must release exactly what was reserved, even if the quote row changes.
+    version: 2,
+    sql: "ALTER TABLE purchases ADD COLUMN amount TEXT;",
+  },
 ];
 
 export function migrate(db: Db): void {

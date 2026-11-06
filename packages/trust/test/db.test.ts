@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createCtx } from "../src/db";
+import { MIGRATIONS, createCtx } from "../src/db";
 import { createMandateDraft } from "../src/mandates";
 import { activate, cleanup, draft, makeFx, propose, setup } from "./helpers";
 
@@ -14,9 +14,9 @@ describe("db", () => {
       c.db.close();
     }
     const c = createCtx({ DB_PATH: fx.path });
-    const rows = c.db.prepare("SELECT version FROM schema_migrations").all();
+    const rows = c.db.prepare("SELECT version FROM schema_migrations ORDER BY version").all();
     c.db.close();
-    expect(rows).toEqual([{ version: 1 }]);
+    expect(rows).toEqual(MIGRATIONS.map((m) => ({ version: m.version })));
   });
 
   it("sets foreign_keys=1 and journal_mode=wal on a file db", () => {
