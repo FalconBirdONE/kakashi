@@ -5,8 +5,6 @@ minimumReleaseAgeExclude:
   - '@tailwindcss/node@4.3.5'
   - '@tailwindcss/vite@4.3.5'
   - openai@7.52.0 || 7.53.0
-onlyBuiltDependencies:
-  - better-sqlite3
-  - esbuild
-ignoredBuiltDependencies:
-  - protobufjs
+allowBuilds:
+  esbuild: false
+  protobufjs: false

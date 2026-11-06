@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import type { z } from "zod";
-import { sha256Hex } from "@tollbooth/contracts";
+import { canonicalJson, sha256Hex } from "@tollbooth/contracts";
 import type { BrainError, InferenceKind, InferenceTrace, Traced } from "@tollbooth/contracts";
 
 export type CallOpts<T> = { kind: InferenceKind; system: string; user: string; schema: z.ZodType<T>; maxTokens?: number };
@@ -79,7 +79,7 @@ export async function callStructured<T>(o: CallOpts<T>, deps: ClientDeps = {}): 
   const traceOf = (first: Raw, last: Raw, extra?: Raw): InferenceTrace => ({
     model, trustTier: tier, zgRequestId: last.requestId, provider: last.provider, teeVerified: last.teeVerified,
     totalCost: String(first.cost + (extra?.cost ?? 0)), latencyMs: first.latencyMs + (extra?.latencyMs ?? 0),
-    inputHash: sha256Hex({ system: o.system, user: o.user }), outputHash: sha256Hex(last.content),
+    inputHash: sha256Hex(canonicalJson({ system: o.system, user: o.user })), outputHash: sha256Hex(last.content),
   });
 
   const parse = (content: string): { ok: true; value: T } | { ok: false; why: string } => {

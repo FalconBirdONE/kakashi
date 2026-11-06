@@ -1,7 +1,7 @@
 // Eval: does 0G pick the right evidence to buy, and does it beat a "cheapest first" rule?
 // Real run:  npx tsx --env-file-if-exists=.env evals/run.ts           (needs ZG_API_KEY, ZG_MODEL)
 // Dry run:   EVAL_DRY=1 npx tsx evals/run.ts                          (fake brain; proves the harness only, NOT evidence)
-import { MERCHANTS, createFakeBrain, type Brain } from "../packages/contracts/src";
+import { MERCHANT_REGISTRY, createFakeBrain, type Brain } from "../packages/contracts/src";
 import { createBrain } from "../packages/brain/src";
 import { cases, isAccepted, quotes } from "./cases";
 
@@ -11,7 +11,7 @@ if (!dry && (!process.env.ZG_API_KEY || !process.env.ZG_MODEL)) {
   process.exit(2);
 }
 const brain: Brain = dry ? createFakeBrain() : createBrain();
-const catalog = MERCHANTS.map(({ payToEnv: _p, priceAtomic, ...m }) => ({ ...m, livePriceAtomic: priceAtomic }));
+const catalog = MERCHANT_REGISTRY.map(({ payToEnv: _p, ...m }) => m);
 
 /** Baseline: cheapest-first, one purchase per need (it has no idea which merchant covers which need), within budget. */
 function baseline(needCount: number, budget: bigint): string[] {

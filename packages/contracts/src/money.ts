@@ -1,31 +1,43 @@
-// All money is integer atomic units as decimal strings (SPEC §7.1). These are the only allowed arithmetic.
 export type Atomic = string;
 
-const ATOMIC = /^\d+$/;
-const chk = (a: string) => {
-  if (!ATOMIC.test(a)) throw new Error(`not an atomic amount: ${a}`);
-  return BigInt(a);
-};
+const DEC = /^\d+$/;
 
-export const addA = (a: Atomic, b: Atomic): Atomic => (chk(a) + chk(b)).toString();
-export const subA = (a: Atomic, b: Atomic): Atomic => {
-  const r = chk(a) - chk(b);
-  if (r < 0n) throw new Error("negative atomic amount");
-  return r.toString();
-};
-export const cmpA = (a: Atomic, b: Atomic): -1 | 0 | 1 => {
-  const x = chk(a), y = chk(b);
-  return x < y ? -1 : x > y ? 1 : 0;
-};
+export function isAtomic(x: unknown): x is Atomic {
+  return typeof x === "string" && /^(0|[1-9]\d*)$/.test(x);
+}
+
+function big(a: string): bigint {
+  if (typeof a !== "string" || !DEC.test(a)) throw new Error(`invalid atomic amount: ${String(a)}`);
+  return BigInt(a);
+}
 
 export function toAtomic(display: string, decimals: number): Atomic {
+  if (!Number.isInteger(decimals) || decimals < 0) throw new Error("invalid decimals");
   const m = /^(\d+)(?:\.(\d+))?$/.exec(display);
-  if (!m || (m[2]?.length ?? 0) > decimals) throw new Error(`bad amount: ${display}`);
-  return BigInt((m[1] as string) + (m[2] ?? "").padEnd(decimals, "0")).toString();
+  if (!m) throw new Error(`invalid decimal amount: ${String(display)}`);
+  const frac = m[2] ?? "";
+  if (frac.length > decimals) throw new Error("too many fractional digits");
+  return (BigInt(m[1]! + frac.padEnd(decimals, "0"))).toString();
 }
 
 export function fromAtomic(a: Atomic, decimals: number): string {
-  const s = chk(a).toString().padStart(decimals + 1, "0");
+  const v = big(a);
+  if (!Number.isInteger(decimals) || decimals < 0) throw new Error("invalid decimals");
+  const s = v.toString().padStart(decimals + 1, "0");
+  const int = s.slice(0, s.length - decimals);
   const frac = s.slice(s.length - decimals).replace(/0+$/, "");
-  return s.slice(0, s.length - decimals) + (frac ? "." + frac : "");
+  return frac ? `${int}.${frac}` : int;
+}
+
+export const addA = (a: Atomic, b: Atomic): Atomic => (big(a) + big(b)).toString();
+
+export function subA(a: Atomic, b: Atomic): Atomic {
+  const r = big(a) - big(b);
+  if (r < 0n) throw new Error("negative result");
+  return r.toString();
+}
+
+export function cmpA(a: Atomic, b: Atomic): -1 | 0 | 1 {
+  const x = big(a), y = big(b);
+  return x < y ? -1 : x > y ? 1 : 0;
 }

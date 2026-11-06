@@ -1,19 +1,19 @@
 // Manual end-to-end: plan -> decide -> synthesize against the real 0G Router, with sample quotes from the registry.
 // Run: cd packages/brain && npx tsx --env-file-if-exists=../../.env scripts/manual.ts
 // Needs ZG_API_KEY and ZG_MODEL (model chosen by scripts/spike.ts). Prints request ids only, never the key.
-import { MERCHANTS } from "@tollbooth/contracts";
+import { MERCHANT_REGISTRY } from "@tollbooth/contracts";
 import { createBrain } from "../src";
 
 if (!process.env.ZG_API_KEY || !process.env.ZG_MODEL) { console.error("Set ZG_API_KEY and ZG_MODEL first."); process.exit(2); }
 const brain = createBrain();
 const question = "Is 6-8 am tomorrow good for a run in Bandra?";
-const catalog = MERCHANTS.map(({ payToEnv: _p, priceAtomic, ...m }) => ({ ...m, livePriceAtomic: priceAtomic }));
+const catalog = MERCHANT_REGISTRY.map(({ payToEnv: _p, ...m }) => m);
 
 const plan = await brain.plan({ question, catalog, budgetRemainingAtomic: "200000", perPaymentCapAtomic: "100000", assetDecimals: 6 });
 if (!plan.ok) { console.error("plan failed:", plan.error); process.exit(1); }
 console.log("PLAN", plan.trace.zgRequestId, plan.trace.teeVerified, JSON.stringify(plan.value.needs));
 
-const quotes = MERCHANTS.map((m, n) => ({ quoteId: `qte_sample${n}`, merchantId: m.id, amountAtomic: m.priceAtomic,
+const quotes = MERCHANT_REGISTRY.map((m, n) => ({ quoteId: `qte_sample${n}`, merchantId: m.id, amountAtomic: m.priceAtomic,
   capabilities: m.capabilities, coverage: m.coverage, freshnessSeconds: m.freshnessSeconds, referencePrice: m.referencePriceAtomic }));
 const dec = await brain.decide({ question, needs: plan.value.needs, quotes, alreadyBought: [], budgetRemainingAtomic: "200000", purchasesRemaining: 3, round: 1 });
 if (!dec.ok) { console.error("decide failed:", dec.error); process.exit(1); }

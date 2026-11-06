@@ -18,7 +18,7 @@ export function buildPlanUser(i: PlanInput): string {
   const catalog = i.catalog.map((c) => ({
     id: c.id, name: c.name, capabilities: c.capabilities, coverage: c.coverage,
     freshnessSeconds: c.freshnessSeconds, referencePriceAtomic: c.referencePriceAtomic,
-    ...(c.livePriceAtomic !== undefined ? { livePriceAtomic: c.livePriceAtomic } : {}),
+    priceAtomic: c.priceAtomic,
   }));
   return [
     `Question: ${neutralise(i.question)}`,

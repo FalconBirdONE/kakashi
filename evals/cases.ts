@@ -1,9 +1,9 @@
-import { MERCHANTS, type DecideInput } from "../packages/contracts/src";
+import { MERCHANT_REGISTRY, type DecideInput } from "../packages/contracts/src";
 
 type Quote = DecideInput["quotes"][number];
 
 /** Quotes as policy would pass them: registry merchants minus the adversarial gouger (policy rejects it before the AI sees it). */
-export const quotes: Quote[] = MERCHANTS.filter((m) => m.demoRole === "normal").map((m) => ({
+export const quotes: Quote[] = MERCHANT_REGISTRY.filter((m) => m.demoRole === "normal").map((m) => ({
   quoteId: `qte_eval_${m.id}`, merchantId: m.id, amountAtomic: m.priceAtomic, capabilities: m.capabilities,
   coverage: m.coverage, freshnessSeconds: m.freshnessSeconds, referencePrice: m.referencePriceAtomic,
 }));

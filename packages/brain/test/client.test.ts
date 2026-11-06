@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { sha256Hex } from "@tollbooth/contracts";
+import { canonicalJson, sha256Hex } from "@tollbooth/contracts";
 import { callStructured } from "../src/client";
 
 const KEY = "sk-secret-key-123";
@@ -74,7 +74,7 @@ describe("callStructured", () => {
       provider: "0xprov",
       teeVerified: true,
       totalCost: "0.003",
-      inputHash: sha256Hex({ system: SYSTEM, user: USER }),
+      inputHash: sha256Hex(canonicalJson({ system: SYSTEM, user: USER })),
       outputHash: sha256Hex(good),
     });
     expect(typeof r.trace.latencyMs).toBe("number");
@@ -173,7 +173,7 @@ describe("callStructured", () => {
     expect(r.value).toEqual({ a: 1 });
     expect(r.trace.zgRequestId).toBe("req-2");
     expect(Number(r.trace.totalCost)).toBeCloseTo(0.006);
-    expect(r.trace.inputHash).toBe(sha256Hex({ system: SYSTEM, user: USER }));
+    expect(r.trace.inputHash).toBe(sha256Hex(canonicalJson({ system: SYSTEM, user: USER })));
     expect(r.trace.outputHash).toBe(sha256Hex(good));
   });
 

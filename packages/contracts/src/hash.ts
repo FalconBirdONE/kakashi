@@ -1,24 +1,26 @@
 import { createHash } from "node:crypto";
-import { ulid } from "ulid";
 
-export type IdPrefix = "usr" | "agt" | "mdt" | "att" | "apv" | "run" | "qte" | "pur" | "inf" | "evt" | "pmt";
-export const newId = (p: IdPrefix): string => `${p}_${ulid()}`;
-
-/** Sorted keys, undefined dropped (SPEC §7.2). */
-export function canonicalJson(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map((x) => (x === undefined ? "null" : canonicalJson(x))).join(",")}]`;
-  if (v && typeof v === "object") {
-    const o = v as Record<string, unknown>;
-    return `{${Object.keys(o).sort().filter((k) => o[k] !== undefined)
-      .map((k) => `${JSON.stringify(k)}:${canonicalJson(o[k])}`).join(",")}}`;
-  }
-  return JSON.stringify(v) ?? "null";
+export function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null";
+  if (Array.isArray(value)) return "[" + value.map((v) => canonicalJson(v)).join(",") + "]";
+  const o = value as Record<string, unknown>;
+  return (
+    "{" +
+    Object.keys(o)
+      .filter((k) => o[k] !== undefined)
+      .sort()
+      .map((k) => JSON.stringify(k) + ":" + canonicalJson(o[k]))
+      .join(",") +
+    "}"
+  );
 }
 
-export const sha256Hex = (v: unknown): string =>
-  createHash("sha256").update(typeof v === "string" ? v : canonicalJson(v)).digest("hex");
+export const sha256Hex = (s: string): string => createHash("sha256").update(s).digest("hex");
 
-export function requestHash(method: string, path: string, query: Record<string, string> = {}): string {
-  const qs = Object.keys(query).sort().map((k) => `${k}=${query[k]}`).join("&");
-  return sha256Hex(`${method}\n${path}\n${qs}`);
+export function requestHash(method: string, path: string, query: Record<string, string>): string {
+  const qs = Object.keys(query)
+    .sort()
+    .map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(query[k]!)}`)
+    .join("&");
+  return sha256Hex(method.toUpperCase() + "\n" + path + "\n" + qs);
 }

@@ -1,37 +1,58 @@
-import type { Atomic } from "./money";
+import type { Atomic } from "./money.js";
 
+// SPEC §7.5 and §10. Static, "configured, not observed" reference prices.
 export type MerchantId = "quickcast" | "hourlypro" | "groundtruth" | "gouger";
 
-export type MerchantEntry = {
+export type MerchantInfo = {
   id: MerchantId;
   name: string;
+  /** /m/<id>/<resource>, resolved against MERCHANTS_URL. */
   path: string;
   capabilities: string[];
-  coverage: "city" | "neighbourhood" | "station";
+  coverage: string;
+  /** 0 = not applicable (gouger). */
   freshnessSeconds: number;
   responseSchemaId: string;
-  /** "configured, not observed" (SPEC §7.5) */
   referencePriceAtomic: { min: Atomic; max: Atomic };
-  /** Env var holding this merchant's 0.0.x payTo account. The ONLY acceptable recipient. */
+  priceAtomic: Atomic;
+  /** Name of the env var holding the merchant's 0.0.x account. */
   payToEnv: string;
   demoRole: "normal" | "adversarial";
-  /** Configured list price in USDC atomic (6 decimals), SPEC §10. */
-  priceAtomic: Atomic;
 };
 
-export const MERCHANTS: readonly MerchantEntry[] = [
-  { id: "quickcast", name: "QuickCast", path: "/quickcast", capabilities: ["daily-forecast-7d"], coverage: "city",
-    freshnessSeconds: 6 * 3600, responseSchemaId: "forecast.daily.v1", referencePriceAtomic: { min: "5000", max: "20000" },
-    payToEnv: "MERCHANT_QUICKCAST_PAYTO", demoRole: "normal", priceAtomic: "10000" },
-  { id: "hourlypro", name: "HourlyPro", path: "/hourlypro", capabilities: ["hourly-forecast-48h"], coverage: "neighbourhood",
-    freshnessSeconds: 3600, responseSchemaId: "forecast.hourly.v1", referencePriceAtomic: { min: "30000", max: "80000" },
-    payToEnv: "MERCHANT_HOURLYPRO_PAYTO", demoRole: "normal", priceAtomic: "50000" },
-  { id: "groundtruth", name: "GroundTruth", path: "/groundtruth", capabilities: ["current-observations"], coverage: "station",
-    freshnessSeconds: 900, responseSchemaId: "observations.v1", referencePriceAtomic: { min: "20000", max: "50000" },
-    payToEnv: "MERCHANT_GROUNDTRUTH_PAYTO", demoRole: "normal", priceAtomic: "30000" },
-  { id: "gouger", name: "PriceGouger", path: "/gouger", capabilities: ["premium-forecast"], coverage: "city",
-    freshnessSeconds: 0, responseSchemaId: "forecast.daily.v1", referencePriceAtomic: { min: "10000", max: "50000" },
-    payToEnv: "MERCHANT_GOUGER_PAYTO", demoRole: "adversarial", priceAtomic: "500000" },
+export const MERCHANT_REGISTRY: readonly MerchantInfo[] = [
+  {
+    id: "quickcast", name: "QuickCast", path: "/m/quickcast/forecast",
+    capabilities: ["daily-forecast", "7-day"], coverage: "city",
+    freshnessSeconds: 6 * 3600, responseSchemaId: "daily-forecast.v1",
+    referencePriceAtomic: { min: "5000", max: "20000" }, priceAtomic: "10000",
+    payToEnv: "MERCHANT_QUICKCAST_PAYTO", demoRole: "normal",
+  },
+  {
+    id: "hourlypro", name: "HourlyPro", path: "/m/hourlypro/forecast",
+    capabilities: ["hourly-forecast", "48-hour"], coverage: "neighbourhood",
+    freshnessSeconds: 3600, responseSchemaId: "hourly-forecast.v1",
+    referencePriceAtomic: { min: "30000", max: "80000" }, priceAtomic: "50000",
+    payToEnv: "MERCHANT_HOURLYPRO_PAYTO", demoRole: "normal",
+  },
+  {
+    id: "groundtruth", name: "GroundTruth", path: "/m/groundtruth/observations",
+    capabilities: ["current-observations", "nearby-stations"], coverage: "nearby stations",
+    freshnessSeconds: 900, responseSchemaId: "observations.v1",
+    referencePriceAtomic: { min: "20000", max: "50000" }, priceAtomic: "30000",
+    payToEnv: "MERCHANT_GROUNDTRUTH_PAYTO", demoRole: "normal",
+  },
+  {
+    id: "gouger", name: "PriceGouger", path: "/m/gouger/premium",
+    capabilities: ["premium-forecast"], coverage: "claimed global",
+    freshnessSeconds: 0, responseSchemaId: "premium-forecast.v1",
+    referencePriceAtomic: { min: "10000", max: "50000" }, priceAtomic: "500000",
+    payToEnv: "MERCHANT_GOUGER_PAYTO", demoRole: "adversarial",
+  },
 ];
 
-export const getMerchant = (id: string): MerchantEntry | undefined => MERCHANTS.find((m) => m.id === id);
+export const MERCHANT_IDS = MERCHANT_REGISTRY.map((m) => m.id) as MerchantId[];
+
+export function getMerchant(id: string): MerchantInfo | undefined {
+  return MERCHANT_REGISTRY.find((m) => m.id === id);
+}

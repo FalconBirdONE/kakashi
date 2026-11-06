@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AgentDecision, DecideInput, SynthesisInput, PlanInput } from "@tollbooth/contracts";
+import type { DecisionItem, DecideInput, SynthesisInput, PlanInput } from "@tollbooth/contracts";
 import { createFunctions, postCheckDecisions } from "../src/functions";
 import { createBrain } from "../src";
 import * as plan from "../src/prompts/plan";
@@ -36,10 +36,10 @@ const decideInput = (over: Partial<DecideInput> = {}): DecideInput => ({
   quotes: [quote("qte_a", "100"), quote("qte_b", "100")], alreadyBought: [],
   budgetRemainingAtomic: "1000", purchasesRemaining: 3, round: 1, ...over,
 });
-const dec = (quoteId: string, action: "BUY" | "SKIP" = "BUY", expectedUsefulness = 0.5): AgentDecision => ({
+const dec = (quoteId: string, action: "BUY" | "SKIP" = "BUY", expectedUsefulness = 0.5): DecisionItem => ({
   quoteId, action, reasonCode: "FILLS_NEED", needId: "n1", expectedUsefulness, rationale: "r",
 });
-const decOut = (...ds: AgentDecision[]) => JSON.stringify({ decisions: ds, stop: false });
+const decOut = (...ds: DecisionItem[]) => JSON.stringify({ decisions: ds, stop: false });
 
 describe("decide schema enforcement (B4)", () => {
   it.each([["unknown quoteId", "qte_zz"], ["merchantId as quoteId", "m_qte_a"]])(
@@ -90,10 +90,14 @@ describe("synthesize injection handling (B5)", () => {
     expect(r.ok && r.value.suspiciousContent).toEqual([INJECT]);
   });
 
-  it("filters citations not in the evidence", async () => {
-    const m = mockFetch(reply({ citations: ["pur_1", "pur_999"] }));
+  it("rejects citations not in the evidence (schema-restricted), then repairs", async () => {
+    const m = mockFetch(reply({ citations: ["pur_1", "pur_999"] }), reply());
     const r = await fns(m.fn).synthesize(si({ a: 1 }));
+    expect(m.calls).toHaveLength(2);
     expect(r.ok && r.value.citations).toEqual(["pur_1"]);
+    const bad = mockFetch(reply({ citations: ["pur_999"] }));
+    const r2 = await fns(bad.fn).synthesize(si({ a: 1 }));
+    expect(!r2.ok && r2.error).toBe("SCHEMA_INVALID");
   });
 
   it("evidence cannot close the wrapper", () => {
