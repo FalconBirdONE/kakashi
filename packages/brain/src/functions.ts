@@ -12,7 +12,7 @@ export function createFunctions(env: Record<string, string | undefined> = proces
   const d = { ...deps, env };
   return {
     plan: (i) => callStructured({
-      kind: "PLAN", system: planPrompt.SYSTEM, user: planPrompt.buildPlanUser(i), schema: planOutputSchema(i.catalog.map((c) => c.id)), maxTokens: 600,
+      kind: "PLAN", system: planPrompt.SYSTEM, user: planPrompt.buildPlanUser(i), schema: planOutputSchema(i.catalog.map((c) => c.id)), maxTokens: 1500,
     }, { ...d, accounting:i.accounting }),
 
     async decide(i) {
@@ -21,7 +21,7 @@ export function createFunctions(env: Record<string, string | undefined> = proces
       if (ids.length === 0) return { ok: false, error: "SCHEMA_INVALID" };
       const r = await callStructured({
         kind: "DECIDE", system: decidePrompt.SYSTEM, user: decidePrompt.buildDecideUser(i),
-        schema: decideOutputSchema(ids, i.needs.map((n) => n.needId)), maxTokens: 900,
+        schema: decideOutputSchema(ids, i.needs.map((n) => n.needId)), maxTokens: 2000,
       }, { ...d, accounting:i.accounting });
       return r.ok ? { ...r, value: postCheckDecisions(i, r.value) } : r;
     },
@@ -29,7 +29,7 @@ export function createFunctions(env: Record<string, string | undefined> = proces
     async synthesize(i) {
       const r = await callStructured({
         kind: "SYNTHESIZE", system: synthPrompt.SYSTEM, user: synthPrompt.buildSynthesizeUser(i),
-        schema: synthesisOutputSchema(i.evidence.map((e) => e.purchaseId)), maxTokens: 900,
+        schema: synthesisOutputSchema(i.evidence.map((e) => e.purchaseId)), maxTokens: 2000,
       }, { ...d, accounting:i.accounting });
       return r; // citations are schema-restricted to the evidence purchaseIds; an unknown one fails validation and gets one repair
     },

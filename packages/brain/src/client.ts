@@ -36,10 +36,12 @@ export async function callStructured<T>(o:CallOpts<T>,deps:ClientDeps={}):Promis
       try {
         ({data}=await client.chat.completions.create({model,temperature:0.2,messages,max_tokens:o.maxTokens,verify_tee:verify,...(env.ZG_JSON_MODE==='true'?{response_format:{type:'json_object'}}:{})} as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming).withResponse());
       } catch(e) {error=e;}
-      const body=data as {choices?:{message?:{content?:string}}[];x_0g_trace?:{request_id?:string;provider?:string;tee_verified?:boolean;billing?:{total_cost?:unknown}}}|undefined;
+      const body=data as {choices?:{message?:{content?:string}}[];x_0g_trace?:{request_id?:string;provider?:string;tee_verified?:boolean;billing?:{total_cost?:unknown;total_cost_usd_micro?:unknown}}}|undefined;
       const t=body?.x_0g_trace,content=body?.choices?.[0]?.message?.content??'';
       let cost:string|undefined;
-      try { if(typeof t?.billing?.total_cost==='string'||typeof t?.billing?.total_cost==='number')cost=decimal(String(t.billing.total_cost)); } catch { /* Unknown billing keeps its admission reservation. */ }
+      // The live Router reports total_cost in micro-USD (equal to total_cost_usd_micro); prefer the explicitly-unit field.
+      const micro=t?.billing?.total_cost_usd_micro;
+      try { if((typeof micro==='string'||typeof micro==='number')&&/^\d+$/.test(String(micro)))cost=decimal(`${micro}e-6`); else if(typeof t?.billing?.total_cost==='string'||typeof t?.billing?.total_cost==='number')cost=decimal(String(t.billing.total_cost)); } catch { /* Unknown billing keeps its admission reservation. */ }
       const trace:InferenceAttempt={requestKey,model,trustTier:tier,zgRequestId:typeof t?.request_id==='string'?t.request_id:'',provider:t?.provider??'unknown',teeVerified:t?.tee_verified??null,totalCost:cost??'0',billingState:cost===undefined?'UNKNOWN':'CONFIRMED',latencyMs:Date.now()-start,inputHash:sha256Hex(canonicalJson({messages})),outputHash:sha256Hex(content),ok:!error&&!!t?.request_id};
       if(error)trace.error=error instanceof OpenAI.APIConnectionTimeoutError?'TIMEOUT':'ZG_UNAVAILABLE';
       record(trace);
@@ -61,7 +63,13 @@ export async function callStructured<T>(o:CallOpts<T>,deps:ClientDeps={}):Promis
   };
   const parse=(content:string):{ok:true;value:T}|{ok:false;why:string}=>{
     let json:unknown;
-    try {json=JSON.parse(content.trim().replace(/^```(?:json)?\s*|\s*```$/g,''));}catch{return {ok:false,why:'output was not valid JSON'};}
+    // TEE-verified 0gm-*-sia models emit "<reasoning></think>" before the JSON answer; parse only what follows.
+    const text=content.split('</think>').pop()!.trim().replace(/^```(?:json)?\s*|\s*```$/g,''),end=text.lastIndexOf('}');
+    try {json=JSON.parse(text);}catch{
+      // Reasoning sometimes arrives without the closing tag: take the JSON object that ends the reply. Schema still validates it.
+      for(let i=text.indexOf('{');i>=0&&i<end&&json===undefined;i=text.indexOf('{',i+1))try{json=JSON.parse(text.slice(i,end+1));}catch{/* keep scanning */}
+      if(json===undefined)return {ok:false,why:'output was not valid JSON'};
+    }
     const result=o.schema.safeParse(json);
     return result.success?{ok:true,value:result.data}:{ok:false,why:result.error.issues.map(i=>`${i.path.join('.')}: ${i.message}`).join('; ')};
   };
