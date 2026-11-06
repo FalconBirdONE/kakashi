@@ -4,4 +4,9 @@ dist
 .env.*
 !.env.example
 *.sqlite
+*.sqlite-*
 data/
+
+# Generated and OS files
+coverage/
+.DS_Store

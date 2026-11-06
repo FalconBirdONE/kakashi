@@ -5,6 +5,8 @@ packages:
   - evals
 minimumReleaseAgeExclude:
   - '@tailwindcss/node@4.3.5'
+  - '@tailwindcss/vite@4.3.5'
+  - '@tailwindcss/oxide@4.3.5'
   - '@tailwindcss/oxide-android-arm64@4.3.5'
   - '@tailwindcss/oxide-darwin-arm64@4.3.5'
   - '@tailwindcss/oxide-darwin-x64@4.3.5'
@@ -17,10 +19,8 @@ minimumReleaseAgeExclude:
   - '@tailwindcss/oxide-wasm32-wasi@4.3.5'
   - '@tailwindcss/oxide-win32-arm64-msvc@4.3.5'
   - '@tailwindcss/oxide-win32-x64-msvc@4.3.5'
-  - '@tailwindcss/oxide@4.3.5'
-  - '@tailwindcss/vite@4.3.5'
-  - openai@7.53.0
   - tailwindcss@4.3.5
+  - openai@7.52.0 || 7.53.0
 allowBuilds:
   better-sqlite3: true
   esbuild: true
