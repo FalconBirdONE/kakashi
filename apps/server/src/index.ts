@@ -12,6 +12,7 @@ async function main() {
   const auth = new AuthStore(config.authDbPath);
   for (const email of config.invites) auth.invite(email);
   // DEMO_USER_ID keeps the demo user (and its World ID link in the persistent trust DB) across restarts.
+  if (process.env.DEMO_USER_ID && !/^usr_[0-9A-Z]{26}$/.test(process.env.DEMO_USER_ID)) throw new Error("DEMO_USER_ID must be usr_ followed by 26 characters 0-9A-Z");
   const { app, ctx } = createApp(deps, config, {demoUserId:process.env.DEMO_USER_ID||undefined,authStore:auth,login:config.login,paymentsEnabled:process.env.PAYMENTS_ENABLED==="true",staticDir:process.env.WEB_ROOT});
   const stopWorkers = startWorkers(ctx,{allowSpending:config.demoMode||process.env.PAYMENTS_ENABLED==="true"});
   const server = app.listen(config.port, () => {
