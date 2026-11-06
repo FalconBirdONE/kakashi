@@ -230,9 +230,18 @@ importers:
 
   apps/server:
     dependencies:
+      '@tollbooth/brain':
+        specifier: workspace:*
+        version: link:../../packages/brain
       '@tollbooth/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@tollbooth/rails':
+        specifier: workspace:*
+        version: link:../../packages/rails
+      '@tollbooth/trust':
+        specifier: workspace:*
+        version: link:../../packages/trust
       cookie-parser:
         specifier: 1.4.7
         version: 1.4.7

@@ -7,13 +7,17 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch --env-file-if-exists=../../.env src/index.ts",
+    "start": "node --env-file-if-exists=../../.env dist/index.js"
   },
   "dependencies": {
     "express": "5.3.0",
     "cookie-parser": "1.4.7",
     "zod": "4.6.7",
-    "@tollbooth/contracts": "workspace:*"
+    "@tollbooth/contracts": "workspace:*",
+    "@tollbooth/rails": "workspace:*",
+    "@tollbooth/brain": "workspace:*",
+    "@tollbooth/trust": "workspace:*"
   },
   "devDependencies": {
     "typescript": "7.0.2",
