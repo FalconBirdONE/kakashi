@@ -91,5 +91,5 @@ export function Reveal({ children, className = "", delay = 0 }: { children: Reac
     io.observe(el);
     return () => io.disconnect();
   }, []);
-  return <div ref={ref} className={`reveal ${shown ? "is-shown" : ""} ${className}`} style={{ transitionDelay: `${delay}ms` }}>{children}</div>;
+  return <div ref={ref} className={`reveal ${shown ? "is-shown" : ""} ${className}`} style={{ transitionDelay: `${Math.round(delay * 0.6)}ms` }}>{children}</div>;
 }

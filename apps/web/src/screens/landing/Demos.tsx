@@ -54,11 +54,11 @@ export function DecideDemo() {
           const v: Verdict = baseline ? (r.v === "BLOCKED" ? "BLOCKED" : r.m === "KeyScan" ? "BUY" : "SKIP") : r.v;
           return (
             <div key={`${c}-${baseline}-${r.m}`} className="animate-rise grid grid-cols-[minmax(0,1fr)_auto_auto] items-start gap-x-4 gap-y-1.5 border-t border-white/[0.05] px-4 py-3.5 first:border-t-0"
-              style={{ animationDelay: `${n * 90}ms` }}>
+              style={{ animationDelay: `${n * 60}ms` }}>
               <span className="font-medium text-zinc-100">{r.m}<span className="ml-2 text-xs font-normal text-zinc-500">{r.offer}</span></span>
               <span className="pt-0.5 text-right font-mono text-sm text-zinc-300">{r.price}</span>
               <span className="flex w-32 flex-col items-end gap-1 whitespace-nowrap">
-                <span className={`animate-pop inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${VERDICT[v]}`} style={{ animationDelay: `${300 + n * 90}ms` }}>
+                <span className={`animate-pop inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${VERDICT[v]}`} style={{ animationDelay: `${180 + n * 60}ms` }}>
                   {v === "BLOCKED" ? "Blocked by policy" : v}
                 </span>
                 {!baseline && r.approval && v === "BUY" && <span className="flex items-center gap-1 text-[11px] text-sky-300"><SponsorMark id="world" className="h-3" />needs approval</span>}
@@ -106,7 +106,7 @@ export function WorldDemo() {
   useEffect(() => {
     if (s !== "verified") { setChecked(0); return; }
     if (checked >= CHECKS.length) return;
-    const t = setTimeout(() => setChecked((n) => n + 1), reducedMotion() ? 0 : 260);
+    const t = setTimeout(() => setChecked((n) => n + 1), reducedMotion() ? 0 : 180);
     return () => clearTimeout(t);
   }, [s, checked]);
   const state = s === "verified" && checked >= CHECKS.length ? ["Active", "green"] as const
@@ -210,7 +210,7 @@ export function PayOnceDemo() {
   useEffect(() => { setN(reducedMotion() ? chain.length : 0); }, [drop, chain.length]);
   useEffect(() => {
     if (!inView || n >= chain.length) return;
-    const t = setTimeout(() => setN((x) => x + 1), n === 0 ? 300 : 850);
+    const t = setTimeout(() => setN((x) => x + 1), n === 0 ? 200 : 550);
     return () => clearTimeout(t);
   }, [inView, n, chain.length]);
   const done = n >= chain.length;
@@ -292,7 +292,7 @@ export function AttackLab() {
   const inView = useInView(ref);
   const [paused, setPaused] = useState(reducedMotion);
   const playing = inView && !paused;
-  const [a, setA] = useTicker(ATTACKS.length, 5200, playing);
+  const [a, setA] = useTicker(ATTACKS.length, 3800, playing);
   const atk = ATTACKS[a]!;
   const stopAt = LAYERS.findIndex((l) => l.k === atk.stop);
 
@@ -319,7 +319,7 @@ export function AttackLab() {
             const passed = n < stopAt, hit = n === stopAt;
             return (
               <li key={`${a}-${l.k}`} className={`animate-rise flex items-center gap-3 rounded-xl border px-3.5 py-2.5 transition-colors ${hit ? "border-emerald-400/40 bg-emerald-400/[0.07]" : passed ? "border-white/[0.07] bg-white/[0.015]" : "border-white/[0.04] opacity-40"}`}
-                style={{ animationDelay: `${n * 110}ms` }}>
+                style={{ animationDelay: `${n * 70}ms` }}>
                 <span className={`flex size-6 shrink-0 items-center justify-center rounded-full ring-1 ring-inset ${hit ? "bg-emerald-400/15 text-emerald-300 ring-emerald-400/35" : "text-zinc-600 ring-white/10"}`}>
                   {hit ? <Check className="size-3" /> : <span className="size-1.5 rounded-full bg-current" />}
                 </span>
@@ -327,7 +327,7 @@ export function AttackLab() {
                   <span className={`block text-sm font-medium ${hit ? "text-emerald-100" : "text-zinc-300"}`}>{l.t}</span>
                   <span className="block text-xs text-zinc-500">{l.d}</span>
                 </span>
-                {hit && <span className="animate-pop rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] font-medium text-emerald-200 [animation-delay:500ms]">Stopped here</span>}
+                {hit && <span className="animate-pop rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] font-medium text-emerald-200 [animation-delay:300ms]">Stopped here</span>}
                 {l.k === "ai" && <SponsorTag id="0g" className="max-sm:hidden" />}
                 {l.k === "world" && <SponsorTag id="world" className="max-sm:hidden" />}
                 {l.k === "settle" && <SponsorTag id="hedera" className="max-sm:hidden" />}
@@ -335,7 +335,7 @@ export function AttackLab() {
             );
           })}
         </ol>
-        <div key={`o${a}`} className="animate-rise mt-5 grid gap-3 border-t border-white/[0.06] pt-4 text-sm [animation-delay:400ms] sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div key={`o${a}`} className="animate-rise mt-5 grid gap-3 border-t border-white/[0.06] pt-4 text-sm [animation-delay:250ms] sm:grid-cols-[minmax(0,1fr)_auto]">
           <p className="text-zinc-300"><span className="text-zinc-500">Outcome: </span>{atk.outcome}</p>
           <span className="self-start justify-self-start whitespace-nowrap rounded-full border border-gold-400/25 bg-gold-400/[0.06] px-2.5 py-0.5 text-xs text-gold-200 sm:justify-self-end">Proves: {atk.proves}</span>
           <p className="font-mono text-xs text-zinc-500 sm:col-span-2">Try it live: {atk.live}</p>

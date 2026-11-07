@@ -13,11 +13,11 @@
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --animate-page-in: page-in 0.6s var(--ease-out-expo) both;
-  --animate-rise: rise 0.9s var(--ease-out-expo) both;
-  --animate-pop: pop 0.5s var(--ease-out-expo) both;
+  --animate-page-in: page-in 0.4s var(--ease-out-expo) both;
+  --animate-rise: rise 0.55s var(--ease-out-expo) both;
+  --animate-pop: pop 0.35s var(--ease-out-expo) both;
   --animate-menu-in: menu-in 0.25s var(--ease-out-expo) both;
-  --animate-grow-x: grow-x 1.2s var(--ease-out-expo) both;
+  --animate-grow-x: grow-x 0.8s var(--ease-out-expo) both;
 
   @keyframes page-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -100,7 +100,7 @@
 .flow-dash-both { animation: dash-both 3.2s ease-in-out infinite; }
 
 /* Scroll reveal, toggled by <Reveal>. */
-.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo); }
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.55s var(--ease-out-expo), transform 0.55s var(--ease-out-expo); }
 .reveal.is-shown { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {

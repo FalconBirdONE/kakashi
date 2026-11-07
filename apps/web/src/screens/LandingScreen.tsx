@@ -44,12 +44,12 @@ function ExampleRun() {
             </div>
             {DEMO.map((q, i) => (
               <div key={q.name} className="animate-rise grid grid-cols-[1fr_auto] items-center gap-x-4 border-t border-white/[0.05] px-4 py-3 text-sm sm:grid-cols-[1fr_1.3fr_auto_11rem]"
-                style={{ animationDelay: `${700 + i * 140}ms` }}>
+                style={{ animationDelay: `${350 + i * 90}ms` }}>
                 <span className="font-medium text-zinc-200">{q.name}<span className="block font-mono text-xs font-normal text-zinc-500 sm:hidden">{q.price} USDC</span></span>
                 <span className="hidden text-zinc-400 sm:block">{q.offer}</span>
                 <span className="hidden text-right font-mono text-zinc-300 sm:block">{q.price} USDC</span>
                 <span className="text-right">
-                  <span className={`animate-pop inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${q.verdict.cls}`} style={{ animationDelay: `${1200 + i * 140}ms` }}>
+                  <span className={`animate-pop inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${q.verdict.cls}`} style={{ animationDelay: `${650 + i * 90}ms` }}>
                     {q.verdict.text}
                   </span>
                 </span>
@@ -57,7 +57,7 @@ function ExampleRun() {
             ))}
           </div>
 
-          <div className="animate-rise mt-5 rounded-xl border border-gold-400/15 bg-gold-400/[0.04] p-4" style={{ animationDelay: "1900ms" }}>
+          <div className="animate-rise mt-5 rounded-xl border border-gold-400/15 bg-gold-400/[0.04] p-4" style={{ animationDelay: "1000ms" }}>
             <p className="text-xs font-medium text-gold-300">Answer · high confidence</p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-200">
               CAUTION. The issuer holds admin and supply keys and can mint more; 9 wallets each hold over 1%. <span className="text-gold-300">[1]</span> <span className="text-gold-300">[2]</span> <span className="text-gold-300">[3]</span>
@@ -182,23 +182,23 @@ export default function LandingScreen() {
             <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-400 shadow-[0_0_10px_2px_rgba(240,185,85,0.5)]" />
             ETHGlobal Mumbai 2026 · Token checks with receipts
           </p>
-          <h1 className="text-sheen animate-rise mx-auto mt-6 max-w-4xl text-balance text-[clamp(2.6rem,8vw,5.25rem)] font-semibold leading-[1.02] tracking-[-0.04em] [animation-delay:80ms]">
+          <h1 className="text-sheen animate-rise mx-auto mt-6 max-w-4xl text-balance text-[clamp(2.6rem,8vw,5.25rem)] font-semibold leading-[1.02] tracking-[-0.04em] [animation-delay:50ms]">
             Check a token <span className="font-serif font-normal italic tracking-[-0.02em] text-gold-300">before</span> you buy it.
           </h1>
-          <p className="animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg [animation-delay:160ms]">
+          <p className="animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg [animation-delay:100ms]">
             Kakashi is a pre-trade check for Hedera tokens. It buys only the checks your trade size justifies, spends only inside a budget a verified human approved,
             and can prove every decision and payment.
           </p>
-          <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:240ms]">
+          <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:150ms]">
             <a href="#/mandate" className={`${btn("primary", "lg")} w-full sm:w-auto`}>Set up a mandate <Arrow /></a>
             <button type="button" onClick={() => document.getElementById("flow")?.scrollIntoView({ behavior: "smooth" })}
               className={`${btn("ghost", "lg")} w-full sm:w-auto`}>See how it works</button>
           </div>
-          <div className="animate-rise mt-12 flex flex-col items-center gap-4 [animation-delay:320ms]">
+          <div className="animate-rise mt-12 flex flex-col items-center gap-4 [animation-delay:200ms]">
             <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Built on</p>
             <BuiltOn className="justify-center gap-x-10" logo="h-7" />
           </div>
-          <div className="animate-rise mx-auto mt-14 max-w-4xl sm:mt-16 [animation-delay:420ms]">
+          <div className="animate-rise mx-auto mt-14 max-w-4xl sm:mt-16 [animation-delay:260ms]">
             <ExampleRun />
           </div>
         </div>
