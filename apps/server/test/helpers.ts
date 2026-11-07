@@ -6,12 +6,12 @@ import { createDeps, type Deps } from "../src/wiring.js";
 
 export const SECRET = "test-secret";
 
-export async function makeServer(o: { demoMode?: boolean; brain?: (b: ReturnType<typeof createFakeBrain>) => Brain } = {}) {
+export async function makeServer(o: { demoMode?: boolean; liveDemo?: boolean; brain?: (b: ReturnType<typeof createFakeBrain>) => Brain } = {}) {
   const deps: Deps = await createDeps([], {}, () => {});
   if (o.brain) deps.brain = o.brain(deps.fakes.brain!);
   const { app, ctx, demoUserId } = createApp(
     deps,
-    { demoMode: o.demoMode ?? true, merchantsUrl: "http://127.0.0.1:4200", sessionSecret: SECRET, secureCookie: false },
+    { demoMode: o.demoMode ?? true, liveDemo: o.liveDemo, merchantsUrl: "http://127.0.0.1:4200", sessionSecret: SECRET, secureCookie: false },
     { approvalPollMs: 10 },
   );
   const agent = request.agent(app);

@@ -19,7 +19,7 @@ export function createApp(
   opts: { approvalPollMs?: number; heartbeatMs?: number; demoUserId?: string; authStore?: AuthStore; login?: LoginConfig; paymentsEnabled?: boolean; staticDir?:string } = {},
 ): { app: express.Express; ctx: OrchContext; demoUserId: string } {
   const ctx: OrchContext = createContext(deps, opts);
-  // LIVE_DEMO: one shared demo user on real trust/rails. World ID still gates activation and over-cap purchases. Never in production (readiness).
+  // LIVE_DEMO: one demo user per browser on real trust/rails. World ID still gates activation and over-cap purchases. Never in production (readiness).
   if (config.demoMode && !config.liveDemo && (deps.modes.trust === "real" || deps.modes.rails === "real")) throw new Error("demo authority requires fake trust and rails (LIVE_DEMO=true allows a shared live demo)");
   const auth = opts.authStore ?? new AuthStore(":memory:");
   const demoUserId = opts.demoUserId ?? newId("usr_"); // the one demo user, created at start
@@ -41,7 +41,7 @@ export function createApp(
     if(!config.demoMode && !opts.paymentsEnabled){res.status(503).json({error:'PAYMENTS_DISABLED',message:'Payment access is gated pending production validation'});return;}
     next();
   });
-  api.use(accountRoutes(ctx, { demoUserId, secureCookie: config.secureCookie, demoMode: config.demoMode }));
+  api.use(accountRoutes(ctx, { demoUserId, secureCookie: config.secureCookie, demoMode: config.demoMode, perVisitor: config.liveDemo }));
   if (config.demoMode) api.use(demoRoutes(ctx, { merchantsUrl: config.merchantsUrl }));
   api.use(purchaseListRoute(ctx));
   api.use(runRoutes(ctx, { heartbeatMs: opts.heartbeatMs }));

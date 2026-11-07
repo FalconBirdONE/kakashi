@@ -9,17 +9,24 @@ import QuotesSection from "../components/timeline/QuotesSection";
 import DecisionsSection from "../components/timeline/DecisionsSection";
 import AnswerSection from "../components/timeline/AnswerSection";
 import RunStateBadge from "../components/timeline/RunStateBadge";
-import { SponsorTag } from "../components/Brand";
+import { SponsorTag, type SponsorId } from "../components/Brand";
 
 const ENDED = ["DONE", "PARTIAL", "FAILED"];
 const MOVING = ["AWAITING_APPROVAL", "RESERVED", "SIGNED", "SUBMITTED", "UNKNOWN"];
 const LIVE_ORDER = ["PLANNING", "QUOTING", "DECIDING", "PURCHASING", "SYNTHESIZING"];
-const EXAMPLES = [
-  "Should I put 20 USDC into SAUCE (0.0.731861)?",
-  "I'm about to put 2,000 USDC into 0.0.731861. Is it safe?",
-  "Is the supply of DOVU (0.0.624505) concentrated? Planning 300 USD.",
-  "Quick check before a 5 USD trade of 0.0.4696266",
+type Persona = { who: string; story: string; q: string; see: string; by: SponsorId[] };
+/** Ready-made traders, so a first-time visitor sees each sponsor's job in one run. Token ids are verified mainnet tokens. */
+const PERSONAS: Persona[] = [
+  { who: "Riya · first trade", story: "Small stake, wants a quick sanity check.", q: "Should I put 20 USDC into SAUCE (0.0.731861)?",
+    see: "0G buys KeyScan only (0.01 USDC). It is under the auto-approve cap, so it pays on Hedera with no human in the loop.", by: ["0g", "hedera"] },
+  { who: "Kabir · sizing up", story: "Same token, a hundred times the money.", q: "I'm about to put 2,000 USDC into 0.0.731861. Is it safe?",
+    see: "0G adds HolderMap and TreasuryWatch. Both are above the cap, so each needs your World ID step-up before it pays.", by: ["0g", "world", "hedera"] },
+  { who: "Meera · long-term holder", story: "Worried the team is selling.", q: "Is the team dumping GRELF (0.0.1159074)? I hold 1,000 USD of it.",
+    see: "0G buys TreasuryWatch for treasury outflows and mints, after a World ID step-up.", by: ["0g", "world", "hedera"] },
+  { who: "Dev · copycat check", story: "Found a token with a familiar name.", q: "Quick check before a 5 USD trade of 0.0.4696266",
+    see: "KeyScan reads the issuer keys of “The Real Hashpack Token” from Hedera mainnet for one cent.", by: ["0g", "hedera"] },
 ];
+const EXAMPLES = [...PERSONAS.map((p) => p.q), "Is the supply of DOVU (0.0.624505) concentrated? Planning 300 USD."];
 const HAS_TOKEN = /0\.0\.\d+|\b(SAUCE|USDC|DOVU|GRELF)\b/i;
 const EYEBROW = "Step 2 of 3 · Research";
 
@@ -90,13 +97,31 @@ export default function ResearchScreen({ runId }: { runId?: string }) {
       <PageHeader eyebrow={EYEBROW} title="Check a token before you buy.">
         Name the Hedera token and your trade size. The agent buys only the checks the trade justifies, inside your mandate, and answers BUY, CAUTION or AVOID with receipts.
       </PageHeader>
+      <section aria-labelledby="personas" className="mb-6 max-w-3xl">
+        <h2 id="personas" className="text-sm font-semibold text-zinc-100">Try it as a persona</h2>
+        <p className="mt-1 text-sm text-zinc-400">Pick one to fill in the question, then press Run. Every payment is real USDC on Hedera testnet; token data is live from Hedera mainnet.</p>
+        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+          {PERSONAS.map((p) => (
+            <li key={p.who}>
+              <button type="button" onClick={() => setQuestion(p.q)} aria-pressed={question === p.q}
+                className={`flex h-full w-full flex-col gap-2 rounded-2xl border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70 ${question === p.q ? "border-gold-400/40 bg-gold-400/[0.06]" : "border-white/[0.08] bg-white/[0.02] hover:border-white/20"}`}>
+                <span className="text-sm font-semibold text-zinc-50">{p.who}</span>
+                <span className="text-xs text-zinc-500">{p.story}</span>
+                <span className="text-sm text-zinc-200">“{p.q}”</span>
+                <span className="text-xs leading-relaxed text-zinc-400">{p.see}</span>
+                <span className="mt-auto flex flex-wrap gap-1.5 pt-1">{p.by.map((b) => <SponsorTag key={b} id={b} />)}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
       <Card className="max-w-3xl">
         <form onSubmit={(e) => { e.preventDefault(); void start(); }}>
           <label className="block"><Label>Your question</Label>
             <textarea className={`${inputCls} resize-none`} rows={4} maxLength={500} value={question} onChange={(e) => setQuestion(e.target.value)} /></label>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className="text-xs text-zinc-500">Try:</span>
-            {EXAMPLES.map((q) => (
+            {EXAMPLES.slice(PERSONAS.length).map((q) => (
               <button key={q} type="button" onClick={() => setQuestion(q)}
                 className="rounded-full border border-white/[0.08] bg-white/[0.02] px-3 py-1 text-left text-xs text-zinc-400 transition-colors hover:border-white/20 hover:text-zinc-100">
                 {q}

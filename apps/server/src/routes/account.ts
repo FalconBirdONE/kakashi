@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { MERCHANT_IDS, cmpA, boundedAtomic, type MandateDraft, type MerchantId } from "@kakashi/contracts";
+import { MERCHANT_IDS, cmpA, boundedAtomic, newId, type MandateDraft, type MerchantId } from "@kakashi/contracts";
 import { HttpError, conflict } from "../errors.js";
 import { issueCookie, requireUser, userOf } from "../session.js";
 import { owner } from "../orchestrator/context.js";
@@ -22,14 +22,16 @@ const draftSchema = z.object({
   if (Date.parse(d.expiresAt) <= Date.now()) c.addIssue({ code: "custom", path: ["expiresAt"], message: "must be in the future" });
 });
 
-export function accountRoutes(ctx: OrchContext, opts: { demoUserId: string; secureCookie: boolean; demoMode: boolean }): Router {
+export function accountRoutes(ctx: OrchContext, opts: { demoUserId: string; secureCookie: boolean; demoMode: boolean; perVisitor?: boolean }): Router {
   const { trust } = ctx.deps;
   const r = Router();
 
-  // The single demo user. Issues the signed session cookie.
+  // Demo session. Issues the signed session cookie: one shared demo user, or with perVisitor (LIVE_DEMO)
+  // one user per browser, because World ID binds each user to one human and each human to one user.
   if (opts.demoMode) r.post("/session", (_req, res) => {
-    issueCookie(res, opts.demoUserId, opts.secureCookie);
-    res.json({ userId: opts.demoUserId });
+    const userId = opts.perVisitor ? ((res.locals.userId as string | undefined) ?? newId("usr_")) : opts.demoUserId;
+    issueCookie(res, userId, opts.secureCookie);
+    res.json({ userId });
   });
 
   r.use(requireUser);

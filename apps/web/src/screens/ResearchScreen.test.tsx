@@ -73,8 +73,16 @@ it('refreshes an answer and citations when delayed evidence emits an event',asyn
 it("renders the token examples", () => {
   render(<ResearchScreen />);
   expect(screen.getByRole("heading", { name: "Check a token before you buy." })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Should I put 20 USDC into SAUCE (0.0.731861)?" })).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Quick check before a 5 USD trade of 0.0.4696266" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Riya · first trade.*Should I put 20 USDC into SAUCE \(0\.0\.731861\)\?/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Dev · copycat check.*0\.0\.4696266/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Is the supply of DOVU (0.0.624505) concentrated? Planning 300 USD." })).toBeInTheDocument();
+});
+
+it("fills the question from a persona", () => {
+  render(<ResearchScreen />);
+  fireEvent.click(screen.getByRole("button", { name: /Kabir · sizing up/ }));
+  expect(screen.getByRole("textbox", { name: "Your question" })).toHaveValue("I'm about to put 2,000 USDC into 0.0.731861. Is it safe?");
+  expect(screen.getByRole("button", { name: "Run" })).toBeEnabled();
 });
 
 it("asks for a token id and disables Run when the question has none", () => {

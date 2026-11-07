@@ -80,6 +80,24 @@ describe("session ownership", () => {
   });
 });
 
+describe("live demo sessions", () => {
+  it("gives each browser its own user and keeps it across calls", async () => {
+    const s = await makeServer({ liveDemo: true });
+    const a = request.agent(s.app), b = request.agent(s.app);
+    const first = (await a.post("/api/session").expect(200)).body.userId;
+    expect((await a.post("/api/session").expect(200)).body.userId).toBe(first);
+    const other = (await b.post("/api/session").expect(200)).body.userId;
+    expect(other).toMatch(/^usr_/);
+    expect(other).not.toBe(first);
+    expect(first).not.toBe(s.demoUserId);
+  });
+
+  it("keeps one shared demo user without LIVE_DEMO", async () => {
+    const s = await makeServer();
+    expect((await request(s.app).post("/api/session").expect(200)).body.userId).toBe(s.demoUserId);
+  });
+});
+
 describe("demo gating and basics", () => {
   it("demo and dev routes are 404 when DEMO_MODE is off", async () => {
     const s = await makeServer({ demoMode: false });
