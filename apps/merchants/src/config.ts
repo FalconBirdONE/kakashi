@@ -25,6 +25,8 @@ const schema = z.object({
   USDC_TOKEN_ID: acct.default("0.0.429274"),
   FACILITATOR_URL: z.string().url().default("https://x402.org/facilitator"),
   MIRROR_NODE_URL: z.string().url().default("https://testnet.mirrornode.hedera.com"),
+  // Token data is always mainnet; MIRROR_NODE_URL stays testnet and only verifies payments.
+  TOKEN_MIRROR_URL: z.string().url().default("https://mainnet-public.mirrornode.hedera.com"),
   MERCHANT_QUICKCAST_PAYTO: acct,
   MERCHANT_HOURLYPRO_PAYTO: acct,
   MERCHANT_GROUNDTRUTH_PAYTO: acct,
@@ -43,6 +45,7 @@ export type MerchantsConfig = {
   swapPayTo?: string;
   facilitatorUrl: string;
   mirrorUrl: string;
+  tokenMirrorUrl: string;
   demoMode: boolean;
   fixtureMode: boolean;
   port: number;
@@ -62,6 +65,7 @@ export function parseConfig(env: Record<string, string | undefined>): MerchantsC
     swapPayTo: e.HEDERA_OPERATOR_ID,
     facilitatorUrl: e.FACILITATOR_URL,
     mirrorUrl: e.MIRROR_NODE_URL,
+    tokenMirrorUrl: e.TOKEN_MIRROR_URL,
     demoMode: e.DEMO_MODE,
     fixtureMode: e.FIXTURE_MODE,
     port: e.MERCHANTS_PORT,

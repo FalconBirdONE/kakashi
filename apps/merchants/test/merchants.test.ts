@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import request from "supertest";
 import { describe, expect, test, vi } from "vitest";
 import type { FacilitatorClient } from "@x402/core/server";
@@ -11,7 +13,8 @@ import { openStore } from "../src/store.js";
 const FEE_PAYER = "0.0.9185802";
 const PAYER = "0.0.5005";
 const NOW = new Date("2026-11-06T10:00:00.000Z");
-const QUERY = { lat: "19.076", lon: "72.878", startDate: "2026-11-07", endDate: "2026-11-07" };
+const QUERY = { tokenId: "0.0.731861" };
+const P = (id: string) => MERCHANT_REGISTRY.find((m) => m.id === id)!.path;
 
 const baseConfig: MerchantsConfig = {
   network: "hedera:testnet",
@@ -20,6 +23,7 @@ const baseConfig: MerchantsConfig = {
   swapPayTo: "0.0.2",
   facilitatorUrl: "http://facilitator.test",
   mirrorUrl: "http://mirror.test",
+  tokenMirrorUrl: "http://mainnet-mirror.test",
   demoMode: true,
   fixtureMode: true,
   port: 0,
@@ -88,60 +92,116 @@ describe("402 quotes", () => {
     expect(res.body[0]).toMatchObject({ id: "quickcast", priceAtomic: "10000" });
   });
 
-  test("bad query is rejected before any quote", async () => {
+  test.each([[{}], [{ tokenId: "SAUCE" }], [{ tokenId: "0.0.x" }]])("bad query %j is rejected before any quote", async (q) => {
     const { app } = await setup();
-    expect((await request(app).get("/m/quickcast/forecast").query({ lat: "abc" })).status).toBe(400);
+    const res = await request(app).get(P("quickcast")).query(q);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("invalid query: expected tokenId (0.0.N)");
   });
 });
 
 describe("paid requests", () => {
   test("verify, settle, then respond with PAYMENT-RESPONSE and the required metadata", async () => {
     const { app, calls } = await setup();
-    const header = await paymentHeader(app, "/m/quickcast/forecast");
-    const res = await request(app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header);
+    const header = await paymentHeader(app, P("quickcast"));
+    const res = await request(app).get(P("quickcast")).query(QUERY).set("PAYMENT-SIGNATURE", header);
     expect(res.status).toBe(200);
     expect(calls).toEqual({ verify: 1, settle: 1 });
     expect(decodePaymentResponseHeader(res.headers["payment-response"])).toMatchObject({ success: true, payer: PAYER });
     expect(res.body).toMatchObject({
-      merchant: "quickcast", source: "fixture", units: "metric", generatedAt: NOW.toISOString(),
-      location: { lat: 19.076, lon: 72.878 }, window: { start: "2026-11-07", end: "2026-11-07" },
+      merchant: "quickcast", source: "fixture", tokenId: "0.0.731861", generatedAt: NOW.toISOString(),
+      token: { symbol: "SAUCE", keys: { admin: true, supply: true, freeze: false } },
     });
-    expect(res.body.daily).toBeDefined();
   });
 
   test("idempotent replay returns the cached body without a new 402 or a second settlement", async () => {
     const { app, calls } = await setup();
-    const header = await paymentHeader(app, "/m/hourlypro/forecast");
-    const first = await request(app).get("/m/hourlypro/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header);
-    const second = await request(app).get("/m/hourlypro/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header);
+    const header = await paymentHeader(app, P("hourlypro"));
+    const first = await request(app).get(P("hourlypro")).query(QUERY).set("PAYMENT-SIGNATURE", header);
+    const second = await request(app).get(P("hourlypro")).query(QUERY).set("PAYMENT-SIGNATURE", header);
     expect(second.status).toBe(200);
     expect(second.body).toEqual(first.body);
     expect(second.headers["payment-response"]).toBe(first.headers["payment-response"]);
     expect(calls.settle).toBe(1);
   });
 
-  test("uses Open-Meteo when it answers, fixtures when it fails", async () => {
-    const live = vi.fn(async () => Response.json({ daily: { time: ["2026-11-07"] }, daily_units: { time: "iso8601" } }));
-    const a = await setup({ config: { fixtureMode: false }, fetch: live as unknown as typeof fetch });
-    const okRes = await request(a.app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(a.app, "/m/quickcast/forecast"));
-    expect(okRes.body).toMatchObject({ source: "open-meteo", daily: { time: ["2026-11-07"] } });
+  test("live mode reads only the mainnet mirror: token, balances above 1%, treasury transactions", async () => {
+    const token = JSON.parse(readFileSync(resolve(import.meta.dirname, "../fixtures/token.json"), "utf8"));
+    const urls: string[] = [];
+    const live = vi.fn(async (url: string | URL) => {
+      const u = String(url); urls.push(u);
+      if (u.includes("/balances")) return Response.json({ balances: [{ account: "0.0.1077627", balance: "500000000000000" }] });
+      if (u.includes("/transactions")) return Response.json({ transactions: [] });
+      return Response.json(token);
+    });
+    const { app } = await setup({ config: { fixtureMode: false }, fetch: live as unknown as typeof fetch });
+    for (const id of ["quickcast", "groundtruth", "hourlypro"]) {
+      const res = await request(app).get(P(id)).query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, P(id)));
+      expect(res.body).toMatchObject({ source: "hedera-mainnet-mirror", tokenId: "0.0.731861" });
+    }
+    const gt = BigInt(token.total_supply) / 100n;
+    expect(new Set(urls)).toEqual(new Set([
+      "http://mainnet-mirror.test/api/v1/tokens/0.0.731861",
+      `http://mainnet-mirror.test/api/v1/tokens/0.0.731861/balances?account.balance=gt:${gt}&limit=100`,
+      "http://mainnet-mirror.test/api/v1/transactions?account.id=0.0.1077627&limit=100&order=desc",
+    ]));
+    expect(urls.some((u) => u.startsWith(baseConfig.mirrorUrl))).toBe(false);
+  });
 
-    const down = vi.fn(async () => new Response("down", { status: 503 }));
-    const b = await setup({ config: { fixtureMode: false }, fetch: down as unknown as typeof fetch });
-    const fbRes = await request(b.app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(b.app, "/m/quickcast/forecast"));
+  test("a token missing on mainnet gets the NOT_FOUND body", async () => {
+    const missing = vi.fn(async () => new Response("{}", { status: 404 }));
+    const { app } = await setup({ config: { fixtureMode: false }, fetch: missing as unknown as typeof fetch });
+    const q = { tokenId: "0.0.1" };
+    const head = await request(app).get(P("quickcast")).query(q);
+    const pr = decodePaymentRequiredHeader(head.headers["payment-required"]);
+    const sig = encodePaymentSignatureHeader({ x402Version: 2, resource: pr.resource, accepted: pr.accepts[0]!, payload: { transaction: "dGVzdA==" } });
+    const res = await request(app).get(P("quickcast")).query(q).set("PAYMENT-SIGNATURE", sig);
+    expect(res.body).toMatchObject({ source: "hedera-mainnet-mirror", tokenId: "0.0.1", token: null, flags: ["NOT_FOUND: no such token on Hedera mainnet"] });
+  });
+
+  test("a network failure falls back to fixtures that keep their real tokenId", async () => {
+    const down = vi.fn(async () => { throw new TypeError("fetch failed"); });
+    const { app } = await setup({ config: { fixtureMode: false }, fetch: down as unknown as typeof fetch });
+    const q = { tokenId: "0.0.456858" };
+    const head = await request(app).get(P("groundtruth")).query(q);
+    const pr = decodePaymentRequiredHeader(head.headers["payment-required"]);
+    const sig = encodePaymentSignatureHeader({ x402Version: 2, resource: pr.resource, accepted: pr.accepts[0]!, payload: { transaction: "dGVzdA==" } });
+    const res = await request(app).get(P("groundtruth")).query(q).set("PAYMENT-SIGNATURE", sig);
     expect(down).toHaveBeenCalled();
-    expect(fbRes.body.source).toBe("fixture");
-    expect(fbRes.body.daily).toBeDefined();
+    expect(res.body).toMatchObject({ source: "fixture", tokenId: "0.0.731861" });
+  });
+
+  test.each(MERCHANT_REGISTRY.map((m) => [m.id] as const))("%s body matches the shared contract", async (id) => {
+    const { app } = await setup();
+    const res = await request(app).get(P(id)).query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, P(id)));
+    const b = res.body;
+    expect(Object.keys(b).sort()).toEqual(["flags", "generatedAt", "merchant", "source", "tokenId",
+      id === "groundtruth" ? "holders" : id === "hourlypro" ? "treasury" : "token"].sort());
+    expect(b).toMatchObject({ merchant: id, source: "fixture", tokenId: "0.0.731861" });
+    expect(b.flags.every((f: unknown) => typeof f === "string")).toBe(true);
+    if (id === "groundtruth") {
+      expect(b.holders).toMatchObject({ thresholdPct: 1, whaleCount: 9 });
+      expect(Object.keys(b.holders).sort()).toEqual(["thresholdPct", "treasurySharePct", "whaleCount", "whaleSharePct", "whales"]);
+      expect(typeof b.holders.whales[0].balance).toBe("string");
+    } else if (id === "hourlypro") {
+      expect(Object.keys(b.treasury).sort()).toEqual(["account", "mints", "outflowTotal", "outflows", "sampled"]);
+      expect(b.treasury).toMatchObject({ account: "0.0.1077627", sampled: 100 });
+    } else {
+      expect(Object.keys(b.token).sort()).toEqual(["createdAt", "customFees", "decimals", "keys", "maxSupply", "memo", "name",
+        "pauseStatus", "supplyType", "symbol", "totalSupply", "treasury"]);
+      expect(Object.keys(b.token.keys).sort()).toEqual(["admin", "feeSchedule", "freeze", "kyc", "pause", "supply", "wipe"]);
+      expect(b.token.customFees).toEqual({ fixed: 0, fractional: 0, royalty: 0 });
+    }
   });
 });
 
 describe("recovery", () => {
   test("returns the cached body for the paying tx and requestHash, 404 otherwise", async () => {
     const { app } = await setup();
-    const res = await request(app).get("/m/groundtruth/observations").query(QUERY)
-      .set("PAYMENT-SIGNATURE", await paymentHeader(app, "/m/groundtruth/observations"));
+    const res = await request(app).get(P("groundtruth")).query(QUERY)
+      .set("PAYMENT-SIGNATURE", await paymentHeader(app, P("groundtruth")));
     const tx = decodePaymentResponseHeader(res.headers["payment-response"]).transaction;
-    const rh = requestHash("GET", "/m/groundtruth/observations", QUERY);
+    const rh = requestHash("GET", P("groundtruth"), QUERY);
     const ok = await request(app).get("/recover").query({ tx, requestHash: rh, merchant: "groundtruth" });
     expect(ok.status).toBe(200);
     expect(ok.body).toEqual(res.body);
@@ -158,19 +218,19 @@ describe("recovery", () => {
       });
     });
     const { app, store } = await setup({ fetch: mirror as unknown as typeof fetch });
-    await request(app).get("/m/quickcast/forecast").query(QUERY); // the 402 records the query behind the requestHash
-    const rh = requestHash("GET", "/m/quickcast/forecast", QUERY);
+    await request(app).get(P("quickcast")).query(QUERY); // the 402 records the query behind the requestHash
+    const rh = requestHash("GET", P("quickcast"), QUERY);
     const res = await request(app).get("/recover").query({ tx, requestHash: rh });
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ merchant: "quickcast", location: { lat: 19.076 } });
+    expect(res.body).toMatchObject({ merchant: "quickcast", tokenId: "0.0.731861" });
     expect(store.byTx(tx)?.payer).toBe(PAYER);
   });
 
   test("refuses to regenerate when the mirror node shows a different credit", async () => {
     const mirror = vi.fn(async () => Response.json({ transactions: [{ result: "SUCCESS", transfers: [{ account: PAYER, amount: -1 }, { account: "0.0.101", amount: 1 }] }] }));
     const { app } = await setup({ fetch: mirror as unknown as typeof fetch });
-    await request(app).get("/m/quickcast/forecast").query(QUERY);
-    const res = await request(app).get("/recover").query({ tx: "0.0.1@1.2", requestHash: requestHash("GET", "/m/quickcast/forecast", QUERY) });
+    await request(app).get(P("quickcast")).query(QUERY);
+    const res = await request(app).get("/recover").query({ tx: "0.0.1@1.2", requestHash: requestHash("GET", P("quickcast"), QUERY) });
     expect(res.status).toBe(404);
   });
 
@@ -186,33 +246,33 @@ describe("demo faults", () => {
   test("DROP_AFTER_SETTLE settles and stores, then drops the connection", async () => {
     const { app, store, calls } = await setup();
     await setFault(app, "quickcast", "DROP_AFTER_SETTLE").expect(200);
-    const header = await paymentHeader(app, "/m/quickcast/forecast");
-    await expect(request(app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header)).rejects.toThrow();
+    const header = await paymentHeader(app, P("quickcast"));
+    await expect(request(app).get(P("quickcast")).query(QUERY).set("PAYMENT-SIGNATURE", header)).rejects.toThrow();
     expect(calls.settle).toBe(1);
     const tx = `${FEE_PAYER}@1793981706.000000001`;
     expect(store.byTx(tx)?.merchantId).toBe("quickcast");
-    const rec = await request(app).get("/recover").query({ tx, requestHash: requestHash("GET", "/m/quickcast/forecast", QUERY) });
+    const rec = await request(app).get("/recover").query({ tx, requestHash: requestHash("GET", P("quickcast"), QUERY) });
     expect(rec.status).toBe(200);
   });
 
   test("SWAP_PAYTO advertises the operator account", async () => {
     const { app } = await setup();
     await setFault(app, "quickcast", "SWAP_PAYTO").expect(200);
-    const res = await request(app).get("/m/quickcast/forecast").query(QUERY);
+    const res = await request(app).get(P("quickcast")).query(QUERY);
     expect(decodePaymentRequiredHeader(res.headers["payment-required"]).accepts[0]!.payTo).toBe("0.0.2");
   });
 
   test("STALE_DATA makes generatedAt 2 days old", async () => {
     const { app } = await setup();
     await setFault(app, "hourlypro", "STALE_DATA").expect(200);
-    const res = await request(app).get("/m/hourlypro/forecast").query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, "/m/hourlypro/forecast"));
+    const res = await request(app).get(P("hourlypro")).query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, P("hourlypro")));
     expect(Date.parse(res.body.generatedAt)).toBe(NOW.getTime() - 2 * 86_400_000);
   });
 
   test("INJECT_TEXT adds the injected note", async () => {
     const { app } = await setup();
     await setFault(app, "quickcast", "INJECT_TEXT").expect(200);
-    const res = await request(app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, "/m/quickcast/forecast"));
+    const res = await request(app).get(P("quickcast")).query(QUERY).set("PAYMENT-SIGNATURE", await paymentHeader(app, P("quickcast")));
     expect(res.body.note).toBe(INJECTED_NOTE);
   });
 
@@ -220,7 +280,7 @@ describe("demo faults", () => {
     const { app } = await setup();
     await setFault(app, "quickcast", "SWAP_PAYTO").expect(200);
     await setFault(app, "quickcast", "NONE").expect(200);
-    const res = await request(app).get("/m/quickcast/forecast").query(QUERY);
+    const res = await request(app).get(P("quickcast")).query(QUERY);
     expect(decodePaymentRequiredHeader(res.headers["payment-required"]).accepts[0]!.payTo).toBe("0.0.101");
     const off = await setup({ config: { demoMode: false } });
     expect((await setFault(off.app, "quickcast", "INJECT_TEXT")).status).toBe(404);
@@ -240,8 +300,8 @@ describe("log hygiene", () => {
     const facilitator = fakeFacilitator();
     facilitator.client.verify = async () => { throw new Error("verify blew up"); };
     const app = await createApp({ config: baseConfig, facilitator: facilitator.client, store: openStore(":memory:"), now: () => NOW, log: (m) => lines.push(m) });
-    const header = await paymentHeader(app, "/m/quickcast/forecast");
-    const res = await request(app).get("/m/quickcast/forecast").query(QUERY).set("PAYMENT-SIGNATURE", header);
+    const header = await paymentHeader(app, P("quickcast"));
+    const res = await request(app).get(P("quickcast")).query(QUERY).set("PAYMENT-SIGNATURE", header);
     expect(res.status).toBe(502);
     expect(lines.join("\n")).not.toContain(header);
     expect(lines.join("\n")).toContain("verify blew up");
