@@ -16,10 +16,10 @@ const hashscan = (kind: "topic" | "token" | "account", id: string) => `https://h
 
 type Verdict = { text: string; cls: string };
 const DEMO: { name: string; offer: string; price: string; verdict: Verdict }[] = [
-  { name: "QuickCast", offer: "Daily forecast, city", price: "0.01", verdict: { text: "Buy", cls: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" } },
-  { name: "HourlyPro", offer: "Hourly, by neighbourhood", price: "0.05", verdict: { text: "Buy · World ID approved", cls: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" } },
-  { name: "GroundTruth", offer: "Station observations", price: "0.03", verdict: { text: "Skip · redundant", cls: "bg-white/[0.06] text-zinc-300 ring-white/10" } },
-  { name: "PriceGouger", offer: "“Premium” global forecast", price: "0.50", verdict: { text: "Blocked by policy", cls: "bg-rose-400/10 text-rose-300 ring-rose-400/20" } },
+  { name: "KeyScan", offer: "Issuer keys and fees", price: "0.01", verdict: { text: "Buy", cls: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" } },
+  { name: "HolderMap", offer: "Wallets above 1% of supply", price: "0.03", verdict: { text: "Buy · World ID approved", cls: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" } },
+  { name: "TreasuryWatch", offer: "Treasury selling and mints", price: "0.05", verdict: { text: "Buy · World ID approved", cls: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20" } },
+  { name: "InsiderAlpha", offer: "“Insider” calls", price: "0.50", verdict: { text: "Blocked by policy", cls: "bg-rose-400/10 text-rose-300 ring-rose-400/20" } },
 ];
 
 /** Illustrative run in the hero. Static content, animated in once. */
@@ -36,7 +36,7 @@ function ExampleRun() {
         </div>
         <div className="p-4 sm:p-6">
           <p className="text-xs text-zinc-500">Question</p>
-          <p className="mt-1 text-lg font-medium text-zinc-100 sm:text-xl">Will it rain in Mumbai tomorrow afternoon?</p>
+          <p className="mt-1 text-lg font-medium text-zinc-100 sm:text-xl">I'm about to put 2,000 USDC into SAUCE (0.0.731861). Safe?</p>
 
           <div className="mt-6 overflow-hidden rounded-xl border border-white/[0.06]">
             <div className="grid grid-cols-[1fr_auto] gap-x-4 bg-white/[0.02] px-4 py-2 font-mono text-[11px] uppercase tracking-wider text-zinc-500 sm:grid-cols-[1fr_1.3fr_auto_11rem]">
@@ -60,13 +60,13 @@ function ExampleRun() {
           <div className="animate-rise mt-5 rounded-xl border border-gold-400/15 bg-gold-400/[0.04] p-4" style={{ animationDelay: "1900ms" }}>
             <p className="text-xs font-medium text-gold-300">Answer · high confidence</p>
             <p className="mt-2 text-sm leading-relaxed text-zinc-200">
-              Light showers are likely between 2 pm and 5 pm, heaviest near Bandra. <span className="text-gold-300">[1]</span> <span className="text-gold-300">[2]</span>
+              CAUTION. The issuer holds admin and supply keys and can mint more; 9 wallets each hold over 1%. <span className="text-gold-300">[1]</span> <span className="text-gold-300">[2]</span> <span className="text-gold-300">[3]</span>
             </p>
             <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 font-mono text-[11px] text-zinc-500">
-              <span>Data spend 0.06 USDC</span>
-              <span className="inline-flex items-center gap-1.5"><SponsorMark id="hedera" className="h-3" />2 receipts on Hedera</span>
+              <span>Check spend 0.09 USDC</span>
+              <span className="inline-flex items-center gap-1.5"><SponsorMark id="hedera" className="h-3" />3 receipts on Hedera</span>
               <span className="inline-flex items-center gap-1.5"><SponsorMark id="0g" className="h-2.5" />decided in a TEE</span>
-              <span className="inline-flex items-center gap-1.5"><SponsorMark id="world" className="h-3" />1 human approval</span>
+              <span className="inline-flex items-center gap-1.5"><SponsorMark id="world" className="h-3" />2 human approvals</span>
             </p>
           </div>
         </div>
@@ -83,16 +83,16 @@ const PROBLEMS = [
 
 const JOBS: Record<SponsorId, { points: string[]; without: string }> = {
   world: {
-    points: ["Activates each mandate version", "Step-up approval for any purchase above the auto-approve cap", "Validated on the server and bound to the exact mandate or purchase hash"],
+    points: ["World decides who may spend.", "Activates each mandate version", "Step-up approval for any check above the auto-approve cap", "Validated on the server and bound to the exact mandate or purchase hash"],
     without: "Anyone holding the session could hand the agent a budget. No human would stand behind a spend.",
   },
   "0g": {
-    points: ["Plans the evidence a question needs", "Decides BUY or SKIP for every eligible quote, with a reason", "Writes the answer from purchased data, with no tools"],
-    without: "Kakashi can't tell which evidence is worth paying for, and your private question goes to an ordinary provider in plaintext.",
+    points: ["0G decides which checks this trade size justifies.", "Plans which risks matter for this token and trade", "Decides BUY or SKIP for every eligible check, with a reason", "Writes BUY, CAUTION or AVOID from the purchased checks, with no tools"],
+    without: "Kakashi can't tell which checks a trade is worth paying for, and your token and trade size go to an ordinary provider in plaintext.",
   },
   hedera: {
-    points: ["x402 quotes and USDC settlement on testnet", "Mirror-node reconciliation, so a lost response is never paid twice", "A hash-chained audit trail anchored to HCS"],
-    without: "No pay-per-request data, and no tamper-evident record of what the agent bought.",
+    points: ["Hedera pays per check, proves it, and supplies the HTS-specific risks.", "x402 quotes and USDC settlement on testnet, with mirror-node reconciliation so a lost response is never paid twice", "Issuer keys, custom fees, holders and treasury moves read from the mainnet mirror node", "A hash-chained audit trail anchored to HCS"],
+    without: "No pay-per-check data, no token risks to check, and no tamper-evident record of what the agent bought.",
   },
 };
 
@@ -104,13 +104,11 @@ const PRINCIPLES = [
 ];
 
 const SCRIPT: { at: string; title: string; steps: string; by: SponsorId[]; q?: string; href?: string; cta?: string }[] = [
-  { at: "0:00", title: "Hook", steps: "Agents can't pay for data safely. Kakashi fixes that. Show the three jobs slide.", by: [] },
-  { at: "0:12", title: "Mandate, failure path, then success", steps: "Create a mandate → Activate with World ID → cancel → the mandate stays inactive and a run is blocked → retry → verified → Active.", by: ["world"], href: "#/mandate", cta: "Open mandate" },
-  { at: "0:35", title: "A paid request with no human", steps: "Ask the question → plan → quotes, PriceGouger rejected by policy → 0G buys QuickCast on its own → HashScan link and 0G request ID.", by: ["0g", "hedera"], q: "Will it rain in Mumbai this week?", href: "#/research", cta: "Open research" },
-  { at: "1:10", title: "A different choice, and a step-up", steps: "0G picks HourlyPro, which is above the auto-approve cap → Approve with World ID → paid.", by: ["0g", "world"], q: "Is 6–8 am tomorrow good for a run in Bandra?", href: "#/research", cta: "Open research" },
-  { at: "1:35", title: "No double pay", steps: "Demo drawer → QuickCast → DROP_AFTER_SETTLE → buy → “Pending reconciliation” → mirror node confirms → data recovered → one payment on HashScan.", by: ["hedera"], href: "#/research", cta: "Open research" },
-  { at: "2:05", title: "Injection and audit", steps: "Demo drawer → QuickCast → INJECT_TEXT → rerun → the answer flags the embedded instructions, no extra purchases → open the HCS topic.", by: ["0g", "hedera"], href: hashscan("topic", HCS_TOPIC), cta: "Open HCS topic" },
-  { at: "2:25", title: "Close", steps: "Three sponsors, three jobs. The 0G sentence. The honest limits.", by: ["world", "0g", "hedera"], href: "#limits", cta: "Jump to limits" },
+  { at: "0:00", title: "A human grants the budget", steps: "Create a mandate → Activate with World ID → verified → Active.", by: ["world"], href: "#/mandate", cta: "Open mandate" },
+  { at: "0:35", title: "A small trade, a paid check with no human", steps: "Ask the question → plan → quotes, InsiderAlpha blocked by policy → 0G buys KeyScan on its own, under the auto-approve cap → HashScan link and 0G request ID.", by: ["0g", "hedera"], q: "Should I put 20 USDC into 0.0.731861?", href: "#/research", cta: "Open research" },
+  { at: "1:10", title: "A bigger trade, and a step-up", steps: "Same token, a hundred times the size → the agent adds HolderMap and TreasuryWatch, both above the auto-approve cap → approve the step-up with World ID → paid → a verdict with receipts.", by: ["0g", "world"], q: "I'm about to put 2,000 USDC into 0.0.731861.", href: "#/research", cta: "Open research" },
+  { at: "1:50", title: "Receipts", steps: "Ledger → the HashScan transaction, the HCS topic and the 0G trace for every check.", by: ["hedera", "0g"], href: "#/ledger", cta: "Open ledger" },
+  { at: "2:20", title: "The reason to come back", steps: "History → Run again: the same checks on fresh mainnet data before your next trade.", by: ["world", "0g", "hedera"], href: "#/history", cta: "Open history" },
 ];
 
 const LIMITS = [
@@ -119,7 +117,8 @@ const LIMITS = [
   "The 0G Router reports TEE verification for each decision. We record that report and the trace ID; we don't verify the attestation independently.",
   "Untrusted model output can't bypass the spending rules. Prompt injection in merchant data can still distort the written answer, so Kakashi flags suspicious content.",
   "HCS makes our recorded history tamper-evident. It doesn't make it a complete, trustless audit.",
-  "The data merchants are demo APIs on Hedera testnet, and one of them is deliberately adversarial.",
+  "The check sellers are demo APIs paid on Hedera testnet, and one of them is deliberately adversarial.",
+  "Checks read public Hedera mainnet data; what you pay for is the indexing and the judgment. Payments run on testnet. Merchants see only the token ID, never your trade size.",
 ];
 
 const STACK = [
@@ -181,13 +180,13 @@ export default function LandingScreen() {
         <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-14 text-center sm:px-6 sm:pb-28 sm:pt-20">
           <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-zinc-300">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-400 shadow-[0_0_10px_2px_rgba(240,185,85,0.5)]" />
-            ETHGlobal Mumbai 2026 · Research with receipts
+            ETHGlobal Mumbai 2026 · Token checks with receipts
           </p>
           <h1 className="text-sheen animate-rise mx-auto mt-6 max-w-4xl text-balance text-[clamp(2.6rem,8vw,5.25rem)] font-semibold leading-[1.02] tracking-[-0.04em] [animation-delay:80ms]">
-            Answers worth <span className="font-serif font-normal italic tracking-[-0.02em] text-gold-300">paying</span> for.
+            Check a token <span className="font-serif font-normal italic tracking-[-0.02em] text-gold-300">before</span> you buy it.
           </h1>
           <p className="animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg [animation-delay:160ms]">
-            Kakashi is a research agent that buys only the evidence it needs, spends only inside a budget a verified human approved,
+            Kakashi is a pre-trade check for Hedera tokens. It buys only the checks your trade size justifies, spends only inside a budget a verified human approved,
             and can prove every decision and payment.
           </p>
           <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:240ms]">
@@ -210,8 +209,13 @@ export default function LandingScreen() {
         <Wrap>
           <Reveal className="max-w-3xl">
             <Eyebrow n="02">The problem</Eyebrow>
-            <H2>Agents can pay now. <Accent>Should they?</Accent></H2>
-            <Lead>x402 lets an agent buy data one request at a time. That is powerful, and it is exactly where things go wrong.</Lead>
+            <H2>Tokens hide risks. <Accent>Most traders never check.</Accent></H2>
+            <Lead>
+              Tokens on Hedera can carry issuer keys that freeze, wipe or pause balances, or mint more supply, and they can carry hidden transfer fees.
+              Most traders never check. The free mirror node can't tell you who the top holders are, because it lists balances by account id, not by size.
+              You pay cents per check, scaled to what you're putting in, instead of a monthly analytics subscription.
+              Paying per check means an agent spends one request at a time, and that is exactly where things go wrong.
+            </Lead>
           </Reveal>
           <div className="mt-12 grid gap-4 md:grid-cols-3">
             {PROBLEMS.map((p, i) => (
@@ -275,8 +279,8 @@ export default function LandingScreen() {
       <Slide id="flow" label="How it works" className="border-t border-white/[0.06] py-20 sm:py-24">
         <Wrap>
           <Reveal className="max-w-3xl">
-            <Eyebrow n="04">How it works · eight steps from question to receipt</Eyebrow>
-            <H2>One research run, <Accent>end to end.</Accent></H2>
+            <Eyebrow n="04">How it works · eight steps from question to verdict</Eyebrow>
+            <H2>One token check, <Accent>end to end.</Accent></H2>
           </Reveal>
           <Flow />
         </Wrap>
@@ -305,18 +309,18 @@ export default function LandingScreen() {
               <blockquote className="h-full rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/[0.04] p-6 sm:p-8">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-fuchsia-300">What breaks without 0G</p>
                 <p className="mt-3 font-serif text-xl leading-snug text-zinc-100 sm:text-2xl">
-                  “Without 0G, Kakashi can't decide which evidence is worth paying for, and the user's private question, preferences and spending limits would go to an ordinary model provider in plaintext instead of sealed TEE inference that returns a trace ID for every purchase decision.”
+                  “Without 0G, Kakashi can't tell which checks a trade is worth paying for (a cheapest-first rule buys KeyScan every time and misses whales and treasury dumps), and your token and trade size would go to an ordinary model provider in plaintext instead of sealed TEE inference that returns a trace ID for every decision.”
                 </p>
               </blockquote>
             </Reveal>
             <Reveal delay={200}>
               <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-sm font-semibold text-zinc-100">Six eval questions</p>
+                  <p className="text-sm font-semibold text-zinc-100">Token eval questions</p>
                   <span className="text-xs text-zinc-500">exact match on what it buys</span>
                 </div>
                 <div className="mt-5"><EvalBars /></div>
-                <p className="mt-4 text-xs leading-relaxed text-zinc-500">Our target was 5/6 in both runs. Run 1 lost one case to a 30 s provider timeout. Both runs beat the rule.</p>
+                <p className="mt-4 text-xs leading-relaxed text-zinc-500">The eval set now covers token checks. Live scores are pending a re-run on the 0G Router.</p>
               </div>
             </Reveal>
           </div>
@@ -420,7 +424,7 @@ export default function LandingScreen() {
               <ProofLink key="rec" by="hedera" label="Pay-once recovery" value={RECOVERY_TX} href={hashscanTx(RECOVERY_TX)} note="Response dropped after settlement. Confirmed on the mirror node, data recovered, one transfer only." />,
               <ProofLink key="hcs" by="hedera" label="Audit topic" value={HCS_TOPIC} href={hashscan("topic", HCS_TOPIC)} note="Hash-chained audit events anchored to the Hedera Consensus Service." />,
               <ProofLink key="usdc" by="hedera" label="Settlement asset" value={`USDC ${USDC}`} href={hashscan("token", USDC)} note="Testnet USDC, 6 decimals. No contracts deployed: Hedera native services only." />,
-              <ProofLink key="zg" by="0g" label="0G decision trace" value="b6e49d9d-4973-40b2-bc4d-60bec63beb54" note="x_0g_trace.request_id of a live decide call (eval run 2, case 2: HourlyPro)." />,
+              <ProofLink key="zg" by="0g" label="0G decision trace" value="b6e49d9d-4973-40b2-bc4d-60bec63beb54" note="x_0g_trace.request_id of a live decide call (eval run 2, case 2, merchant hourlypro)." />,
               <ProofLink key="world" by="world" label="World integration" value="docs/WORLD_DEBRIEF.md" href={`${REPO}/blob/main/docs/WORLD_DEBRIEF.md`} note="Time to first success, friction, missing docs and our top improvement for Agent Pass." />,
             ].map((el, i) => <Reveal key={i} delay={i * 70} className="h-full">{el}</Reveal>)}
           </div>
@@ -499,7 +503,7 @@ export default function LandingScreen() {
             <h2 className="mx-auto max-w-3xl text-balance text-3xl font-semibold tracking-[-0.03em] text-zinc-50 sm:text-5xl">
               Set the budget once. <span className="font-serif font-normal italic text-gold-300">Keep every receipt.</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-zinc-400">Create a mandate, activate it with World ID, then ask your first question.</p>
+            <p className="mx-auto mt-4 max-w-lg text-zinc-400">Create a mandate, activate it with World ID, then check your first token.</p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a href="#/mandate" className={btn("primary", "lg")}>Get started <Arrow /></a>
               <a href={REPO} target="_blank" rel="noreferrer" className={btn("ghost", "lg")}>Source on GitHub</a>

@@ -14,7 +14,13 @@ import { SponsorTag } from "../components/Brand";
 const ENDED = ["DONE", "PARTIAL", "FAILED"];
 const MOVING = ["AWAITING_APPROVAL", "RESERVED", "SIGNED", "SUBMITTED", "UNKNOWN"];
 const LIVE_ORDER = ["PLANNING", "QUOTING", "DECIDING", "PURCHASING", "SYNTHESIZING"];
-const EXAMPLES = ["Will it rain in Mumbai tomorrow afternoon?", "Do I need an umbrella in Bandra at 6 pm today?"];
+const EXAMPLES = [
+  "Should I put 20 USDC into SAUCE (0.0.731861)?",
+  "I'm about to put 2,000 USDC into 0.0.731861. Is it safe?",
+  "Is the supply of DOVU (0.0.624505) concentrated? Planning 300 USD.",
+  "Quick check before a 5 USD trade of 0.0.4696266",
+];
+const HAS_TOKEN = /0\.0\.\d+|\b(SAUCE|USDC|DOVU|GRELF)\b/i;
 const EYEBROW = "Step 2 of 3 · Research";
 
 type StepState = "done" | "active" | "idle";
@@ -77,10 +83,12 @@ export default function ResearchScreen({ runId }: { runId?: string }) {
     ? <p role="alert" className="text-sm text-rose-300">You need an active mandate before researching. <a className="text-link" href="#/mandate">Set up a mandate</a></p>
     : <ErrorText>{error.message}</ErrorText>);
 
+  const missingToken = !!question.trim() && !HAS_TOKEN.test(question);
+
   if (!runId) return (
     <div>
-      <PageHeader eyebrow={EYEBROW} title="Ask a question">
-        The agent plans the evidence it needs, buys only what is worth it inside your mandate, and answers with receipts.
+      <PageHeader eyebrow={EYEBROW} title="Check a token before you buy.">
+        Name the Hedera token and your trade size. The agent buys only the checks the trade justifies, inside your mandate, and answers BUY, CAUTION or AVOID with receipts.
       </PageHeader>
       <Card className="max-w-3xl">
         <form onSubmit={(e) => { e.preventDefault(); void start(); }}>
@@ -97,7 +105,8 @@ export default function ResearchScreen({ runId }: { runId?: string }) {
           </div>
           <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
             <span className="font-mono text-xs text-zinc-500">{question.length}/500</span>
-            <Button type="submit" disabled={busy || !question.trim()}>Run <Arrow /></Button>
+            {missingToken && <span className="text-xs text-amber-200">Add the token ID, for example 0.0.731861</span>}
+            <Button type="submit" disabled={busy || !question.trim() || missingToken}>Run <Arrow /></Button>
           </div>
         </form>
       </Card>

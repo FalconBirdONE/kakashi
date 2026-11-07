@@ -187,7 +187,7 @@ export default function MandateScreen() {
           <Card title="Preferences">
             <label className="block">
               <Label>Used by the AI, not enforced</Label>
-              <textarea className={`${inputCls} resize-none`} rows={4} placeholder="e.g. Prefer hourly data over daily forecasts" value={prefs}
+              <textarea className={`${inputCls} resize-none`} rows={4} placeholder="e.g. Avoid tokens whose issuer can freeze or wipe balances" value={prefs}
                 onChange={(e) => { setPrefs(e.target.value); setPrefsMsg(null); }} />
             </label>
             <div className="mt-3 flex items-center gap-3">

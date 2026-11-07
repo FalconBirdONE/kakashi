@@ -37,3 +37,18 @@ it("shows the failure path in the World demo", () => {
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
   expect(screen.getByText("Cancelled. The mandate stays inactive.")).toBeInTheDocument();
 });
+
+it("pitches the pre-trade token check", () => {
+  render(<LandingScreen />);
+  expect(screen.getByRole("heading", { level: 1, name: "Check a token before you buy it." })).toBeInTheDocument();
+  expect(screen.getByText("I'm about to put 2,000 USDC into SAUCE (0.0.731861). Safe?")).toBeInTheDocument();
+  expect(screen.getByText(/Checks read public Hedera mainnet data/)).toBeInTheDocument();
+  expect(screen.getByText(/a cheapest-first rule buys KeyScan every time/)).toBeInTheDocument();
+});
+
+it("buys only KeyScan under the cheapest-first rule", () => {
+  render(<LandingScreen />);
+  fireEvent.click(screen.getByLabelText("Compare with a cheapest-first rule"));
+  expect(screen.getByText("No AI: it buys KeyScan every time.")).toBeInTheDocument();
+  expect(screen.getAllByText("Cheapest quote that fills a need.")).toHaveLength(1);
+});
