@@ -1,6 +1,6 @@
 # Brain evals: does 0G beat a dumb rule?
 
-**Status: run against the live 0G Router on 2026-11-07 with `ZG_MODEL=0gm-1.0-35b-a3b-sia`, `ZG_TRUST_MODE=private`, `ZG_VERIFY_TEE=true` (prompts plan.v2, decide.v1). Every scored call returned `tee_verified: true`. Target met in one of the two runs (4/6, 5/6); both runs beat the baseline.**
+**Status: live scores for the token cases are pending re-run (prompts plan.v3, decide.v2).**
 
 ## Run it (twice) and paste the output into the tables below
 ```
@@ -10,22 +10,28 @@ npx --prefix packages/brain tsx --env-file-if-exists=.env evals/run.ts
 `EVAL_DRY=1 npx --prefix packages/brain tsx evals/run.ts` runs the same harness on the fake brain. It only proves the harness works; its scores mean nothing.
 
 ## What is measured
-Six cases from SPEC §9.2 item 6 (`evals/cases.ts`). For each: `brain.plan` then `brain.decide` on the real Router, with quotes built from the contracts registry, **PriceGouger excluded** (policy rejects it before the AI sees it) and the demo budget of 0.20 USDC (case 6: 0.02, which fits only QuickCast). A case passes when the set of BUY merchants equals an accepted set.
+Six token cases (`evals/cases.ts`). For each: `brain.plan` then `brain.decide` on the real Router, with quotes built from the contracts registry, **InsiderAlpha excluded** (policy rejects it before the AI sees it) and the demo budget of 0.20 USDC (case 6: 0.02, which fits only KeyScan). A case passes when the set of BUY merchants equals an accepted set.
 
-| # | Question | Accepted BUY sets |
-|---|---|---|
-| 1 | Will it rain in Mumbai this week? | QuickCast |
-| 2 | Is 6–8 am tomorrow good for a run in Bandra? | HourlyPro |
-| 3 | Forecasts say dry but it looks cloudy, is it raining in Andheri right now? | GroundTruth |
-| 4 | Plan an outdoor shoot Saturday 4–6 pm in Colaba | HourlyPro, or HourlyPro + QuickCast |
-| 5 | Rough weekly outlook, keep it cheap | QuickCast |
-| 6 | Same as 2, budget fits only QuickCast | QuickCast (the final answer should note the gap; that is synthesis, so it isn't scored here) |
+| # | Question | Budget (atomic) | Accepted BUY sets |
+|---|---|---|---|
+| 1 | Should I put 20 USDC into SAUCE (0.0.731861)? | 200000 | KeyScan |
+| 2 | I'm about to put 2,000 USDC into 0.0.731861. Is it safe? | 200000 | KeyScan + HolderMap + TreasuryWatch |
+| 3 | Is the supply of DOVU (0.0.624505) concentrated in a few wallets? Planning 300 USD. | 200000 | HolderMap, or HolderMap + KeyScan |
+| 4 | Is the team dumping GRELF (0.0.1159074)? I hold 1,000 USD of it. | 200000 | TreasuryWatch, or TreasuryWatch + KeyScan |
+| 5 | Quick sanity check before a 5 USD trade of 0.0.4696266, keep it cheap | 200000 | KeyScan |
+| 6 | I'm about to put 5,000 USDC into 0.0.731861. | 20000 | KeyScan (the budget only fits it; the final answer should note the gap, which is synthesis, so it isn't scored here) |
 
-**Baseline ("cheapest first until each need is covered").** It takes the number of needs from the *same* plan output, then buys the cheapest affordable quotes, one per need. It has no idea which merchant covers which need, which is the point: it represents a rule that only looks at price. With one need it always buys QuickCast, so it can only pass cases 1, 5 and 6; with two needs it buys QuickCast + GroundTruth, which matches no accepted set.
+**Baseline ("cheapest first until each need is covered").** It takes the number of needs from the *same* plan output, then buys the cheapest affordable quotes, one per need. It has no idea which merchant covers which need, which is the point: it represents a rule that only looks at price. With one need it always buys KeyScan, so it can only pass cases 1, 5 and 6. `evals/cases.test.ts` asserts this offline: the fake brain's cheapest-first rule passes at most 3 of 6.
 
 Scoring is exact set match on the BUY merchants after the brain's `postCheckDecisions`, so it matches what the orchestrator would see. Rationales are not scored.
 
-## Run 1
+## Token-case scores
+Pending re-run. A live run on 2026-11-07 on `branch-3` gave no usable score: all six plan calls ended `SCHEMA_INVALID`, so no decide call ran. This is expected until branch 1 merges, because `planOutputSchema` in `packages/contracts` still requires lat/lon while `plan.v3` returns `tokenId` and `tradeUsd`. That run used `ZG_MODEL=glm-5.3` from `.env`, cost 0.047761 as reported, and its 0/6 says nothing about the model. Re-run twice after branch 1 merges, and record the model used.
+
+## Earlier scores (v1 weather cases, plan.v2 and decide.v1; not comparable)
+These runs used a different case set and merchant names. They are kept as a record of what the Router did, on 2026-11-07 with `ZG_MODEL=0gm-1.0-35b-a3b-sia`, `ZG_TRUST_MODE=private`, `ZG_VERIFY_TEE=true`. Every scored call returned `tee_verified: true`.
+
+### Run 1
 | # | 0G buys | 0G | Baseline buys | Baseline |
 |---|---|---|---|---|
 | 1 | quickcast | PASS | quickcast | PASS |
@@ -37,7 +43,7 @@ Scoring is exact set match on the BUY merchants after the brain's `postCheckDeci
 
 Totals: 0G 4/6, baseline 3/6. 0G cost: $0.021588. Request ids: 1 plan `b8032c34-58ec-41db-a985-ba73789f95e5`, 1 decide `f6e3f666-74ed-4c79-9db1-56f322f3d90a`, 2 plan `0bddd74d-e77b-4ba9-8e58-1f11b086dd4d`, 2 decide `f52f92f4-f22b-41b9-a27f-226681f64c35`, 3 plan `53a3758a-c459-4287-bdfe-dec734012aba`, 3 decide `b2f90f21-42d3-4ee1-9061-49ae9acadfda`, 4 plan `c3b188b5-f9d0-4a8c-8a39-570beb6731ae`, 4 decide `ab14ddb5-7864-4a26-b786-419cd557ccf4`, 5 plan `7c4c5580-b57d-4e59-97c2-44aeda8b15bf`, 6 plan `d8f1b042-6079-40ec-8d86-abd1526a18b6`, 6 decide `71f4aff9-07d1-427c-bcc0-a7aabae84fe9`.
 
-## Run 2
+### Run 2
 | # | 0G buys | 0G | Baseline buys | Baseline |
 |---|---|---|---|---|
 | 1 | quickcast | PASS | quickcast | PASS |
@@ -59,12 +65,5 @@ Three earlier live runs (6/6, 4/6, 2/6) exposed client bugs, now fixed in `packa
 
 Remaining failure modes: 30 s timeouts (SPEC §9.2 timeout, provider latency 5-25 s per call) and run-to-run variance on cases 2 and 4.
 
-## README summary (fill in the numbers after the runs)
-> We tested whether the AI actually earns its place. On six weather questions where the right purchase differs (a weekly outlook, an hourly run window, a "is it raining right now" check, a photo shoot, a cheap outlook, and a tight budget), the 0G-powered agent picked the accepted set of data sources in **4 and 5 of 6** cases in two runs, against **3 of 6** for a simple "buy the cheapest source per need" rule. The baseline can't tell a daily forecast from live observations, so it fails exactly the questions that need a different source. Every decision above was made through 0G's private inference tier and carries a request ID. Total inference cost for a run was **about $0.02-0.03**.
-
-## Suggested prompt changes
-None yet: I have not seen real model output, so I won't guess. After the first real run, check these likely failure modes before touching prompts:
-- Case 3 (is it raining *right now*) and case 2 (a 6–8 am window) depend on the model mapping the question's time scale to a capability (`current-observations`, `hourly-forecast-48h`). If it buys QuickCast there, add one line to `decide.v1`: "Match the question's time scale to a quote's capabilities; a daily forecast cannot answer an hourly or right-now question."
-- Case 5 ("keep it cheap") may pull the model toward buying nothing. If so, state in `decide.v1` that buying nothing is only right when no quote fills a need.
-- Case 4 expects HourlyPro with an optional QuickCast. If the model buys all three, tighten the "never buy two sources for the same need" rule, or check whether `plan.v1` produced redundant needs.
-Any change goes through a follow-up brain prompt (bump `PROMPT_VERSION`).
+## README summary
+Fill in after the token-case runs. Until then the README says the live scores are pending and cites only the offline baseline test.

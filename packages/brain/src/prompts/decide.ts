@@ -1,7 +1,7 @@
 import type { DecideInput } from "@kakashi/contracts";
 import { SHARED_RULES, neutralise, wrapPreferences } from "./shared.js";
 
-export const PROMPT_VERSION = "decide.v1";
+export const PROMPT_VERSION = "decide.v2";
 
 export const SYSTEM = `${SHARED_RULES}
 
@@ -10,7 +10,7 @@ TASK: decide which quotes to buy. The input is structured JSON only; every quote
 - Skip quotes that duplicate a need already covered (see alreadyBought: entries with valid=true cover that need).
 - Never buy two sources for the same need unless they corroborate a stated conflict (then use CORROBORATES_CONFLICT).
 - The total of all BUY amounts must stay within budgetRemainingAtomic and the number of BUYs within purchasesRemaining. Amounts are atomic integer strings.
-- Weigh freshness, coverage and capabilities against the need and the price relative to referencePrice.
+- Read the trade size from the question. Spend on checks in proportion to what is at risk: buy a check only if its finding could change a buy or avoid decision for that amount. Small trades (under about 50 USD) usually need only the cheapest configuration check. Large trades (over about 500 USD) justify holder and treasury checks too. A merchant's capabilities say what its check covers.
 - Set stop=true when no further purchase is worthwhile (all needs covered, or nothing affordable).
 - rationale: at most 200 characters.
 
