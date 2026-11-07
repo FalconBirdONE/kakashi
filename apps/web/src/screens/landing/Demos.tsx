@@ -43,7 +43,7 @@ export function DecideDemo() {
   const [baseline, setBaseline] = useState(false);
   const rows = CASES[c]!.rows;
   return (
-    <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-6">
+    <div className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-6">
       <p className="text-xs text-zinc-500">Pick a question</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {CASES.map((x, n) => <button key={x.q} type="button" className={pill(n === c)} aria-pressed={n === c} onClick={() => setC(n)}>{x.q}</button>)}
@@ -114,7 +114,7 @@ export function WorldDemo() {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+      <div className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-zinc-100">Your mandate</p>
@@ -158,7 +158,7 @@ export function WorldDemo() {
           )}
         </div>
       </div>
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
+      <div className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5">
         <p className="text-sm font-semibold text-zinc-100">Server-side checks</p>
         <p className="mt-1 text-xs text-zinc-500">No client secret in the browser. The browser's word is never trusted.</p>
         <ul className="mt-4 space-y-2.5">
@@ -216,7 +216,7 @@ export function PayOnceDemo() {
   const done = n >= chain.length;
 
   return (
-    <div ref={ref} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-6">
+    <div ref={ref} className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <button type="button" className={pill(!drop)} aria-pressed={!drop} onClick={() => setDrop(false)}>Normal purchase</button>
@@ -312,7 +312,7 @@ export function AttackLab() {
         <Controls label="Attack lab" playing={playing} onToggle={() => setPaused(playing)} />
       </div>
 
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6" aria-live="polite">
+      <div className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6" aria-live="polite">
         <p key={`h${a}`} className="animate-rise text-[15px] text-zinc-200"><span className="mr-2 text-rose-300">Attack:</span>{atk.how}</p>
         <ol className="relative mt-5 space-y-2">
           {LAYERS.map((l, n) => {

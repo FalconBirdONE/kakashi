@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { BuiltOn, SPONSORS, SPONSOR_ORDER, SponsorLogo, SponsorMark, SponsorTag, type SponsorId } from "../components/Brand";
 import { Arrow, btn, hashscanTx, Reveal } from "../components/ui";
 import DeckNav from "./landing/Deck";
+import { CursorFx, HeroDust, ScrollProgress } from "./landing/Fx";
 import { AttackLab, AuditChain, DecideDemo, EvalBars, PayOnceDemo, WorldDemo } from "./landing/Demos";
 import Flow from "./landing/Flow";
 import { Accent, Check, Cross, Eyebrow, H2, Lead, Slide, Wrap } from "./landing/kit";
@@ -25,7 +26,7 @@ const DEMO: { name: string; offer: string; price: string; verdict: Verdict }[] =
 /** Illustrative run in the hero. Static content, animated in once. */
 function ExampleRun() {
   return (
-    <div className="glow-border shadow-[0_40px_120px_-40px_rgba(240,185,85,0.28)]">
+    <div data-tilt className="glow-border shadow-[0_40px_120px_-40px_rgba(240,185,85,0.28)]">
       <div className="rounded-[calc(1.25rem-1px)] bg-[#0b0c0f] text-left">
         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3 sm:px-5">
           <div aria-hidden="true" className="flex gap-1.5">
@@ -139,7 +140,7 @@ function ProofLink({ label, value, href, by, note }: { label: string; value: str
       <span className="mt-3 flex items-center gap-2 break-all font-mono text-xs text-gold-300">{value}{href && <Arrow />}</span>
     </>
   );
-  const cls = "group block h-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors duration-300";
+  const cls = "fx-card group block h-full rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors duration-300";
   return href
     ? <a href={href} target="_blank" rel="noreferrer" className={`${cls} hover:border-gold-400/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/70`}>{body}</a>
     : <div className={cls}>{body}</div>;
@@ -172,27 +173,30 @@ export default function LandingScreen() {
   return (
     <>
       <DeckNav />
+      <CursorFx />
+      <ScrollProgress />
 
       {/* 01 · Intro */}
       <Slide id="intro" label="Intro" className="-mt-16 overflow-hidden pt-16">
-        <div aria-hidden="true" className="hero-grid pointer-events-none absolute inset-0" />
-        <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-[-300px] h-[600px] w-[min(1000px,140vw)] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(240,185,85,0.16),transparent)]" />
+        <div aria-hidden="true" className="fx-parallax pointer-events-none absolute -inset-8 [--depth:-14px]"><div className="hero-grid absolute inset-0" /></div>
+        <HeroDust />
+        <div aria-hidden="true" className="fx-parallax pointer-events-none absolute left-1/2 top-[-300px] [--depth:40px] h-[600px] w-[min(1000px,140vw)] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(240,185,85,0.16),transparent)]" />
         <div className="relative mx-auto max-w-6xl px-4 pb-20 pt-14 text-center sm:px-6 sm:pb-28 sm:pt-20">
           <p className="animate-rise inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-zinc-300">
-            <span aria-hidden="true" className="size-1.5 rounded-full bg-gold-400 shadow-[0_0_10px_2px_rgba(240,185,85,0.5)]" />
+            <span aria-hidden="true" className="fx-ping size-1.5 rounded-full bg-gold-400 shadow-[0_0_10px_2px_rgba(240,185,85,0.5)]" />
             ETHGlobal Mumbai 2026 · Token checks with receipts
           </p>
           <h1 className="text-sheen animate-rise mx-auto mt-6 max-w-4xl text-balance text-[clamp(2.6rem,8vw,5.25rem)] font-semibold leading-[1.02] tracking-[-0.04em] [animation-delay:50ms]">
-            Check a token <span className="font-serif font-normal italic tracking-[-0.02em] text-gold-300">before</span> you buy it.
+            Check a token <span className="text-shimmer font-serif font-normal italic tracking-[-0.02em] text-gold-300">before</span> you buy it.
           </h1>
           <p className="animate-rise mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg [animation-delay:100ms]">
             Kakashi is a pre-trade check for Hedera tokens. It buys only the checks your trade size justifies, spends only inside a budget a verified human approved,
             and can prove every decision and payment.
           </p>
           <div className="animate-rise mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row [animation-delay:150ms]">
-            <a href="#/mandate" className={`${btn("primary", "lg")} w-full sm:w-auto`}>Set up a mandate <Arrow /></a>
+            <a data-magnetic href="#/mandate" className={`${btn("primary", "lg")} w-full sm:w-auto`}>Set up a mandate <Arrow /></a>
             <button type="button" onClick={() => document.getElementById("flow")?.scrollIntoView({ behavior: "smooth" })}
-              className={`${btn("ghost", "lg")} w-full sm:w-auto`}>See how it works</button>
+              data-magnetic className={`${btn("ghost", "lg")} w-full sm:w-auto`}>See how it works</button>
           </div>
           <div className="animate-rise mt-12 flex flex-col items-center gap-4 [animation-delay:200ms]">
             <p className="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Built on</p>
@@ -220,7 +224,7 @@ export default function LandingScreen() {
           <div className="mt-12 grid gap-4 md:grid-cols-3">
             {PROBLEMS.map((p, i) => (
               <Reveal key={p.t} delay={i * 100} className="h-full">
-                <div className="h-full rounded-2xl border border-rose-400/[0.12] bg-[radial-gradient(120%_120%_at_0%_0%,rgba(251,113,133,0.06),transparent_60%)] p-6">
+                <div className="fx-card h-full rounded-2xl border border-rose-400/[0.12] bg-[radial-gradient(120%_120%_at_0%_0%,rgba(251,113,133,0.06),transparent_60%)] p-6">
                   <span className="flex size-8 items-center justify-center rounded-full bg-rose-400/10 text-rose-300 ring-1 ring-inset ring-rose-400/20"><Cross /></span>
                   <h3 className="mt-6 text-lg font-semibold tracking-tight text-zinc-50">{p.t}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-zinc-400">{p.b}</p>
@@ -229,7 +233,7 @@ export default function LandingScreen() {
             ))}
           </div>
           <Reveal delay={200} className="mt-6">
-            <div className="flex flex-col gap-5 rounded-2xl border border-gold-400/20 bg-gold-400/[0.04] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            <div className="fx-card flex flex-col gap-5 rounded-2xl border border-gold-400/20 bg-gold-400/[0.04] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
               <p className="max-w-2xl text-xl font-medium leading-snug tracking-tight text-zinc-50 sm:text-2xl">
                 The model only <span className="text-gold-300">proposes</span>. Plain code <span className="text-gold-300">decides</span>. A separate process <span className="text-gold-300">signs</span>. A verified human <span className="text-gold-300">approves</span> anything that matters.
               </p>
@@ -252,7 +256,7 @@ export default function LandingScreen() {
               const s = SPONSORS[id];
               return (
                 <Reveal key={id} delay={i * 120} className="h-full">
-                  <article className={`group flex h-full flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.035] ${s.hover}`}>
+                  <article className={`fx-card group flex h-full flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all duration-500 hover:-translate-y-1 hover:bg-white/[0.035] ${s.hover}`}>
                     <div className="flex items-center justify-between">
                       <SponsorLogo id={id} className="h-7 text-zinc-50" />
                       <span className="font-mono text-xs text-zinc-500">0{i + 1}</span>
@@ -306,7 +310,7 @@ export default function LandingScreen() {
           </div>
           <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
             <Reveal delay={120}>
-              <blockquote className="h-full rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/[0.04] p-6 sm:p-8">
+              <blockquote className="fx-card h-full rounded-2xl border border-fuchsia-400/20 bg-fuchsia-400/[0.04] p-6 sm:p-8">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-fuchsia-300">What breaks without 0G</p>
                 <p className="mt-3 font-serif text-xl leading-snug text-zinc-100 sm:text-2xl">
                   “Without 0G, Kakashi can't tell which checks a trade is worth paying for (a cheapest-first rule buys KeyScan every time and misses whales and treasury dumps), and your token and trade size would go to an ordinary model provider in plaintext instead of sealed TEE inference that returns a trace ID for every decision.”
@@ -314,7 +318,7 @@ export default function LandingScreen() {
               </blockquote>
             </Reveal>
             <Reveal delay={200}>
-              <div className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
+              <div className="fx-card h-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6">
                 <div className="flex items-baseline justify-between gap-3">
                   <p className="text-sm font-semibold text-zinc-100">Token eval questions</p>
                   <span className="text-xs text-zinc-500">exact match on what it buys</span>
@@ -376,7 +380,7 @@ export default function LandingScreen() {
             <Reveal delay={120}><PayOnceDemo /></Reveal>
           </div>
           <Reveal delay={120} className="mt-6">
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6">
+            <div className="fx-card rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6">
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <p className="text-sm font-semibold text-zinc-100">Tamper-evident audit on the Hedera Consensus Service</p>
                 <a href={hashscan("topic", HCS_TOPIC)} target="_blank" rel="noreferrer" className="text-link font-mono text-xs">topic {HCS_TOPIC}</a>
@@ -440,7 +444,7 @@ export default function LandingScreen() {
               <H2>Now watch it <Accent>pay.</Accent></H2>
               <Lead>The script we run in front of you, under three minutes. Every scene maps to a sponsor requirement.</Lead>
             </Reveal>
-            <a href="#/mandate" className={`${btn("primary", "lg")} shrink-0`}>Launch the app <Arrow /></a>
+            <a data-magnetic href="#/mandate" className={`${btn("primary", "lg")} shrink-0`}>Launch the app <Arrow /></a>
           </div>
           <ol className="mt-12 divide-y divide-white/[0.06] border-y border-white/[0.06]">
             {SCRIPT.map((s, i) => (
@@ -479,7 +483,7 @@ export default function LandingScreen() {
           <ul className="mt-12 grid gap-4 md:grid-cols-2">
             {LIMITS.map((l, i) => (
               <li key={i}>
-                <Reveal delay={i * 70} className="h-full rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5 text-sm leading-relaxed text-zinc-300">{l}</Reveal>
+                <Reveal delay={i * 70} className="fx-card h-full rounded-2xl border border-white/[0.07] bg-white/[0.015] p-5 text-sm leading-relaxed text-zinc-300">{l}</Reveal>
               </li>
             ))}
           </ul>
@@ -496,7 +500,7 @@ export default function LandingScreen() {
           </Reveal>
           <dl className="mt-12 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.07] sm:grid-cols-2 lg:grid-cols-4">
             {STACK.map(([k, v]) => (
-              <div key={k} className="bg-ink px-5 py-5"><dt className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">{k}</dt><dd className="mt-2 text-sm text-zinc-200">{v}</dd></div>
+              <div key={k} className="fx-card bg-ink px-5 py-5"><dt className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">{k}</dt><dd className="mt-2 text-sm text-zinc-200">{v}</dd></div>
             ))}
           </dl>
           <Reveal className="relative mt-16 overflow-hidden rounded-3xl border border-white/[0.08] bg-[radial-gradient(120%_120%_at_50%_0%,rgba(240,185,85,0.14),transparent_60%)] px-6 py-16 text-center sm:py-24">
@@ -505,8 +509,8 @@ export default function LandingScreen() {
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-zinc-400">Create a mandate, activate it with World ID, then check your first token.</p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <a href="#/mandate" className={btn("primary", "lg")}>Get started <Arrow /></a>
-              <a href={REPO} target="_blank" rel="noreferrer" className={btn("ghost", "lg")}>Source on GitHub</a>
+              <a data-magnetic href="#/mandate" className={btn("primary", "lg")}>Get started <Arrow /></a>
+              <a data-magnetic href={REPO} target="_blank" rel="noreferrer" className={btn("ghost", "lg")}>Source on GitHub</a>
             </div>
             <BuiltOn className="mt-12 justify-center gap-x-9" logo="h-6" />
           </Reveal>
