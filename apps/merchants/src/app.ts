@@ -51,7 +51,7 @@ export async function createApp(deps: AppDeps): Promise<Express> {
   await rs.initialize();
 
   const body = (m: MerchantInfo, q: DataQuery) =>
-    buildBody(m.id, q, { fetch: fetchFn, fixtureMode: config.fixtureMode, now: now(), fault: faultOf(m.id) });
+    buildBody(m.id, q, { fetch: fetchFn, fixtureMode: config.fixtureMode, now: now(), fault: faultOf(m.id), tokenMirrorUrl: config.tokenMirrorUrl });
 
   /** Confirms on the mirror node that tx credited exactly the price to this merchant. Returns the payer. */
   async function mirrorPayer(tx: string, m: MerchantInfo): Promise<string | null> {
@@ -71,7 +71,7 @@ export async function createApp(deps: AppDeps): Promise<Express> {
     const query = stringQuery(req.query);
     const parsed = query && querySchema.safeParse(query);
     if (!query || !parsed?.success) {
-      res.status(400).json({ error: "invalid query: expected lat, lon and optional startDate, endDate (YYYY-MM-DD)" });
+      res.status(400).json({ error: "invalid query: expected tokenId (0.0.N)" });
       return;
     }
     const reqHash = requestHash("GET", m.path, query);
