@@ -152,7 +152,7 @@ export type Need = { needId: string; description: string; priority: 1 | 2 | 3 };
 
 export type PlanOutput = {
   needs: Need[];
-  query: { lat: number; lon: number; startDate: string; endDate: string };
+  query: { tokenId: string; tradeUsd: number };
 };
 export type DecisionItem = AgentDecision & { quoteId: string };
 export type DecideOutput = { decisions: DecisionItem[]; stop: boolean };

@@ -20,7 +20,7 @@ const requirement: PaymentRequirements = {
   payTo: "0.0.101", maxTimeoutSeconds: 60, extra: { feePayer: FEE_PAYER },
 };
 const reqB64 = (r: PaymentRequirements = requirement) =>
-  encodePaymentRequiredHeader({ x402Version: 2, resource: { url: "http://127.0.0.1:4200/m/quickcast/forecast" }, accepts: [r] });
+  encodePaymentRequiredHeader({ x402Version: 2, resource: { url: "http://127.0.0.1:4200/m/quickcast/keys?tokenId=0.0.731861" }, accepts: [r] });
 
 let seq = 0;
 const permit = (over: Partial<PermitFields> = {}, secret = SECRET) =>
@@ -176,7 +176,7 @@ describe.skipIf(!process.env.REAL_HEDERA)("real Hedera payment", () => {
       maxPerTx: 100_000n, maxTotal: 1_000_000n, store: openPermitStore(":memory:"),
       build: hederaPaymentBuilder(c.AGENT_ACCOUNT_ID, c.agentKey, c.HEDERA_NETWORK),
     });
-    const url = `${process.env.MERCHANTS_URL ?? "http://127.0.0.1:4200"}/m/quickcast/forecast?lat=19.076&lon=72.878&nonce=${Date.now()}`;
+    const url = `${process.env.MERCHANTS_URL ?? "http://127.0.0.1:4200"}/m/quickcast/keys?tokenId=0.0.731861&nonce=${Date.now()}`;
     const quote = await fetch(url);
     expect(quote.status).toBe(402);
     const raw = quote.headers.get("PAYMENT-REQUIRED")!;

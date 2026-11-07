@@ -10,7 +10,7 @@ import { checkSettlement } from "./settlement.js";
 import { validateDelivery } from "./validate.js";
 
 export { checkSettlement, toMirrorTxId } from "./settlement.js";
-export { distanceKm, validateDelivery } from "./validate.js";
+export { validateDelivery } from "./validate.js";
 
 export const AUDIT_MAX_BYTES = 1024;
 const QUOTE_TIMEOUT_MS = 10_000;

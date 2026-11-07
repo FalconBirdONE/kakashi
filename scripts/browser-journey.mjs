@@ -15,9 +15,9 @@ try{
  await page.getByRole('button',{name:'Activate with World ID',exact:true}).click();
  await page.getByText('Active',{exact:true}).waitFor();
  await page.getByRole('link',{name:'Research',exact:true}).click();
- await page.getByRole('textbox',{name:'Your question'}).fill('Will it rain in Mumbai?');
+ await page.getByRole('textbox',{name:'Your question'}).fill('Should I put 20 USDC into 0.0.731861?');
  await page.getByRole('button',{name:'Run',exact:true}).click();
- await page.getByText('Controlled forecast: dry weather, based on paid evidence.',{exact:true}).waitFor();
+ await page.getByText('Controlled check: CAUTION, issuer holds admin and supply keys.',{exact:true}).waitFor();
  await page.getByRole('link',{name:'[1]',exact:true}).waitFor();
  let stats=stack.stats();assert.equal(stats.payments,1);assert.equal(stats.signatures,1);assert.equal(stats.requests,3);
  await page.getByRole('link',{name:'Ledger',exact:true}).click();
@@ -25,11 +25,11 @@ try{
  // Full server/trust/signer restart over the same databases: history, receipt and session survive.
  await stack.restart();await page.reload();
  await page.getByRole('link',{name:'History',exact:true}).click();
- await page.getByText('Will it rain in Mumbai?',{exact:true}).waitFor();
+ await page.getByText('Should I put 20 USDC into 0.0.731861?',{exact:true}).waitFor();
  assert.equal(stack.stats().payments,1);assert.equal(stack.stats().signatures,1);
  await page.request.post(stack.url+'/controlled/drop');
  await page.getByRole('link',{name:'Research',exact:true}).click();
- await page.getByRole('textbox',{name:'Your question'}).fill('Will it rain after recovery?');
+ await page.getByRole('textbox',{name:'Your question'}).fill('Re-check 0.0.731861 after recovery');
  await page.getByRole('button',{name:'Run',exact:true}).click();
  await page.getByText('Data recovered',{exact:true}).waitFor({timeout:20000});
  await page.getByRole('link',{name:'[1]',exact:true}).waitFor();

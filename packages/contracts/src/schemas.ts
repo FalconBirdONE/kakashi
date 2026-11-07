@@ -11,10 +11,8 @@ export const planOutputSchema = (_merchantIds: readonly string[] = []) =>
       priority: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     }).strict()).min(1).max(5),
     query: z.object({
-      lat: z.number().min(-90).max(90),
-      lon: z.number().min(-180).max(180),
-      startDate: z.string(),
-      endDate: z.string(),
+      tokenId: z.string().regex(/^0\.0\.\d{1,10}$/),
+      tradeUsd: z.number().positive().max(1_000_000_000),
     }).strict(),
   }).strict();
 

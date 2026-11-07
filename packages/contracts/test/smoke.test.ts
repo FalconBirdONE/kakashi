@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   createFakeBrain, createFakeRails, createFakeTrust, IllegalTransitionError, toAtomic, verifyPermit, FAKE_PERMIT_SECRET,
+  MERCHANT_REGISTRY, planOutputSchema,
 } from "../src/index.js";
 
 const draft = {
@@ -94,5 +95,30 @@ describe("fake purchase smoke", () => {
     const ev = trust.listPendingAudit(10);
     expect(ev.length).toBeGreaterThan(0);
     ev.forEach((e, i) => expect(e.prevHash).toBe(i === 0 ? "GENESIS" : ev[i - 1]!.hash));
+  });
+});
+
+describe("token-check registry and plan schema", () => {
+  it("keeps the 4 ids at their old prices with the new names, paths and schema ids", () => {
+    expect(MERCHANT_REGISTRY.map((m) => [m.id, m.priceAtomic, m.name, m.path, m.responseSchemaId])).toEqual([
+      ["quickcast", "10000", "KeyScan", "/m/quickcast/keys", "token-keys.v1"],
+      ["hourlypro", "50000", "TreasuryWatch", "/m/hourlypro/treasury", "token-treasury.v1"],
+      ["groundtruth", "30000", "HolderMap", "/m/groundtruth/holders", "token-holders.v1"],
+      ["gouger", "500000", "InsiderAlpha", "/m/gouger/alpha", "token-alpha.v1"],
+    ]);
+  });
+
+  const needs = [{ needId: "n1", description: "Admin keys", priority: 1 }];
+  const parse = (query: unknown) => planOutputSchema().safeParse({ needs, query }).success;
+
+  it("accepts a token query", () => {
+    expect(parse({ tokenId: "0.0.731861", tradeUsd: 2000 })).toBe(true);
+  });
+
+  it("rejects the old lat/lon shape, symbols, zero trade size and extra keys", () => {
+    expect(parse({ lat: 19.07, lon: 72.87, startDate: "2026-01-01", endDate: "2026-01-01" })).toBe(false);
+    expect(parse({ tokenId: "SAUCE", tradeUsd: 2000 })).toBe(false);
+    expect(parse({ tokenId: "0.0.731861", tradeUsd: 0 })).toBe(false);
+    expect(parse({ tokenId: "0.0.731861", tradeUsd: 2000, extra: 1 })).toBe(false);
   });
 });

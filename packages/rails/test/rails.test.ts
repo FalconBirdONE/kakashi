@@ -11,7 +11,7 @@ const ENV = {
   MERCHANT_GROUNDTRUTH_PAYTO: "0.0.103", MERCHANT_GOUGER_PAYTO: "0.0.104",
   HEDERA_OPERATOR_ID: "0.0.2", HEDERA_OPERATOR_KEY: "unused-in-tests", HCS_TOPIC_ID: "0.0.7777",
 };
-const QUERY = { lat: "19.076", lon: "72.878", startDate: "2026-11-07", endDate: "2026-11-07" };
+const QUERY = { tokenId: "0.0.731861" };
 const REQ = { scheme: "exact", network: "hedera:testnet", asset: "0.0.0", amount: "10000", payTo: "0.0.101", maxTimeoutSeconds: 60, extra: { feePayer: "0.0.9185802" } };
 const header402 = (accepts: unknown[] = [REQ]) =>
   encodePaymentRequiredHeader({ x402Version: 2, resource: { url: "x" }, accepts } as never);
@@ -31,8 +31,8 @@ describe("fetchQuote", () => {
     if (!res.ok) throw new Error(res.error);
     const { rawRequirements, receivedAt, localExpiresAt, quoteHash, ...core } = res.quote;
     expect(core).toEqual({
-      merchantId: "quickcast", method: "GET", origin: "http://127.0.0.1:4200", path: "/m/quickcast/forecast",
-      requestHash: requestHash("GET", "/m/quickcast/forecast", QUERY), network: "hedera:testnet", assetId: "0.0.0",
+      merchantId: "quickcast", method: "GET", origin: "http://127.0.0.1:4200", path: "/m/quickcast/keys",
+      requestHash: requestHash("GET", "/m/quickcast/keys", QUERY), network: "hedera:testnet", assetId: "0.0.0",
       amountAtomic: "10000", payTo: "0.0.101", facilitatorUrl: "https://x402.org/facilitator", feePayer: "0.0.9185802", maxTimeoutSeconds: 60,
     });
     expect(quoteHash).toBe(sha256Hex(canonicalJson(core)));
@@ -40,7 +40,7 @@ describe("fetchQuote", () => {
     expect(receivedAt).toBe(NOW.toISOString());
     expect(localExpiresAt).toBe(new Date(NOW.getTime() + 60_000).toISOString());
     const [url, init] = fetchMock.mock.calls[0]!;
-    expect(String(url)).toBe("http://127.0.0.1:4200/m/quickcast/forecast?endDate=2026-11-07&lat=19.076&lon=72.878&startDate=2026-11-07");
+    expect(String(url)).toBe("http://127.0.0.1:4200/m/quickcast/keys?tokenId=0.0.731861");
     expect(init?.redirect).toBe("manual");
   });
 
@@ -65,10 +65,10 @@ describe("fetchQuote", () => {
 
   test("query values cannot change the path or host", async () => {
     const { r, fetchMock } = rails(() => quoted());
-    await r.fetchQuote("quickcast", { lat: "1", lon: "2", x: "../../admin/fault?@evil.example" });
+    await r.fetchQuote("quickcast", { tokenId: "0.0.1", x: "../../admin/fault?@evil.example" });
     const url = new URL(String(fetchMock.mock.calls[0]![0]));
     expect(url.host).toBe("127.0.0.1:4200");
-    expect(url.pathname).toBe("/m/quickcast/forecast");
+    expect(url.pathname).toBe("/m/quickcast/keys");
   });
 
   test.each([
@@ -177,43 +177,59 @@ describe("settlement", () => {
 });
 
 describe("validateDelivery (R6)", () => {
-  const good = () => ({
-    merchant: "quickcast", source: "open-meteo", location: { lat: 19.076, lon: 72.878, name: "x" },
-    window: { start: "2026-11-07", end: "2026-11-07" }, generatedAt: new Date(NOW.getTime() - 60_000).toISOString(),
-    units: "metric", daily: { time: ["2026-11-07"] },
+  const at = () => new Date(NOW.getTime() - 60_000).toISOString();
+  const head = (merchant: string) => ({ merchant, source: "hedera-mainnet-mirror", tokenId: "0.0.731861", generatedAt: at(), flags: [] as string[] });
+  const keys = () => ({
+    ...head("quickcast"),
+    token: {
+      name: "SAUCE", symbol: "SAUCE", decimals: 6, totalSupply: "1000000000000000", maxSupply: "1000000000000000", supplyType: "FINITE",
+      treasury: "0.0.1077627", createdAt: "2022-01-01T00:00:00.000Z", memo: "", pauseStatus: "NOT_APPLICABLE",
+      keys: { admin: true, freeze: false, wipe: false, supply: true, pause: false, kyc: false, feeSchedule: false },
+      customFees: { fixed: 0, fractional: 0, royalty: 0 },
+    },
+  });
+  const holdersBody = () => ({
+    ...head("groundtruth"),
+    holders: { thresholdPct: 1, whales: [{ account: "0.0.1077627", balance: "300000000000000", pct: 30 }], whaleCount: 1, whaleSharePct: 30, treasurySharePct: 30 },
+  });
+  const treasuryBody = () => ({
+    ...head("hourlypro"),
+    treasury: {
+      account: "0.0.1077627", sampled: 100, mints: [{ timestamp: "1730000000.000000000", amount: "1000" }],
+      outflows: [{ timestamp: "1730000001.000000000", amount: "500", to: "0.0.1001" }], outflowTotal: "500",
+    },
   });
   const check = (body: unknown, merchant = "quickcast") => validateDelivery(merchant, QUERY, body, NOW);
 
-  test("a correct body is valid", () => expect(check(good())).toEqual({ valid: true, issues: [] }));
+  test("a good body for each kind is valid", () => {
+    expect(check(keys())).toEqual({ valid: true, issues: [] });
+    expect(check(holdersBody(), "groundtruth")).toEqual({ valid: true, issues: [] });
+    expect(check(treasuryBody(), "hourlypro")).toEqual({ valid: true, issues: [] });
+  });
 
-  test("wrong location", () => {
-    const r = check({ ...good(), location: { lat: 28.61, lon: 77.21, name: "Delhi" } });
-    expect(r.valid).toBe(false);
-    expect(r.issues[0]).toMatch(/^wrong location: \d+\.\d km/);
+  test("a NOT_FOUND body with token: null is valid", () => {
+    const body = { ...keys(), token: null, flags: ["NOT_FOUND: no such token on Hedera mainnet"] };
+    expect(check(body)).toEqual({ valid: true, issues: [] });
+  });
+
+  test("wrong token", () => {
+    expect(check({ ...keys(), tokenId: "0.0.456858" }).issues).toEqual(["wrong token: 0.0.456858, requested 0.0.731861"]);
   });
 
   test("stale data", () => {
-    const r = check({ ...good(), generatedAt: new Date(NOW.getTime() - 2 * 86_400_000).toISOString() });
+    const r = check({ ...keys(), generatedAt: new Date(NOW.getTime() - 2 * 86_400_000).toISOString() });
     expect(r.issues).toEqual(["stale data: generated 172800 s ago (max 21600 s)"]);
   });
 
-  test("wrong units", () => expect(check({ ...good(), units: "imperial" }).issues).toEqual(["unexpected units: imperial (declared metric)"]));
-
-  test("window not covering the requested dates", () => {
-    expect(check({ ...good(), window: { start: "2026-11-08", end: "2026-11-08" } }).issues).toEqual(["window starts 2026-11-08, after requested 2026-11-07"]);
+  test("future timestamp", () => {
+    expect(check({ ...keys(), generatedAt: new Date(NOW.getTime() + 3_600_000).toISOString() }).issues).toEqual(["generatedAt is in the future"]);
   });
 
   test("schema violations and wrong merchant", () => {
-    expect(check({ ...good(), daily: undefined }).issues[0]).toMatch(/^schema: daily/);
+    expect(check({ ...holdersBody(), holders: undefined }, "groundtruth").issues[0]).toMatch(/^schema: holders/);
+    expect(check({ ...keys(), source: "open-web" }).valid).toBe(false);
     expect(check(undefined).valid).toBe(false);
-    expect(check({ ...good(), merchant: "gouger" }).issues).toEqual(["wrong merchant: gouger"]);
-  });
-
-  test("per-merchant schemas: hourly, observations", () => {
-    const hourly = { ...good(), merchant: "hourlypro", daily: undefined, hourly: { time: ["2026-11-07T06:00"] } };
-    expect(check(hourly, "hourlypro").valid).toBe(true);
-    const obs = { ...good(), merchant: "groundtruth", daily: undefined, current: { time: "2026-11-06T15:30" } };
-    expect(check(obs, "groundtruth").valid).toBe(true);
+    expect(check({ ...keys(), merchant: "gouger" }).issues).toEqual(["wrong merchant: gouger"]);
   });
 });
 

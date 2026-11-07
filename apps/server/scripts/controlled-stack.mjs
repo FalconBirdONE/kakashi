@@ -34,7 +34,7 @@ export async function controlledStack(){
  const settled=new Map(),anchors=new Map();let sequence=0,requests=0,signatures=0,payments=0,dropNext=false,denyNext=false,deliveryFailures=0;
  const stats=()=>({requests,signatures,payments,anchored:anchors.size});
  const json=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json',...headers}});
- const validData=()=>({merchant:'quickcast',source:'controlled fixture',location:{lat:19.076,lon:72.8777,name:'Mumbai'},window:{start:'2026-11-06',end:'2026-11-07'},generatedAt:new Date().toISOString(),units:'metric',daily:{time:['2026-11-06','2026-11-07']}});
+ const validData=()=>({merchant:'quickcast',source:'fixture',tokenId:'0.0.731861',generatedAt:new Date().toISOString(),flags:['ADMIN_KEY: issuer can change token settings','SUPPLY_KEY: issuer can mint more supply'],token:{name:'SAUCE',symbol:'SAUCE',decimals:6,totalSupply:'1000000000000000',maxSupply:'1000000000000000',supplyType:'FINITE',treasury:'0.0.1077627',createdAt:'2022-03-01T00:00:00.000Z',memo:'',pauseStatus:'NOT_APPLICABLE',keys:{admin:true,freeze:false,wipe:false,supply:true,pause:false,kyc:false,feeSchedule:false},customFees:{fixed:0,fractional:0,royalty:0}}});
  let db,auth,store,sign,server,ctx,stopWorkers;
  const originalBuild=hederaPaymentBuilder(env.AGENT_ACCOUNT_ID,PrivateKey.generateECDSA(),'hedera:testnet');
  const transport=async(input,init={})=>{
@@ -73,9 +73,9 @@ export async function controlledStack(){
   }
   if(url.host==='zg.controlled.invalid'){
    requests++;const body=JSON.parse(init.body),system=body.messages[0].content,user=body.messages[1].content;let value;
-   if(system.includes('TASK: planning'))value={needs:[{needId:'n1',description:'Daily forecast',priority:1}],query:{lat:19.076,lon:72.8777,startDate:'2026-11-06',endDate:'2026-11-07'}};
+   if(system.includes('TASK: planning'))value={needs:[{needId:'n1',description:'Admin keys and fees',priority:1}],query:{tokenId:'0.0.731861',tradeUsd:20}};
    else if(system.includes('TASK: decide')){const input=JSON.parse(user);value={decisions:input.quotes.map(q=>({quoteId:q.quoteId,action:q.merchantId==='quickcast'?'BUY':'SKIP',needId:'n1',reasonCode:'FILLS_NEED',expectedUsefulness:1,rationale:'controlled decision'})),stop:true};}
-   else value={answer:'Controlled forecast: dry weather, based on paid evidence.',confidence:'high',citations:[...user.matchAll(/purchaseId: ([^\n]+)/g)].map(m=>m[1]),gaps:[],disagreements:[],suspiciousContent:[]};
+   else value={answer:'Controlled check: CAUTION, issuer holds admin and supply keys.',confidence:'high',citations:[...user.matchAll(/purchaseId: ([^\n]+)/g)].map(m=>m[1]),gaps:[],disagreements:[],suspiciousContent:[]};
    return json({choices:[{message:{content:JSON.stringify(value)}}],x_0g_trace:{request_id:'controlled-'+requests,provider:'controlled',tee_verified:true,billing:{total_cost:'0.00000001'}}});
   }
   throw new Error('External transport forbidden in controlled stack');

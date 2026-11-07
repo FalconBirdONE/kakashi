@@ -27,13 +27,10 @@ export function createFakeBrain(): FakeBrain {
     failNext: (e) => void (pendingFail = e),
 
     async plan(i) {
-      return run(i, () => {
-        const today = new Date().toISOString().slice(0, 10);
-        return {
-          needs: [{ needId: "need-1", description: i.question.slice(0, 200) || "forecast", priority: 1 as const }],
-          query: { lat: 19.076, lon: 72.8777, startDate: today, endDate: today },
-        };
-      });
+      return run(i, () => ({
+        needs: [{ needId: "need-1", description: i.question.slice(0, 200) || "token risk", priority: 1 as const }],
+        query: { tokenId: "0.0.731861", tradeUsd: 100 },
+      }));
     },
 
     // Rule-based: buy the cheapest quote that fills each unmet need, within budget and purchase limits.

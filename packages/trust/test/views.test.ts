@@ -46,7 +46,7 @@ describe("createRun", () => {
 
 describe("updateRun", () => {
   const answer: SynthesisOutput = { answer: "sunny", confidence: "high", citations: ["a"], disagreements: [], gaps: ["g"], suspiciousContent: [] };
-  const plan: PlanOutput = { needs: [{ needId: "n1", description: "weather", priority: 1 }], query: { lat: 19.07, lon: 72.87, startDate: "2030-01-01", endDate: "2030-01-02" } };
+  const plan: PlanOutput = { needs: [{ needId: "n1", description: "token risk", priority: 1 }], query: { tokenId: "0.0.731861", tradeUsd: 2000 } };
 
   it("applies allowed keys and round-trips answer/plan JSON", () => {
     const fx = makeFx();

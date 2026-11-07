@@ -3,31 +3,49 @@ import { getMerchant } from "@kakashi/contracts";
 
 const base = z.object({
   merchant: z.string(),
-  source: z.string(),
-  location: z.object({ lat: z.number(), lon: z.number(), name: z.string() }),
-  window: z.object({ start: z.string(), end: z.string() }),
+  source: z.enum(["hedera-mainnet-mirror", "fixture"]),
+  tokenId: z.string().regex(/^0\.0\.\d{1,10}$/),
   generatedAt: z.string().datetime(),
-  units: z.string(),
+  flags: z.array(z.string()),
+  note: z.string().optional(),
 });
-const series = z.object({ time: z.array(z.string()).min(1) }).passthrough();
 
-// One schema per registry responseSchemaId (SPEC §7.5).
+const tokenKeys = z.object({
+  name: z.string(), symbol: z.string(), decimals: z.union([z.number(), z.string()]),
+  totalSupply: z.string(), maxSupply: z.string(), supplyType: z.string(), treasury: z.string().nullable(),
+  createdAt: z.string().nullable(), memo: z.string(), pauseStatus: z.string(),
+  keys: z.object({
+    admin: z.boolean(), freeze: z.boolean(), wipe: z.boolean(), supply: z.boolean(),
+    pause: z.boolean(), kyc: z.boolean(), feeSchedule: z.boolean(),
+  }).passthrough(),
+  customFees: z.object({ fixed: z.number(), fractional: z.number(), royalty: z.number() }).passthrough(),
+}).passthrough().nullable();
+
+const holders = z.object({
+  thresholdPct: z.literal(1),
+  whales: z.array(z.object({ account: z.string(), balance: z.string(), pct: z.number() }).passthrough()),
+  whaleCount: z.number(),
+  whaleSharePct: z.number(),
+  treasurySharePct: z.number(),
+}).passthrough();
+
+const treasury = z.object({
+  account: z.string().nullable(),
+  sampled: z.number(),
+  mints: z.array(z.object({ timestamp: z.string(), amount: z.string() }).passthrough()),
+  outflows: z.array(z.object({ timestamp: z.string(), amount: z.string(), to: z.string() }).passthrough()),
+  outflowTotal: z.string(),
+}).passthrough();
+
+// One schema per registry responseSchemaId (contract item 6).
 export const RESPONSE_SCHEMAS: Record<string, z.ZodTypeAny> = {
-  "daily-forecast.v1": base.extend({ daily: series }),
-  "hourly-forecast.v1": base.extend({ hourly: series }),
-  "observations.v1": base.extend({ current: z.object({ time: z.string() }).passthrough() }),
-  "premium-forecast.v1": base.extend({ daily: series }),
+  "token-keys.v1": base.extend({ token: tokenKeys }),
+  "token-holders.v1": base.extend({ holders }),
+  "token-treasury.v1": base.extend({ treasury }),
+  "token-alpha.v1": base.extend({ token: tokenKeys }),
 };
 
-const MAX_DISTANCE_KM = 10;
 const MAX_CLOCK_SKEW_MS = 5 * 60_000;
-
-export function distanceKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
-  const rad = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(rad(bLat - aLat) / 2) ** 2 +
-    Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(rad(bLon - aLon) / 2) ** 2;
-  return 2 * 6371 * Math.asin(Math.sqrt(h));
-}
 
 export function validateDelivery(
   merchantId: string, query: Record<string, string>, body: unknown, now: Date,
@@ -44,17 +62,7 @@ export function validateDelivery(
   const issues: string[] = [];
 
   if (b.merchant !== m.id) issues.push(`wrong merchant: ${b.merchant}`);
-
-  const qLat = Number(query.lat);
-  const qLon = Number(query.lon);
-  if (Number.isFinite(qLat) && Number.isFinite(qLon)) {
-    const km = distanceKm(qLat, qLon, b.location.lat, b.location.lon);
-    if (km > MAX_DISTANCE_KM) issues.push(`wrong location: ${km.toFixed(1)} km from the requested point (max ${MAX_DISTANCE_KM} km)`);
-  }
-
-  // ISO dates compare correctly as strings.
-  if (query.startDate && b.window.start > query.startDate) issues.push(`window starts ${b.window.start}, after requested ${query.startDate}`);
-  if (query.endDate && b.window.end < query.endDate) issues.push(`window ends ${b.window.end}, before requested ${query.endDate}`);
+  if (b.tokenId !== query.tokenId) issues.push(`wrong token: ${b.tokenId}, requested ${query.tokenId}`);
 
   const ageMs = now.getTime() - Date.parse(b.generatedAt);
   if (ageMs < -MAX_CLOCK_SKEW_MS) issues.push("generatedAt is in the future");
@@ -62,6 +70,5 @@ export function validateDelivery(
     issues.push(`stale data: generated ${Math.round(ageMs / 1000)} s ago (max ${m.freshnessSeconds} s)`);
   }
 
-  if (b.units !== "metric") issues.push(`unexpected units: ${b.units} (declared metric)`);
   return { valid: issues.length === 0, issues };
 }
