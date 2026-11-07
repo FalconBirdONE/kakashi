@@ -154,7 +154,7 @@ export default function Flow() {
 
   return (
     <div ref={ref} className="mt-8 space-y-4">
-      <div className="rounded-2xl border border-white/[0.07] bg-[#0a0b0e] p-3 sm:p-5">
+      <div className="fx-card rounded-2xl border border-white/[0.07] bg-[#0a0b0e] p-3 sm:p-5">
         <svg viewBox="0 0 960 520" className="mx-auto h-auto max-h-[50vh] w-full font-sans" role="img"
           aria-label={`Architecture diagram. Step ${i + 1}: ${step.title}`}>
           <defs>

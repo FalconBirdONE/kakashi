@@ -111,3 +111,61 @@
   }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ---- Landing motion (screens/landing/Fx.tsx). Decorative; disabled for reduced motion and touch. ---- */
+.fx-cursor > div { position: absolute; left: 0; top: 0; will-change: transform; }
+.fx-cursor { opacity: 0; transition: opacity 0.3s; }
+.fx-cursor-on .fx-cursor { opacity: 1; }
+.fx-glow { width: 0; height: 0; }
+.fx-glow::before {
+  content: ""; position: absolute; width: 560px; height: 560px; left: -280px; top: -280px; border-radius: 9999px;
+  background: radial-gradient(closest-side, rgba(240, 185, 85, 0.085), transparent); mix-blend-mode: screen;
+}
+.fx-ring { width: 0; height: 0; }
+.fx-ring > span {
+  position: absolute; width: 34px; height: 34px; left: -17px; top: -17px; border-radius: 9999px;
+  border: 1px solid rgba(247, 210, 138, 0.55); transition: transform 0.35s var(--ease-out-expo), background-color 0.3s, border-color 0.3s;
+}
+.fx-ring[data-hot="true"] > span { transform: scale(1.6); background: rgba(240, 185, 85, 0.08); border-color: rgba(247, 210, 138, 0.85); }
+.fx-dot::before {
+  content: ""; position: absolute; width: 5px; height: 5px; left: -2.5px; top: -2.5px; border-radius: 9999px;
+  background: var(--color-gold-300); box-shadow: 0 0 10px 2px rgba(240, 185, 85, 0.6);
+}
+
+/* Cursor-following glow on cards: a soft fill plus a lit border. */
+.fx-card { position: relative; isolation: isolate; }
+.fx-card::before, .fx-card::after {
+  content: ""; position: absolute; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.4s;
+}
+.fx-card::before { inset: 0; z-index: -1; background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(240, 185, 85, 0.09), transparent 45%); }
+.fx-card::after {
+  inset: -1px; padding: 1px;
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgba(247, 210, 138, 0.6), transparent 60%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.fx-card:hover::before, .fx-card:hover::after { opacity: 1; }
+
+[data-tilt] { transition: transform 0.5s var(--ease-out-expo); transform-style: preserve-3d; }
+[data-magnetic] { transition: translate 0.4s var(--ease-out-expo), background-color 0.2s, border-color 0.2s, scale 0.2s; }
+
+/* Hero layers drift against the cursor. */
+.fx-parallax { transform: translate3d(calc(var(--px, 0) * var(--depth, 20px)), calc(var(--py, 0) * var(--depth, 20px)), 0); transition: transform 0.8s var(--ease-out-expo); }
+
+/* Gold light sweeping across the accent word. */
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.text-shimmer {
+  background: linear-gradient(100deg, var(--color-gold-300) 40%, #fff6dc 50%, var(--color-gold-300) 60%) 0 0 / 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: shimmer 4.5s ease-in-out 1.2s infinite;
+}
+
+/* Pulsing live dot. */
+@keyframes ping-soft { 75%, 100% { transform: scale(2.4); opacity: 0; } }
+.fx-ping { position: relative; }
+.fx-ping::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: inherit; animation: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-parallax, [data-tilt], [data-magnetic] { transform: none !important; translate: none !important; }
+  .text-shimmer { animation: none; }
+}
