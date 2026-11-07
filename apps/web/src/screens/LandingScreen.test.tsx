@@ -52,3 +52,11 @@ it("buys only KeyScan under the cheapest-first rule", () => {
   expect(screen.getByText("No AI: it buys KeyScan every time.")).toBeInTheDocument();
   expect(screen.getAllByText("Cheapest quote that fills a need.")).toHaveLength(1);
 });
+
+it("changes the walkthrough speed", () => {
+  render(<LandingScreen />);
+  const slider = screen.getByRole("slider", { name: /Speed/ });
+  expect(slider).toHaveAttribute("aria-valuetext", "1.5×");
+  fireEvent.change(slider, { target: { value: "4" } });
+  expect(slider).toHaveAttribute("aria-valuetext", "3×");
+});

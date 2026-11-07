@@ -105,7 +105,8 @@ HCS     topic 0.0.11341856  { "type": "PURCHASE_CONFIRMED",
   },
 ];
 
-const STEP_MS = 6500;
+const STEP_MS = 6500; // one step at 1× speed
+const SPEEDS = [0.5, 1, 1.5, 2, 3] as const;
 const GOLD = "#f0b955";
 
 function Node({ id, box, on, color }: { id: NodeId; box: Box; on: boolean; color: string }) {
@@ -144,7 +145,9 @@ export default function Flow() {
   const inView = useInView(ref);
   const [paused, setPaused] = useState(reducedMotion);
   const playing = inView && !paused;
-  const [i, setI] = useTicker(STEPS.length, STEP_MS, playing);
+  const [speed, setSpeed] = useState(1.5);
+  const stepMs = Math.round(STEP_MS / speed);
+  const [i, setI] = useTicker(STEPS.length, stepMs, playing);
   const step = STEPS[i]!;
   const color = step.by[0] ? SPONSORS[step.by[0]].hex : GOLD;
   const pick = (n: number) => { setI((n + STEPS.length) % STEPS.length); setPaused(true); };
@@ -195,13 +198,22 @@ export default function Flow() {
             {STEPS.map((_, n) => (
               <span key={n} className="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.08]">
                 {n < i && <span className="block h-full w-full rounded-full bg-white/30" />}
-                {n === i && <span key={`p${i}-${playing}`} className="block h-full rounded-full"
-                  style={{ background: color, width: playing ? undefined : "100%", animation: playing ? `fill-x ${STEP_MS}ms linear both` : undefined }} />}
+                {n === i && <span key={`p${i}-${playing}-${stepMs}`} className="block h-full rounded-full"
+                  style={{ background: color, width: playing ? undefined : "100%", animation: playing ? `fill-x ${stepMs}ms linear both` : undefined }} />}
               </span>
             ))}
           </div>
           <div className="mt-4 flex items-center justify-between gap-3">
-            <Controls label="Walkthrough" playing={playing} onToggle={() => setPaused(playing)} onPrev={() => pick(i - 1)} onNext={() => pick(i + 1)} />
+            <div className="flex flex-wrap items-center gap-4">
+              <Controls label="Walkthrough" playing={playing} onToggle={() => setPaused(playing)} onPrev={() => pick(i - 1)} onNext={() => pick(i + 1)} />
+              <label className="flex items-center gap-2 text-xs text-zinc-400">
+                Speed
+                <input type="range" min={0} max={SPEEDS.length - 1} step={1} value={SPEEDS.indexOf(speed as (typeof SPEEDS)[number])}
+                  onChange={(e) => setSpeed(SPEEDS[Number(e.target.value)]!)} aria-valuetext={`${speed}×`}
+                  className="w-20 accent-gold-400 sm:w-24" />
+                <span className="w-7 font-mono text-zinc-300">{speed}×</span>
+              </label>
+            </div>
             <ol className="flex flex-wrap justify-end gap-1">
               {STEPS.map((s, n) => (
                 <li key={s.title}>
