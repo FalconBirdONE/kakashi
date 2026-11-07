@@ -20,16 +20,17 @@ export type EvalCase = {
 const DEFAULT_BUDGET = "200000"; // demo mandate: 0.20 USDC
 
 export const cases: EvalCase[] = [
-  { id: 1, question: "Will it rain in Mumbai this week?", budgetAtomic: DEFAULT_BUDGET, accepted: [["quickcast"]] },
-  { id: 2, question: "Is 6–8 am tomorrow good for a run in Bandra?", budgetAtomic: DEFAULT_BUDGET, accepted: [["hourlypro"]] },
-  { id: 3, question: "Forecasts say dry but it looks cloudy, is it raining in Andheri right now?", budgetAtomic: DEFAULT_BUDGET,
-    accepted: [["groundtruth"]] },
-  { id: 4, question: "Plan an outdoor shoot Saturday 4–6 pm in Colaba", budgetAtomic: DEFAULT_BUDGET,
-    accepted: [["hourlypro"], ["hourlypro", "quickcast"]], note: "HourlyPro, plus QuickCast if budget allows" },
-  { id: 5, question: "Rough weekly outlook, keep it cheap", budgetAtomic: DEFAULT_BUDGET, accepted: [["quickcast"]] },
-  // 20000 fits QuickCast (10000) but not HourlyPro (50000) or GroundTruth (30000).
-  { id: 6, question: "Is 6–8 am tomorrow good for a run in Bandra?", budgetAtomic: "20000", accepted: [["quickcast"]],
-    note: "budget only fits QuickCast; the final answer should note the gap (synthesis, not scored here)" },
+  { id: 1, question: "Should I put 20 USDC into SAUCE (0.0.731861)?", budgetAtomic: DEFAULT_BUDGET, accepted: [["quickcast"]] },
+  { id: 2, question: "I'm about to put 2,000 USDC into 0.0.731861. Is it safe?", budgetAtomic: DEFAULT_BUDGET,
+    accepted: [["quickcast", "groundtruth", "hourlypro"]] },
+  { id: 3, question: "Is the supply of DOVU (0.0.624505) concentrated in a few wallets? Planning 300 USD.", budgetAtomic: DEFAULT_BUDGET,
+    accepted: [["groundtruth"], ["groundtruth", "quickcast"]] },
+  { id: 4, question: "Is the team dumping GRELF (0.0.1159074)? I hold 1,000 USD of it.", budgetAtomic: DEFAULT_BUDGET,
+    accepted: [["hourlypro"], ["hourlypro", "quickcast"]] },
+  { id: 5, question: "Quick sanity check before a 5 USD trade of 0.0.4696266, keep it cheap", budgetAtomic: DEFAULT_BUDGET, accepted: [["quickcast"]] },
+  // 20000 fits quickcast (10000) but not hourlypro (50000) or groundtruth (30000).
+  { id: 6, question: "I'm about to put 5,000 USDC into 0.0.731861.", budgetAtomic: "20000", accepted: [["quickcast"]],
+    note: "the budget only fits KeyScan; the final answer should note the gap (synthesis, not scored here)" },
 ];
 
 /** Order-insensitive set equality on merchant ids. */

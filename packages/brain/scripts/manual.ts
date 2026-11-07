@@ -6,7 +6,7 @@ import { createBrain } from "../src";
 
 if (!process.env.ZG_API_KEY || !process.env.ZG_MODEL) { console.error("Set ZG_API_KEY and ZG_MODEL first."); process.exit(2); }
 const brain = createBrain();
-const question = "Is 6-8 am tomorrow good for a run in Bandra?";
+const question = "Should I put 2,000 USDC into 0.0.731861?";
 const catalog = MERCHANT_REGISTRY.map(({ payToEnv: _p, ...m }) => m);
 
 const plan = await brain.plan({ question, catalog, budgetRemainingAtomic: "200000", perPaymentCapAtomic: "100000", assetDecimals: 6 });
@@ -21,7 +21,7 @@ console.log("DECIDE", dec.trace.zgRequestId, dec.trace.teeVerified, JSON.stringi
 
 const buys = dec.value.decisions.filter((d) => d.action === "BUY");
 const evidence = buys.map((d, n) => ({ purchaseId: `pur_sample${n}`, merchantId: quotes.find((q) => q.quoteId === d.quoteId)!.merchantId,
-  valid: true, issues: [], data: { location: "Bandra", window: "tomorrow 06:00-08:00", note: "sample data: dry, 26C, wind 8 km/h" } }));
+  valid: true, issues: [], data: { tokenId: "0.0.731861", note: "sample data: admin and supply keys set, no custom fees" } }));
 const syn = await brain.synthesize({ question, evidence, gaps: [] });
 if (!syn.ok) { console.error("synthesize failed:", syn.error); process.exit(1); }
 console.log("SYNTHESIZE", syn.trace.zgRequestId, syn.trace.teeVerified, syn.value.confidence);
