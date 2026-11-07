@@ -11,7 +11,7 @@ const NODES: Record<NodeId, Box> = {
   zg: { x: 490, y: 30, w: 200, h: 76, title: "0G Router", sub: "Private TEE tier", mark: "0g" },
   you: { x: 16, y: 218, w: 170, h: 84, title: "You", sub: "Browser · no secrets" },
   server: { x: 250, y: 208, w: 440, h: 104, title: "Kakashi server", sub: "Orchestrator · Policy engine · SQLite ledger" },
-  merchants: { x: 754, y: 218, w: 190, h: 84, title: "Data merchants", sub: "4 paid APIs over x402" },
+  merchants: { x: 754, y: 218, w: 190, h: 84, title: "Check sellers", sub: "4 paid checks over x402" },
   signer: { x: 250, y: 414, w: 200, h: 76, title: "Isolated signer", sub: "Agent key only" },
   hedera: { x: 490, y: 414, w: 200, h: 76, title: "Hedera testnet", sub: "USDC · mirror · HCS", mark: "hedera" },
   facilitator: { x: 754, y: 414, w: 190, h: 76, title: "x402 facilitator", sub: "verify · settle" },
@@ -38,47 +38,48 @@ type Step = {
 const STEPS: Step[] = [
   {
     title: "A human approves the mandate", by: ["world"], nodes: ["you", "server", "world"], edges: [["youServer", "fwd"], ["serverWorld", "both"]],
-    body: "You set a total budget, a per-payment cap, an auto-approve cap, the allowed merchants and an expiry. World ID runs an OIDC device flow. The server validates the ID token and records an approval bound to this exact mandate version.",
+    body: "You set a total budget, a per-payment cap, an auto-approve cap, the allowed check sellers and an expiry. World ID runs an OIDC device flow. The server validates the ID token and records an approval bound to this exact mandate version.",
     wire: `POST /api/mandates/:id/activate
 ← verificationUri, userCode        (device_code stays on the server)
 ID token ✓ JWKS · iss · aud · exp · auth_time ≥ start − 5 s
 Approval(APPROVED, targetHash = mandateHash)   → mandate ACTIVE`,
   },
   {
-    title: "0G plans the evidence", by: ["0g"], nodes: ["server", "zg"], edges: [["serverZg", "both"]],
-    body: "Your question, preferences and the mandate summary go to sealed inference on the 0G Router's private TEE tier. It returns specific evidence needs and a normalized query. Every call returns a trace ID.",
+    title: "0G plans which risks matter", by: ["0g"], nodes: ["server", "zg"], edges: [["serverZg", "both"]],
+    body: "Your question, preferences and the mandate summary go to sealed inference on the 0G Router's private TEE tier. It returns the risks worth checking and a normalized query: the token ID and your trade size. Every call returns a trace ID.",
     wire: `POST router-api.0g.ai/v1/chat/completions
 X-0G-Provider-Trust-Mode: private      verify_tee: true
-← needs: [ "hourly rain, Bandra, 06:00–08:00 tomorrow" ]
+← query: { "tokenId": "0.0.731861", "tradeUsd": 2000 }
+← needs: [ "issuer keys", "whale wallets", "treasury selling" ]
 ← x_0g_trace.request_id   b15b4d21-465a-4540-…   tee_verified: true`,
   },
   {
-    title: "Merchants quote over x402", by: ["hedera"], nodes: ["server", "merchants"], edges: [["serverMerchants", "both"]],
-    body: "Kakashi calls every allowed data API without paying. Each one answers 402 Payment Required with a price, recipient, asset and expiry. Quotes are free, and the quote is hashed so a purchase is bound to its exact fields.",
-    wire: `GET /m/hourlypro/forecast?lat=19.05&lon=72.84&startDate=…
+    title: "Check sellers quote over x402", by: ["hedera"], nodes: ["server", "merchants"], edges: [["serverMerchants", "both"]],
+    body: "Kakashi calls every allowed check seller without paying. Only the token ID leaves the server, never the trade size. Each one answers 402 Payment Required with a price, recipient, asset and expiry. Quotes are free, and the quote is hashed so a purchase is bound to its exact fields.",
+    wire: `GET /m/quickcast/keys?tokenId=0.0.731861
 ← 402 Payment Required
 PAYMENT-REQUIRED: { "scheme": "exact", "network": "hedera:testnet",
-  "asset": "0.0.429274", "amount": "50000", "payTo": "0.0.11341852" }`,
+  "asset": "0.0.429274", "amount": "10000", "payTo": "0.0.11341852" }`,
   },
   {
     title: "Policy screens every quote", by: [], nodes: ["server"], edges: [],
-    body: "Plain code checks merchant, recipient, asset, fee payer, caps, budget, price range, expiry and duplicates. PriceGouger's 0.50 USDC quote fails, so the model never sees it as something it could buy.",
+    body: "Plain code checks merchant, recipient, asset, fee payer, caps, budget, price range, expiry and duplicates. InsiderAlpha's 0.50 USDC quote fails, so the model never sees it as something it could buy.",
     wire: `quickcast    0.01 USDC   ✓ eligible
 hourlypro    0.05 USDC   ✓ eligible · above auto-approve (0.02)
 groundtruth  0.03 USDC   ✓ eligible · above auto-approve (0.02)
 gouger       0.50 USDC   ✗ OVER_PER_PAYMENT_CAP, PRICE_ANOMALY`,
   },
   {
-    title: "0G decides what is worth buying", by: ["0g"], nodes: ["server", "zg"], edges: [["serverZg", "both"]],
-    body: "The model sees eligible quotes as structured fields only: no keys, no URLs, no merchant text. It answers BUY or SKIP for each server-generated quote ID, with a reason code and expected usefulness.",
-    wire: `q_hourlypro    BUY    FILLS_NEED      usefulness 0.90
-q_quickcast    SKIP   LOW_RELEVANCE   daily data can't resolve 06:00–08:00
-q_groundtruth  SKIP   LOW_RELEVANCE   observations are now, not tomorrow
+    title: "0G decides which checks the trade justifies", by: ["0g"], nodes: ["server", "zg"], edges: [["serverZg", "both"]],
+    body: "The model sees eligible quotes as structured fields only: no keys, no URLs, no merchant text. It weighs each check's price against the trade size and answers BUY or SKIP for each server-generated quote ID, with a reason code and expected usefulness.",
+    wire: `q_quickcast    BUY    FILLS_NEED   issuer keys first, 0.01 on 2,000 USD
+q_groundtruth  BUY    FILLS_NEED   whales matter at this size
+q_hourlypro    BUY    FILLS_NEED   mints or treasury selling would dilute
 trace b6e49d9d-4973-40b2-…   tee_verified: true`,
   },
   {
-    title: "A human approves the big one", by: ["world"], nodes: ["you", "server", "world"], edges: [["youServer", "both"], ["serverWorld", "both"]],
-    body: "The budget is reserved in one SQLite transaction. HourlyPro costs more than the auto-approve cap, so it waits for a fresh World ID approval bound to this purchase. Deny it and nothing is paid.",
+    title: "A human approves the bigger checks", by: ["world"], nodes: ["you", "server", "world"], edges: [["youServer", "both"], ["serverWorld", "both"]],
+    body: "The budget is reserved in one SQLite transaction. KeyScan sits under the auto-approve cap and goes straight through. TreasuryWatch costs more, so it waits for a fresh World ID approval bound to this purchase. Deny it and nothing is paid.",
     wire: `UPDATE mandates SET reserved = reserved + 50000
  WHERE state = 'ACTIVE' AND spent + reserved + 50000 <= totalBudget
 → AWAITING_APPROVAL     short code 3F9A2C (purchaseHash)
@@ -90,15 +91,15 @@ World ID ✓ → RESERVED, single-use signing permit issued`,
     body: "A separate process that holds only the agent key signs against an HMAC-signed, single-use permit matching the exact payment. The transaction ID is saved before anything is sent. The facilitator settles USDC on Hedera.",
     wire: `signer ✓ permit: MAC · unexpired · unused · amount · payTo · feePayer
 SIGNED     tx 0.0.9185802@<seconds>.<nanos>   (stored before sending)
-GET /m/hourlypro/forecast …   PAYMENT-SIGNATURE: <signed transfer>
+GET /m/hourlypro/treasury?tokenId=0.0.731861   PAYMENT-SIGNATURE: <signed transfer>
 ← 200   PAYMENT-RESPONSE: { "success": true, "transaction": <same tx> }`,
   },
   {
-    title: "An answer with receipts, anchored on HCS", by: ["0g", "hedera"], nodes: ["you", "server", "zg", "hedera"],
+    title: "A verdict with receipts, anchored on HCS", by: ["0g", "hedera"], nodes: ["you", "server", "zg", "hedera"],
     edges: [["serverHedera", "both"], ["serverZg", "both"], ["youServer", "back"]],
-    body: "The mirror node confirms the transfer. 0G writes the answer from the purchased data, wrapped as untrusted and with no tools, and cites each purchase. Hash-chained audit events are anchored to an HCS topic.",
+    body: "The mirror node confirms the transfer. 0G writes BUY, CAUTION or AVOID from the purchased checks, wrapped as untrusted and with no tools, and cites each purchase. Hash-chained audit events are anchored to an HCS topic.",
     wire: `mirror  SUCCESS   AGENT −50000 · hourlypro +50000   (0.05 USDC)
-answer  cites [pur_…]   suspiciousContent: []
+answer  **CAUTION** cites [pur_…]   suspiciousContent: []
 HCS     topic 0.0.11341856  { "type": "PURCHASE_CONFIRMED",
         "tx": "0.0.9185802@…", "zg": "…", "prev": "<hash>" }`,
   },
@@ -137,7 +138,7 @@ function Node({ id, box, on, color }: { id: NodeId; box: Box; on: boolean; color
   );
 }
 
-/** Architecture diagram plus an 8-step walkthrough of one research run. Autoplays while on screen. */
+/** Architecture diagram plus an 8-step walkthrough of one token check. Autoplays while on screen. */
 export default function Flow() {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref);
