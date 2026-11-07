@@ -99,7 +99,7 @@ async function drive(ctx: OrchContext, runId: string, userId: string, question: 
     // ---- QUOTING: every allowed merchant, concurrently (quotes are free) ----
     checkTime();
     setState("QUOTING");
-    const query = { lat: String(planned.query.lat), lon: String(planned.query.lon), startDate: planned.query.startDate, endDate: planned.query.endDate };
+    const query = { tokenId: planned.query.tokenId };
     const fetched = await guard(Promise.all(catalog.map(async (c) => {
       try { return { id: c.id, res: await rails.fetchQuote(c.id, query) }; }
       catch { return { id: c.id, res: { ok: false as const, error: "NETWORK" as const } }; }

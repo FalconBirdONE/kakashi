@@ -140,7 +140,7 @@ describe("authorize", () => {
   it("rejects the gouger quote with OVER_PER_PAYMENT_CAP and PRICE_ANOMALY", () => {
     const fx = fresh();
     const { mandate, run } = setup(fx);
-    const q = recordQuote(fx.ctx, run.id, quoteInput({ merchantId: "gouger", path: "/m/gouger/premium", amountAtomic: "500000", payTo: "0.0.3004" }));
+    const q = recordQuote(fx.ctx, run.id, quoteInput({ merchantId: "gouger", path: "/m/gouger/alpha", amountAtomic: "500000", payTo: "0.0.3004" }));
     const p = proposePurchase(fx.ctx, q.id, decision());
     const r = authorize(fx.ctx, p.id);
     if (r.kind !== "REJECTED") throw new Error(`expected REJECTED, got ${r.kind}`);

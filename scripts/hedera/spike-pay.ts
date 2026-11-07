@@ -1,11 +1,11 @@
 // Spike S1 client: pays one x402 request as AGENT and prints every artifact needed for docs/rails/COMPAT.md.
-// Usage: tsx spike-pay.ts [url]   (default http://127.0.0.1:4200/m/quickcast/forecast)
+// Usage: tsx spike-pay.ts [url]   (default http://127.0.0.1:4200/m/quickcast/keys?tokenId=0.0.731861)
 import { x402Client, x402HTTPClient } from "@x402/core/client";
 import { createClientHederaSigner, inspectHederaTransaction } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
 import { SIGNER_ENV_PATH, parseKey, readEnvFile } from "./env.js";
 
-const url = process.argv[2] ?? "http://127.0.0.1:4200/m/quickcast/forecast";
+const url = process.argv[2] ?? "http://127.0.0.1:4200/m/quickcast/keys?tokenId=0.0.731861";
 const signerEnv = readEnvFile(SIGNER_ENV_PATH);
 const agentId = signerEnv.AGENT_ACCOUNT_ID;
 const agentKey = signerEnv.AGENT_PRIVATE_KEY;

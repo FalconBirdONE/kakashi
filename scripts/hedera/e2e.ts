@@ -28,8 +28,7 @@ async function until<T>(what: string, fn: () => Promise<T | null>, timeoutMs = 4
 }
 
 // A unique query per run, so the merchant's 10-minute idempotency cache never answers for an earlier run.
-const today = new Date().toISOString().slice(0, 10);
-const query = (tag: string) => ({ lat: "19.076", lon: "72.878", startDate: today, endDate: today, run: `${tag}-${Date.now()}` });
+const query = (tag: string) => ({ tokenId: "0.0.731861", run: `${tag}-${Date.now()}` });
 
 async function quoteAndSign(merchantId: string, q: Record<string, string>) {
   const res = await rails.fetchQuote(merchantId, q);

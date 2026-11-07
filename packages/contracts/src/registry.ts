@@ -20,32 +20,33 @@ export type MerchantInfo = {
   demoRole: "normal" | "adversarial";
 };
 
+// shortcut: v1 weather ids kept as internal keys to avoid env, DB and test churn; rename after the event.
 export const MERCHANT_REGISTRY: readonly MerchantInfo[] = [
   {
-    id: "quickcast", name: "QuickCast", path: "/m/quickcast/forecast",
-    capabilities: ["daily-forecast", "7-day"], coverage: "city",
-    freshnessSeconds: 6 * 3600, responseSchemaId: "daily-forecast.v1",
+    id: "quickcast", name: "KeyScan", path: "/m/quickcast/keys",
+    capabilities: ["admin-keys", "custom-fees", "supply-config"], coverage: "token configuration",
+    freshnessSeconds: 6 * 3600, responseSchemaId: "token-keys.v1",
     referencePriceAtomic: { min: "5000", max: "20000" }, priceAtomic: "10000",
     payToEnv: "MERCHANT_QUICKCAST_PAYTO", demoRole: "normal",
   },
   {
-    id: "hourlypro", name: "HourlyPro", path: "/m/hourlypro/forecast",
-    capabilities: ["hourly-forecast", "48-hour"], coverage: "neighbourhood",
-    freshnessSeconds: 3600, responseSchemaId: "hourly-forecast.v1",
+    id: "hourlypro", name: "TreasuryWatch", path: "/m/hourlypro/treasury",
+    capabilities: ["treasury-outflows", "recent-mints"], coverage: "treasury account, last 100 transactions",
+    freshnessSeconds: 3600, responseSchemaId: "token-treasury.v1",
     referencePriceAtomic: { min: "30000", max: "80000" }, priceAtomic: "50000",
     payToEnv: "MERCHANT_HOURLYPRO_PAYTO", demoRole: "normal",
   },
   {
-    id: "groundtruth", name: "GroundTruth", path: "/m/groundtruth/observations",
-    capabilities: ["current-observations", "nearby-stations"], coverage: "nearby stations",
-    freshnessSeconds: 900, responseSchemaId: "observations.v1",
+    id: "groundtruth", name: "HolderMap", path: "/m/groundtruth/holders",
+    capabilities: ["holder-concentration", "whale-wallets"], coverage: "every holder above 1% of supply",
+    freshnessSeconds: 900, responseSchemaId: "token-holders.v1",
     referencePriceAtomic: { min: "20000", max: "50000" }, priceAtomic: "30000",
     payToEnv: "MERCHANT_GROUNDTRUTH_PAYTO", demoRole: "normal",
   },
   {
-    id: "gouger", name: "PriceGouger", path: "/m/gouger/premium",
-    capabilities: ["premium-forecast"], coverage: "claimed global",
-    freshnessSeconds: 0, responseSchemaId: "premium-forecast.v1",
+    id: "gouger", name: "InsiderAlpha", path: "/m/gouger/alpha",
+    capabilities: ["insider-alpha"], coverage: "claimed insider calls",
+    freshnessSeconds: 0, responseSchemaId: "token-alpha.v1",
     referencePriceAtomic: { min: "10000", max: "50000" }, priceAtomic: "500000",
     payToEnv: "MERCHANT_GOUGER_PAYTO", demoRole: "adversarial",
   },

@@ -48,6 +48,23 @@ describe("research run on fakes", () => {
     expect([l.spentAtomic, l.reservedAtomic, l.dataSpendAtomic]).toEqual(["10000", "0", "10000"]);
   });
 
+  it("merchants receive only the token ID, never the trade size", async () => {
+    const s = await makeServer({
+      brain: (b) => ({
+        ...b,
+        plan: async (i) => {
+          const r = await b.plan(i);
+          return r.ok ? { ...r, value: { ...r.value, query: { tokenId: "0.0.731861", tradeUsd: 2000 } } } : r;
+        },
+      }),
+    });
+    const spy = vi.spyOn(s.deps.rails, "fetchQuote");
+    await activateMandate(s);
+    await run(s, "Should I put 2,000 USDC into 0.0.731861?");
+    expect(spy).toHaveBeenCalled();
+    for (const [, query] of spy.mock.calls) expect(query).toEqual({ tokenId: "0.0.731861" });
+  });
+
   it("the gouger quote is rejected by policy and never reaches brain.decide", async () => {
     const s = await makeServer();
     const spy = vi.spyOn(s.deps.brain, "decide");

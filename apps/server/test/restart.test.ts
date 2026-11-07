@@ -19,7 +19,7 @@ async function setup(){
  const fq=await deps.rails.fetchQuote('quickcast',{});if(!fq.ok)throw new Error('quote');
  const q=deps.trust.recordQuote(run.id,{...fq.quote,payTo:'0.0.3001'}),p=deps.trust.proposePurchase(q.id,{action:'BUY',needId:'n',reasonCode:'FILLS_NEED',expectedUsefulness:1,rationale:'test'});
  const auth=deps.trust.authorize(p.id);if(auth.kind!=='PERMIT')throw new Error(JSON.stringify(auth));
- deps.trust.updateRun(run.id,{plan:{needs:[{needId:'n',description:'forecast',priority:1}],query:{lat:19,lon:72,startDate:'2026-11-06',endDate:'2026-11-07'}},state:'PARTIAL',answer:{answer:'Waiting for evidence',confidence:'low',citations:[],gaps:['pending'],disagreements:[],suspiciousContent:[]}});
+ deps.trust.updateRun(run.id,{plan:{needs:[{needId:'n',description:'token risk',priority:1}],query:{tokenId:'0.0.731861',tradeUsd:100}},state:'PARTIAL',answer:{answer:'Waiting for evidence',confidence:'low',citations:[],gaps:['pending'],disagreements:[],suspiciousContent:[]}});
  const restart=()=>{db.db.close();db=createCtx(env);deps.trust=createTrust(env,{ctx:db});return createContext(deps);};
  return {deps,run,q,p,permit:auth.permit,restart,get db(){return db;}};
 }

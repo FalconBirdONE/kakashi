@@ -82,7 +82,7 @@ describe("Trust conformance", () => {
     const fresh = { receivedAt: iso(fx.clock.t), localExpiresAt: iso(fx.clock.t + 60_000) };
     const small = t.recordQuote(run.id, quoteInput({ ...fresh, requestHash: "rh_small" }));
     const big = t.recordQuote(run.id, quoteInput({
-      ...fresh, merchantId: "hourlypro", path: "/m/hourlypro/forecast", amountAtomic: "50000", payTo: "0.0.3002", requestHash: "rh_big",
+      ...fresh, merchantId: "hourlypro", path: "/m/hourlypro/treasury", amountAtomic: "50000", payTo: "0.0.3002", requestHash: "rh_big",
     }));
     expect(small).toMatchObject({ runId: run.id, amountAtomic: "10000" });
     expect(small.quoteHash).toMatch(/^[0-9a-f]{64}$/);

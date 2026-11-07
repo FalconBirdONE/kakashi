@@ -9,5 +9,5 @@ export const countActive = (v: RunView) => v.purchases.filter((p) => ACTIVE_PURC
 
 export function planQuery(v: RunView): Record<string, string> {
   const q = v.run.plan?.query;
-  return q ? { lat: String(q.lat), lon: String(q.lon), startDate: q.startDate, endDate: q.endDate } : {};
+  return q?.tokenId ? { tokenId: q.tokenId } : {};
 }
